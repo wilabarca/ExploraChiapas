@@ -6,7 +6,7 @@ class WelcomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    final size = MediaQuery.sizeOf(context);
 
     return Scaffold(
       body: Container(
@@ -25,38 +25,37 @@ class WelcomePage extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.max,
               children: [
-                SizedBox(height: size.height * 0.04),
+                SizedBox(height: size.height * 0.05),
 
-                // ── Imagen del quetzal ──
-                Container(
+                // ✓ SizedBox con dimensiones proporcionales directas
+                // sin AspectRatio ni FractionallySizedBox anidados
+                SizedBox(
                   width: size.width * 0.52,
-                  height: size.height * 0.28,
-                  decoration: BoxDecoration(
+                  height: size.height * 0.30,
+                  child: ClipRRect(
                     borderRadius: BorderRadius.circular(16),
-                    image: const DecorationImage(
-                      image: AssetImage('assets/images/inicio.png'),
+                    child: Image.asset(
+                      'assets/images/inicio.png',
                       fit: BoxFit.cover,
                     ),
                   ),
                 ),
 
-                SizedBox(height: size.height * 0.05),
+                SizedBox(height: size.height * 0.04),
 
-                // ── Título ──
                 Text(
                   'Explora la Magia\nde Chiapas',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: size.height * 0.048,
+                    fontSize: size.height * 0.045,
                     fontWeight: FontWeight.bold,
                     height: 1.15,
                   ),
                 ),
 
-                SizedBox(height: size.height * 0.02),
+                SizedBox(height: size.height * 0.018),
 
-                // ── Subtítulo ──
                 Text(
                   'Tu aventura sostenible comienza aquí.\n'
                   'Descubre rutas únicas y apoya a las\n'
@@ -64,25 +63,26 @@ class WelcomePage extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white70,
-                    fontSize: size.height * 0.018,
+                    fontSize: size.height * 0.017,
                     height: 1.6,
                   ),
                 ),
 
                 const Spacer(),
 
-                // ── Botón primario ──
-              AuthButton(
-  text: 'COMENZAR REGISTRO',
-  isPrimary: true,
-  onPressed: () => Navigator.pushNamed(context, '/registro'),
-),
+                AuthButton(
+                  text: 'COMENZAR REGISTRO',
+                  isPrimary: true,
+                  onPressed: () => Navigator.pushNamed(context, '/registro'),
+                ),
 
-AuthButton(
-  text: 'INICIAR SESIÓN',
-  isPrimary: false,
-  onPressed: () => Navigator.pushNamed(context, '/login'),
-),
+                SizedBox(height: size.height * 0.016),
+
+                AuthButton(
+                  text: 'INICIAR SESIÓN',
+                  isPrimary: false,
+                  onPressed: () => Navigator.pushNamed(context, '/login'),
+                ),
 
                 SizedBox(height: size.height * 0.04),
               ],

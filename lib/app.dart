@@ -4,6 +4,9 @@ import 'package:device_preview/device_preview.dart';
 import 'features/auth/presentation/pages/welcome_page.dart';
 import 'features/auth/presentation/pages/register_page.dart';
 import 'features/auth/presentation/pages/login_page.dart';
+import 'features/auth/presentation/pages/interests_page.dart';
+import 'features/home/presentation/pages/home_page.dart'; // ← faltaba este
+import 'features/profile/presentation/pages/profile_page.dart';
 
 class ExploraChiapasApp extends StatelessWidget {
   const ExploraChiapasApp({super.key});
@@ -22,6 +25,9 @@ class ExploraChiapasApp extends StatelessWidget {
         '/': (context) => const WelcomePage(),
         '/registro': (context) => const RegisterPage(),
         '/login': (context) => const LoginPage(),
+        '/intereses': (context) => const InterestsPage(),
+        '/home': (context) => const HomePage(),
+        '/perfil': (context) => const ProfilePage(),
       },
     );
   }
