@@ -6,7 +6,7 @@ import 'app.dart';
 void main() {
   runApp(
     DevicePreview(
-      enabled: true, // cámbialo a false para producción
+      enabled: false, // cámbialo a false para producción
       builder: (context) => const ExploraChiapasApp(),
     ),
   );

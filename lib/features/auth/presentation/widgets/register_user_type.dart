@@ -25,60 +25,41 @@ class RegisterUserType extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        Row(
-          children: [
-            _TypeChip(
-              label: 'Turista',
-              isSelected: selected == 'Turista',
-              onTap: () => onChanged('Turista'),
-            ),
-            const SizedBox(width: 10),
-            _TypeChip(
-              label: 'Habitante Local',
-              isSelected: selected == 'Habitante Local',
-              onTap: () => onChanged('Habitante Local'),
-            ),
-          ],
+
+        // ✓ Wrap: chips fluyen automáticamente si no caben en una línea
+        Wrap(
+          spacing: 10,
+          runSpacing: 8,
+          children: ['Turista', 'Habitante Local'].map((tipo) {
+            final isSelected = selected == tipo;
+            return GestureDetector(
+              onTap: () => onChanged(tipo),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? const Color(0xFF4CAF50)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: const Color(0xFF4CAF50),
+                    width: 1.5,
+                  ),
+                ),
+                child: Text(
+                  tipo,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected ? Colors.white : const Color(0xFF4CAF50),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
         ),
       ],
-    );
-  }
-}
-
-class _TypeChip extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _TypeChip({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF4CAF50) : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: const Color(0xFF4CAF50),
-            width: 1.5,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: isSelected ? Colors.white : const Color(0xFF4CAF50),
-          ),
-        ),
-      ),
     );
   }
 }

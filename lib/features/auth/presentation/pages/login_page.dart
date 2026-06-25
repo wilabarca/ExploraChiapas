@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/register_field.dart';
+import '../../../../core/ permissions/location_permission.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -11,6 +13,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -19,9 +22,31 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  Future<void> _handleLogin() async {
+    setState(() => _isLoading = true);
+    // TODO: llamada real al backend
+    await Future.delayed(const Duration(milliseconds: 800));
+
+    final prefs = await SharedPreferences.getInstance();
+    final onboardingCompleto = prefs.getBool('onboarding_completo') ?? false;
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (onboardingCompleto) {
+      // Verifica si revocó el permiso desde la última sesión
+      await LocationPermissionHelper().checkAndRequestOnLogin(context);
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, '/home');
+    } else {
+      // Primera vez: el permiso se pide al final del onboarding (InterestsPage)
+      Navigator.pushReplacementNamed(context, '/intereses');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    final size = MediaQuery.sizeOf(context);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF0FAF0),
@@ -32,7 +57,13 @@ class _LoginPageState extends State<LoginPage> {
             children: [
               SizedBox(height: size.height * 0.06),
 
-              Image.asset('assets/images/ExploraChiapas Logo.png', height: 52),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 60),
+                child: Image.asset(
+                  'assets/images/ExploraChiapas Logo.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
 
               SizedBox(height: size.height * 0.05),
 
@@ -102,28 +133,38 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 28),
 
-                    SizedBox(
-                      width: double.infinity,
-                      height: 54,
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        minHeight: 54,
+                        minWidth: double.infinity,
+                      ),
                       child: ElevatedButton(
-                        onPressed: () {
-                          // TODO: lógica de login
-                        },
+                        onPressed: _isLoading ? null : _handleLogin,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF2E7D32),
+                          disabledBackgroundColor: const Color(0xFFB0BEC5),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
                           ),
                           elevation: 0,
                         ),
-                        child: const Text(
-                          'Iniciar Sesión',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 17,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 22,
+                                width: 22,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2.5,
+                                ),
+                              )
+                            : const Text(
+                                'Iniciar Sesión',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                       ),
                     ),
                   ],

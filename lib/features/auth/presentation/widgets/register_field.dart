@@ -25,39 +25,39 @@ class _RegisterFieldState extends State<RegisterField> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFEAF7EA),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFB2DFDB), width: 1),
-      ),
-      child: TextField(
-        controller: widget.controller,
-        obscureText: widget.isPassword ? _obscure : false,
-        keyboardType: widget.keyboardType,
-        style: const TextStyle(fontSize: 15, color: Color(0xFF2E7D32)),
-        decoration: InputDecoration(
-          hintText: widget.hint,
-          hintStyle: const TextStyle(color: Color(0xFF81C784)),
-          prefixIcon: Icon(
-            widget.icon,
-            color: const Color(0xFF4CAF50),
-            size: 20,
+    // ✓ ConstrainedBox garantiza altura mínima accesible para el campo
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 52),
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFEAF7EA),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFFB2DFDB), width: 1),
+        ),
+        child: TextField(
+          controller: widget.controller,
+          obscureText: widget.isPassword ? _obscure : false,
+          keyboardType: widget.keyboardType,
+          style: const TextStyle(fontSize: 15, color: Color(0xFF2E7D32)),
+          decoration: InputDecoration(
+            hintText: widget.hint,
+            hintStyle: const TextStyle(color: Color(0xFF81C784)),
+            prefixIcon: Icon(widget.icon, color: const Color(0xFF4CAF50), size: 20),
+            suffixIcon: widget.isPassword
+                ? IconButton(
+                    icon: Icon(
+                      _obscure
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                      color: const Color(0xFF4CAF50),
+                      size: 20,
+                    ),
+                    onPressed: () => setState(() => _obscure = !_obscure),
+                  )
+                : null,
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(vertical: 16),
           ),
-          suffixIcon: widget.isPassword
-              ? IconButton(
-                  icon: Icon(
-                    _obscure
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined,
-                    color: const Color(0xFF4CAF50),
-                    size: 20,
-                  ),
-                  onPressed: () => setState(() => _obscure = !_obscure),
-                )
-              : null,
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 16),
         ),
       ),
     );

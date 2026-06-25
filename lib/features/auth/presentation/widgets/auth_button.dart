@@ -14,9 +14,12 @@ class AuthButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 56,
+    // ✓ ConstrainedBox: altura mínima accesible garantizada, ancho flexible
+    return ConstrainedBox(
+      constraints: const BoxConstraints(
+        minHeight: 52,
+        minWidth: double.infinity,
+      ),
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(

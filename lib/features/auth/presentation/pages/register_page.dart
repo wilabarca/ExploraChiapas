@@ -11,6 +11,8 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   String _tipoUsuario = 'Turista';
+  bool _isLoading = false;
+
   final _nombreCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _telefonoCtrl = TextEditingController();
@@ -25,6 +27,38 @@ class _RegisterPageState extends State<RegisterPage> {
     _passCtrl.dispose();
     _confirmCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleRegister() async {
+    // Validacion basica
+    if (_nombreCtrl.text.isEmpty ||
+        _emailCtrl.text.isEmpty ||
+        _telefonoCtrl.text.isEmpty ||
+        _passCtrl.text.isEmpty ||
+        _confirmCtrl.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor completa todos los campos.')),
+      );
+      return;
+    }
+
+    if (_passCtrl.text != _confirmCtrl.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Las contraseñas no coinciden.')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    // TODO: reemplazar con llamada real al backend
+    await Future.delayed(const Duration(milliseconds: 800));
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    // Registro siempre va a intereses (primera vez)
+    Navigator.pushReplacementNamed(context, '/intereses');
   }
 
   @override
@@ -125,24 +159,32 @@ class _RegisterPageState extends State<RegisterPage> {
                       width: double.infinity,
                       height: 54,
                       child: ElevatedButton(
-                        onPressed: () {
-                          // TODO: lógica de registro
-                        },
+                        onPressed: _isLoading ? null : _handleRegister,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF2E7D32),
+                          disabledBackgroundColor: const Color(0xFFB0BEC5),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
                           ),
                           elevation: 0,
                         ),
-                        child: const Text(
-                          'Crear Cuenta',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 17,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 22,
+                                width: 22,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2.5,
+                                ),
+                              )
+                            : const Text(
+                                'Crear Cuenta',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                       ),
                     ),
                   ],
