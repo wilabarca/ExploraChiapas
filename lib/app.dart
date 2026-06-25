@@ -7,6 +7,7 @@ import 'features/auth/presentation/pages/login_page.dart';
 import 'features/auth/presentation/pages/interests_page.dart';
 import 'features/home/presentation/pages/home_page.dart'; // ← faltaba este
 import 'features/profile/presentation/pages/profile_page.dart';
+import 'features/Chat/presentation/pages/chat_routes_page.dart';
 
 class ExploraChiapasApp extends StatelessWidget {
   const ExploraChiapasApp({super.key});
@@ -28,6 +29,7 @@ class ExploraChiapasApp extends StatelessWidget {
         '/intereses': (context) => const InterestsPage(),
         '/home': (context) => const HomePage(),
         '/perfil': (context) => const ProfilePage(),
+        '/chat': (context) => const ChatRoutesPage(),
       },
     );
   }
