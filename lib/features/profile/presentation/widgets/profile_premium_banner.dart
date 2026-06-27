@@ -6,43 +6,56 @@ class ProfilePremiumBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B5E20),
-        borderRadius: BorderRadius.circular(20),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1B5E20), Color(0xFF2E7D32)],
+        ),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
+          const Icon(Icons.star_rounded, color: Colors.amber, size: 32),
+          const SizedBox(width: 12),
           const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Explora Premium',
+                  'Hazte Premium',
                   style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
                     color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
                   ),
                 ),
-                SizedBox(height: 6),
+                SizedBox(height: 2),
                 Text(
-                  'Accede a rutas exclusivas y guías offline.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.white70,
-                    height: 1.4,
-                  ),
+                  'Rutas sin conexión, itinerarios ilimitados y más.',
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 16),
-          Icon(
-            Icons.verified_outlined,
-            color: Colors.white.withOpacity(0.5),
-            size: 40,
+          ElevatedButton(
+            onPressed: () {},
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.amber,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              elevation: 0,
+            ),
+            child: const Text(
+              'Ver plan',
+              style: TextStyle(
+                color: Color(0xFF1B5E20),
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
           ),
         ],
       ),

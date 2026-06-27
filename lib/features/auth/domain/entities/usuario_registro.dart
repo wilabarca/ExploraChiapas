@@ -1,4 +1,4 @@
-enum TipoUsuario { turista, local }
+enum TipoUsuario { turistaNacional, turistaExtranjero, habitanteLocal }
 
 class UsuarioRegistro {
   final String nombre;
@@ -14,4 +14,22 @@ class UsuarioRegistro {
     required this.telefono,
     required this.tipoUsuario,
   });
-} // TURISTA | LOCAL
+
+  bool get esTurista =>
+      tipoUsuario == TipoUsuario.turistaNacional ||
+      tipoUsuario == TipoUsuario.turistaExtranjero;
+
+  bool get esLocal => tipoUsuario == TipoUsuario.habitanteLocal;
+
+  // ← mapea el enum al string que espera el backend
+  String get userTypeId {
+    switch (tipoUsuario) {
+      case TipoUsuario.turistaNacional:
+        return 'turista_nacional';
+      case TipoUsuario.turistaExtranjero:
+        return 'turista_extranjero';
+      case TipoUsuario.habitanteLocal:
+        return 'habitante_local';
+    }
+  }
+}
