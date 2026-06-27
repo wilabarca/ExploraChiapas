@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/register_field.dart';
-import '../../../../core/ permissions/location_permission.dart';
+import '../providers/auth_provider.dart';
+import '../../../../core/permissions/location_permission.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -13,7 +15,6 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
-  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -23,30 +24,47 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _handleLogin() async {
-    setState(() => _isLoading = true);
-    // TODO: llamada real al backend
-    await Future.delayed(const Duration(milliseconds: 800));
+    final provider = context.read<AuthProvider>();
 
-    final prefs = await SharedPreferences.getInstance();
-    final onboardingCompleto = prefs.getBool('onboarding_completo') ?? false;
+    final success = await provider.login(
+      email: _emailCtrl.text.trim(),
+      password: _passCtrl.text.trim(),
+    );
 
     if (!mounted) return;
-    setState(() => _isLoading = false);
 
-    if (onboardingCompleto) {
-      // Verifica si revocó el permiso desde la última sesión
-      await LocationPermissionHelper().checkAndRequestOnLogin(context);
-      if (!mounted) return;
-      Navigator.pushReplacementNamed(context, '/home');
+    if (success) {
+      final prefs = await SharedPreferences.getInstance();
+      final onboardingCompleto = prefs.getBool('onboarding_completo') ?? false;
+
+      if (onboardingCompleto) {
+        await LocationPermissionHelper().checkAndRequestOnLogin(context);
+        if (!mounted) return;
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        Navigator.pushReplacementNamed(context, '/intereses');
+      }
     } else {
-      // Primera vez: el permiso se pide al final del onboarding (InterestsPage)
-      Navigator.pushReplacementNamed(context, '/intereses');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(provider.errorMessage ?? 'Error al iniciar sesión'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+      provider.resetStatus();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
+    // watch para que el botón reaccione al estado loading
+    final authStatus = context.watch<AuthProvider>().status;
+    final isLoading = authStatus == AuthStatus.loading;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF0FAF0),
@@ -139,7 +157,7 @@ class _LoginPageState extends State<LoginPage> {
                         minWidth: double.infinity,
                       ),
                       child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleLogin,
+                        onPressed: isLoading ? null : _handleLogin,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF2E7D32),
                           disabledBackgroundColor: const Color(0xFFB0BEC5),
@@ -148,7 +166,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           elevation: 0,
                         ),
-                        child: _isLoading
+                        child: isLoading
                             ? const SizedBox(
                                 height: 22,
                                 width: 22,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/interest_card.dart';
-import '../../../../core/ permissions/location_permission.dart';
+import '../../../../core/permissions/location_permission.dart';
 
 class InterestsPage extends StatefulWidget {
   const InterestsPage({super.key});

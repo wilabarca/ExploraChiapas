@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
+import '../providers/profile_provider.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -9,179 +10,194 @@ class EditProfilePage extends StatefulWidget {
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
-  final _nombreCtrl = TextEditingController(text: 'Santuario Chiapas');
-  final _emailCtrl  = TextEditingController(text: 'santuario@chiapas.travel');
-  bool _isLoading   = false;
+  final _nombreCtrl = TextEditingController();
+  final _telefonoCtrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    final perfil = context.read<ProfileProvider>().perfil;
+    if (perfil != null) {
+      _nombreCtrl.text = perfil.nombre;
+      _telefonoCtrl.text = perfil.telefono ?? '';
+    }
+  }
 
   @override
   void dispose() {
     _nombreCtrl.dispose();
-    _emailCtrl.dispose();
+    _telefonoCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _guardarCambios() async {
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 800));
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Perfil actualizado correctamente.'),
-        backgroundColor: Color(0xFF2E7D32),
-      ),
+  Future<void> _guardar() async {
+    final provider = context.read<ProfileProvider>();
+    final success = await provider.updatePerfil(
+      nombre: _nombreCtrl.text.trim(),
+      telefono: _telefonoCtrl.text.trim(),
     );
-    Navigator.pop(context);
+
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Perfil actualizado correctamente'),
+          backgroundColor: const Color(0xFF2E7D32),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(provider.errorMessage ?? 'Error al actualizar'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isLoading =
+        context.watch<ProfileProvider>().status == ProfileStatus.loading;
+    final perfil = context.watch<ProfileProvider>().perfil;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8F8F8),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back,
-              color: Color(0xFF2E7D32)),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF1B5E20)),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Editar Perfil',
           style: TextStyle(
-            color: Color(0xFF2E7D32),
+            color: Color(0xFF1B5E20),
             fontWeight: FontWeight.bold,
-            fontSize: 20,
+            fontSize: 18,
           ),
         ),
-        centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
         child: Column(
           children: [
-            const SizedBox(height: 24),
-
-            // Avatar con cámara
+            // ── Avatar default ────────────────────────────────
             Stack(
+              alignment: Alignment.bottomRight,
               children: [
                 CircleAvatar(
-                  radius: 56,
-                  backgroundColor: const Color(0xFFD8F5D8),
-                  child: ClipOval(
-                    child: CachedNetworkImage(
-                      imageUrl: 'https://i.pravatar.cc/150?img=15',
-                      width: 112,
-                      height: 112,
-                      fit: BoxFit.cover,
-                      placeholder: (_, __) => const Icon(
-                        Icons.person,
-                        size: 56,
-                        color: Color(0xFF2E7D32),
-                      ),
-                      errorWidget: (_, __, ___) => const Icon(
-                        Icons.person,
-                        size: 56,
-                        color: Color(0xFF2E7D32),
-                      ),
-                    ),
+                  radius: 54,
+                  backgroundColor: const Color(0xFFE8F5E9),
+                  child: const Icon(
+                    Icons.person,
+                    size: 54,
+                    color: Color(0xFF2E7D32),
                   ),
                 ),
-                Positioned(
-                  bottom: 2,
-                  right: 2,
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF2E7D32),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.camera_alt_outlined,
-                      color: Colors.white,
-                      size: 16,
-                    ),
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF2E7D32),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.camera_alt_outlined,
+                    color: Colors.white,
+                    size: 18,
                   ),
                 ),
               ],
             ),
 
-            const SizedBox(height: 10),
-
+            const SizedBox(height: 8),
             const Text(
               'CAMBIAR FOTO DE PERFIL',
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF888888),
-                letterSpacing: 1.1,
+                color: Color(0xFF2E7D32),
+                letterSpacing: 1.2,
               ),
             ),
 
             const SizedBox(height: 28),
 
-            // Tipo de usuario (solo lectura)
+            // ── Tipo de usuario (solo lectura) ────────────────
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
                 color: const Color(0xFFF5F5F5),
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE0E0E0)),
               ),
-              child: const Text(
-                'Turista Local',
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Color(0xFF888888),
-                ),
+              child: Text(
+                perfil?.tipoUsuarioLabel ?? 'Turista',
+                style: const TextStyle(fontSize: 15, color: Color(0xFF555555)),
               ),
             ),
 
             const SizedBox(height: 20),
 
-            // Nombre
-            _EditField(
-              label: 'Nombre completo',
-              icono: Icons.person_outline,
-              controller: _nombreCtrl,
-            ),
+            // ── Nombre ────────────────────────────────────────
+            _buildLabel('Nombre completo', Icons.person_outline),
+            const SizedBox(height: 8),
+            _buildField(controller: _nombreCtrl, hint: 'Tu nombre completo'),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
 
-            // Correo
-            _EditField(
-              label: 'Correo electrónico',
-              icono: Icons.email_outlined,
-              controller: _emailCtrl,
-              keyboardType: TextInputType.emailAddress,
-            ),
-
-            const SizedBox(height: 16),
-
-            // Contraseña
+            // ── Email (solo lectura) ──────────────────────────
+            _buildLabel('Correo electrónico', Icons.email_outlined),
+            const SizedBox(height: 8),
             Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 14),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
-                color: const Color(0xFFF0FAF0),
+                color: const Color(0xFFF5F5F5),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFD8F5D8)),
+                border: Border.all(color: const Color(0xFFE0E0E0)),
+              ),
+              child: Text(
+                perfil?.email ?? '',
+                style: const TextStyle(fontSize: 15, color: Color(0xFF555555)),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // ── Contraseña (placeholder) ──────────────────────
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE0E0E0)),
               ),
               child: Row(
                 children: [
                   Container(
-                    width: 36,
-                    height: 36,
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2E7D32).withOpacity(0.1),
+                      color: const Color(0xFFE8F5E9),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
                       Icons.lock_outline,
                       color: Color(0xFF2E7D32),
-                      size: 18,
+                      size: 20,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -201,22 +217,21 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         Text(
                           '••••••••••••',
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 15,
                             color: Color(0xFF1B1B1B),
-                            letterSpacing: 2,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () {},
+                  TextButton(
+                    onPressed: () {}, // TODO: cambiar contraseña
                     child: const Text(
                       'CAMBIAR',
                       style: TextStyle(
-                        fontSize: 13,
                         color: Color(0xFF2E7D32),
                         fontWeight: FontWeight.bold,
+                        fontSize: 13,
                       ),
                     ),
                   ),
@@ -226,27 +241,25 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
             const SizedBox(height: 20),
 
-            // Nota informativa
+            // ── Nota informativa ──────────────────────────────
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color(0xFFF0FAF0),
+                color: const Color(0xFFE8F5E9),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFD8F5D8)),
               ),
               child: const Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.info_outline,
-                      color: Color(0xFF2E7D32), size: 18),
+                  Icon(Icons.info_outline, color: Color(0xFF2E7D32), size: 18),
                   SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Tu información se utiliza para personalizar tus planes de viaje y reservas en parques naturales.',
+                      'Tu información se utiliza para personalizar '
+                      'tus planes de viaje y reservas en parques naturales.',
                       style: TextStyle(
                         fontSize: 13,
                         color: Color(0xFF555555),
-                        height: 1.5,
+                        height: 1.4,
                       ),
                     ),
                   ),
@@ -256,21 +269,21 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
             const SizedBox(height: 32),
 
-            // Botón guardar
+            // ── Botón guardar ─────────────────────────────────
             SizedBox(
               width: double.infinity,
+              height: 54,
               child: ElevatedButton(
-                onPressed: _isLoading ? null : _guardarCambios,
+                onPressed: isLoading ? null : _guardar,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2E7D32),
                   disabledBackgroundColor: const Color(0xFFB0BEC5),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(30),
                   ),
                   elevation: 0,
                 ),
-                child: _isLoading
+                child: isLoading
                     ? const SizedBox(
                         height: 22,
                         width: 22,
@@ -290,71 +303,53 @@ class _EditProfilePageState extends State<EditProfilePage> {
               ),
             ),
 
-            const SizedBox(height: 40),
+            const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
-}
 
-class _EditField extends StatelessWidget {
-  final String label;
-  final IconData icono;
-  final TextEditingController controller;
-  final TextInputType keyboardType;
-
-  const _EditField({
-    required this.label,
-    required this.icono,
-    required this.controller,
-    this.keyboardType = TextInputType.text,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildLabel(String text, IconData icon) {
+    return Row(
       children: [
-        Row(
-          children: [
-            Icon(icono, size: 16, color: const Color(0xFF888888)),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 13,
-                color: Color(0xFF888888),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        TextField(
-          controller: controller,
-          keyboardType: keyboardType,
+        Icon(icon, size: 16, color: const Color(0xFF555555)),
+        const SizedBox(width: 6),
+        Text(
+          text,
           style: const TextStyle(
-            fontSize: 15,
-            color: Color(0xFF1B1B1B),
-          ),
-          decoration: InputDecoration(
-            contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16, vertical: 14),
-            filled: true,
-            fillColor: const Color(0xFFF5F5F5),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                  color: Color(0xFF4CAF50), width: 1.5),
-            ),
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF555555),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildField({
+    required TextEditingController controller,
+    required String hint,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE0E0E0)),
+      ),
+      child: TextField(
+        controller: controller,
+        style: const TextStyle(fontSize: 15, color: Color(0xFF1B1B1B)),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: const TextStyle(color: Color(0xFFAAAAAA)),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
+        ),
+      ),
     );
   }
 }

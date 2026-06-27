@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../core/utils/app_constants.dart';
 import 'home_turista_page.dart';
 import 'home_local_page.dart';
 
@@ -11,7 +12,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String _tipoUsuario = 'Turista';
+  String? _tipo;
   bool _loaded = false;
 
   @override
@@ -23,10 +24,13 @@ class _HomePageState extends State<HomePage> {
   Future<void> _cargarTipo() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _tipoUsuario = prefs.getString('tipo_usuario') ?? 'Turista';
+      _tipo = prefs.getString(AppConstants.tipoUsuarioKey);
       _loaded = true;
     });
+    debugPrint('🏠 HomePage — tipo cargado: $_tipo');
   }
+
+  bool get _esLocal => _tipo == AppConstants.tipoHabitanteLocal;
 
   @override
   Widget build(BuildContext context) {
@@ -38,8 +42,6 @@ class _HomePageState extends State<HomePage> {
       );
     }
 
-    return _tipoUsuario == 'Turista'
-        ? const HomeTuristaPage()
-        : const HomeLocalPage();
+    return _esLocal ? const HomeLocalPage() : const HomeTuristaPage();
   }
 }

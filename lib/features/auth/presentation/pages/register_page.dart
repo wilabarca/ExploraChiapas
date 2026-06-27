@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../widgets/register_field.dart';
 import '../widgets/register_user_type.dart';
+import '../providers/auth_provider.dart';
+import '../../domain/entities/usuario_registro.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -10,8 +13,7 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  String _tipoUsuario = 'Turista';
-  bool _isLoading = false;
+  String _tipoUsuario = 'Turista Nacional';
 
   final _nombreCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
@@ -30,7 +32,6 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Future<void> _handleRegister() async {
-    // Validacion basica
     if (_nombreCtrl.text.isEmpty ||
         _emailCtrl.text.isEmpty ||
         _telefonoCtrl.text.isEmpty ||
@@ -49,21 +50,76 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    setState(() => _isLoading = true);
+    if (_passCtrl.text.length < 8) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('La contraseña debe tener al menos 8 caracteres.'),
+        ),
+      );
+      return;
+    }
 
-    // TODO: reemplazar con llamada real al backend
-    await Future.delayed(const Duration(milliseconds: 800));
+    final provider = context.read<AuthProvider>();
+
+    // ← mapea el string del selector al enum correcto
+    TipoUsuario tipo;
+    switch (_tipoUsuario) {
+      case 'Turista Nacional':
+        tipo = TipoUsuario.turistaNacional;
+        break;
+      case 'Turista Extranjero':
+        tipo = TipoUsuario.turistaExtranjero;
+        break;
+      default:
+        tipo = TipoUsuario.habitanteLocal;
+    }
+
+    debugPrint(
+      '📤 Registrando: '
+      'nombre=${_nombreCtrl.text.trim()} '
+      'email=${_emailCtrl.text.trim()} '
+      'tipo=$tipo',
+    );
+
+    final success = await provider.register(
+      UsuarioRegistro(
+        nombre: _nombreCtrl.text.trim(),
+        correo: _emailCtrl.text.trim(),
+        telefono: _telefonoCtrl.text.trim(),
+        contrasena: _passCtrl.text.trim(),
+        tipoUsuario: tipo,
+      ),
+    );
+
+    debugPrint('📥 Register result  : success=$success');
+    debugPrint('📥 Error message    : ${provider.errorMessage}');
+    debugPrint('📥 Status           : ${provider.status}');
 
     if (!mounted) return;
-    setState(() => _isLoading = false);
 
-    // Registro siempre va a intereses (primera vez)
-    Navigator.pushReplacementNamed(context, '/intereses');
+    if (success) {
+      debugPrint('✅ Navegando a /intereses');
+      Navigator.pushReplacementNamed(context, '/intereses');
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(provider.errorMessage ?? 'Error al registrarse'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+      provider.resetStatus();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    final size = MediaQuery.sizeOf(context);
+    final isLoading =
+        context.watch<AuthProvider>().status == AuthStatus.loading;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF0FAF0),
@@ -74,7 +130,13 @@ class _RegisterPageState extends State<RegisterPage> {
             children: [
               SizedBox(height: size.height * 0.05),
 
-              Image.asset('assets/images/ExploraChiapas Logo.png', height: 52),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 60),
+                child: Image.asset(
+                  'assets/images/ExploraChiapas Logo.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
 
               SizedBox(height: size.height * 0.04),
 
@@ -140,7 +202,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                     RegisterField(
                       controller: _passCtrl,
-                      hint: 'Contraseña',
+                      hint: 'Contraseña (mín. 8 caracteres)',
                       icon: Icons.lock_outline,
                       isPassword: true,
                     ),
@@ -155,11 +217,13 @@ class _RegisterPageState extends State<RegisterPage> {
 
                     const SizedBox(height: 28),
 
-                    SizedBox(
-                      width: double.infinity,
-                      height: 54,
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        minHeight: 54,
+                        minWidth: double.infinity,
+                      ),
                       child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleRegister,
+                        onPressed: isLoading ? null : _handleRegister,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF2E7D32),
                           disabledBackgroundColor: const Color(0xFFB0BEC5),
@@ -168,7 +232,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                           elevation: 0,
                         ),
-                        child: _isLoading
+                        child: isLoading
                             ? const SizedBox(
                                 height: 22,
                                 width: 22,
