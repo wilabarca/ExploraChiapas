@@ -6,7 +6,12 @@ class AppConstants {
   static const String registerEndpoint = '/users/register';
   static const String loginEndpoint = '/users/login';
   static const String profileEndpoint = '/users/profile';
-  static const String userTypesEndpoint = '/user-types'; // ← si existe
+  static const String userTypesEndpoint = '/user-types';
+
+  // Capa 1 (NLP/Groq) corre como microservicio independiente del backend
+  // principal; usa su propio host y no requiere JWT.
+  static const String mlServiceBaseUrl = 'http://localhost:3001';
+  static const String planearEndpoint = '/planear';
 
   static const String jwtTokenKey = 'jwt_token';
   static const String tipoUsuarioKey = 'tipo_usuario';
