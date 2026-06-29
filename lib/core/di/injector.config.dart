@@ -43,6 +43,8 @@ import '../../features/profile/domain/usecases/update_perfil_usecase.dart'
 import '../../features/profile/presentation/providers/profile_provider.dart'
     as _i919;
 import '../network/api_client.dart' as _i557;
+import '../services/avatar/avatar_service.dart' as _i45;
+import '../services/avatar/avatar_service_impl.dart' as _i149;
 
 extension GetItInjectableX on _i174.GetIt {
   // initializes the registration of main-scope dependencies inside of GetIt
@@ -52,6 +54,7 @@ extension GetItInjectableX on _i174.GetIt {
   }) {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     gh.lazySingleton<_i557.ApiClient>(() => _i557.ApiClient());
+    gh.lazySingleton<_i45.AvatarService>(() => _i149.AvatarServiceImpl());
     gh.factory<_i1017.IHomeRemoteDatasource>(
       () => _i1017.HomeRemoteDatasourceImpl(),
     );
@@ -64,11 +67,14 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i437.GetDestinosUseCase>(
       () => _i437.GetDestinosUseCase(gh<_i274.IHomeRepository>()),
     );
+    gh.lazySingleton<_i355.AuthRepository>(
+      () => _i797.AuthRepositoryImpl(
+        gh<_i175.AuthRemoteDataSource>(),
+        gh<_i45.AvatarService>(),
+      ),
+    );
     gh.factory<_i1031.IProfileRemoteDatasource>(
       () => _i1031.ProfileRemoteDatasourceImpl(gh<_i557.ApiClient>()),
-    );
-    gh.lazySingleton<_i355.AuthRepository>(
-      () => _i797.AuthRepositoryImpl(gh<_i175.AuthRemoteDataSource>()),
     );
     gh.factory<_i568.GetProfileUseCase>(
       () => _i568.GetProfileUseCase(gh<_i355.AuthRepository>()),

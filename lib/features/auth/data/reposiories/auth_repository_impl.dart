@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/utils/app_constants.dart';
+import '../../../../core/services/avatar/avatar_service.dart';
 import '../../domain/entities/usuario.dart';
 import '../../domain/entities/usuario_registro.dart';
 import '../../../auth/domain/repostories/auth_repository.dart';
@@ -12,8 +13,9 @@ import '../datasource/auth_remote_datasource.dart';
 @LazySingleton(as: AuthRepository)
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _dataSource;
+  final AvatarService _avatarService; // ← inyectado automáticamente por get_it
 
-  AuthRepositoryImpl(this._dataSource);
+  AuthRepositoryImpl(this._dataSource, this._avatarService);
 
   @override
   Future<Either<Failure, Map<String, dynamic>>> register(
@@ -21,13 +23,31 @@ class AuthRepositoryImpl implements AuthRepository {
   ) async {
     try {
       final result = await _dataSource.register(
-        name: usuario.nombre,
-        email: usuario.correo,
-        password: usuario.contrasena,
-        phone: usuario.telefono,
-        userTypeId:
-            usuario.userTypeId, // ← usa el getter que mapea al valor correcto
+        name:       usuario.nombre,
+        email:      usuario.correo,
+        password:   usuario.contrasena,
+        phone:      usuario.telefono,
+        userTypeId: usuario.userTypeId,
       );
+
+      // Guarda datos del usuario localmente
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        AppConstants.tipoUsuarioKey,
+        usuario.esLocal ? 'Local' : 'Turista',
+      );
+      await prefs.setString(
+        AppConstants.userNameKey,
+        result['name'] as String? ?? '',
+      );
+      await prefs.setString(
+        AppConstants.userEmailKey,
+        result['email'] as String? ?? '',
+      );
+
+      // ← detecta género por nombre y asigna avatar de DiceBear
+      await _avatarService.asignarAvatarPorNombre(usuario.nombre);
+
       return Right(result);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
@@ -44,9 +64,9 @@ class AuthRepositoryImpl implements AuthRepository {
     required String password,
   }) async {
     try {
-      final token = await _dataSource.login(email: email, password: password);
+      final token =
+          await _dataSource.login(email: email, password: password);
 
-      // Guarda el token localmente
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(AppConstants.jwtTokenKey, token);
 
@@ -84,7 +104,8 @@ class AuthRepositoryImpl implements AuthRepository {
     String? phone,
   }) async {
     try {
-      final usuario = await _dataSource.updateProfile(name: name, phone: phone);
+      final usuario =
+          await _dataSource.updateProfile(name: name, phone: phone);
       return Right(usuario);
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(message: e.message));
@@ -102,7 +123,6 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       await _dataSource.deleteProfile();
 
-      // Limpia datos locales al eliminar cuenta
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
 
