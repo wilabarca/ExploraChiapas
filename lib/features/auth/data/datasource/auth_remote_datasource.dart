@@ -43,7 +43,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         'email': email,
         'password': password,
         'phone': phone,
-        'userType': userTypeId, // ← campo correcto según la API
+        'userType': userTypeId, // El backend espera 'userType', no 'userTypeId'
       },
     );
 

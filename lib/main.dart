@@ -5,7 +5,7 @@ import 'app.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ← esto debe ejecutarse ANTES de runApp
+  // Debe ejecutarse antes de runApp para que getIt ya tenga todo registrado
   await configureDependencies();
 
   runApp(const ExploraChiapasApp());

@@ -88,12 +88,17 @@ class DestinoCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  '$categoria • $calificacion ★',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF888888),
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      '$categoria • $calificacion ',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF888888),
+                      ),
+                    ),
+                    const Icon(Icons.star, size: 12, color: Color(0xFFFFC107)),
+                  ],
                 ),
               ],
             ),

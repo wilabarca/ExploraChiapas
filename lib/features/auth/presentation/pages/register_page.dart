@@ -61,7 +61,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
     final provider = context.read<AuthProvider>();
 
-    // ← mapea el string del selector al enum correcto
+    // Mapea el string del selector al enum correcto
     TipoUsuario tipo;
     switch (_tipoUsuario) {
       case 'Turista Nacional':
@@ -75,7 +75,7 @@ class _RegisterPageState extends State<RegisterPage> {
     }
 
     debugPrint(
-      '📤 Registrando: '
+      'Registrando: '
       'nombre=${_nombreCtrl.text.trim()} '
       'email=${_emailCtrl.text.trim()} '
       'tipo=$tipo',
@@ -91,14 +91,14 @@ class _RegisterPageState extends State<RegisterPage> {
       ),
     );
 
-    debugPrint('📥 Register result  : success=$success');
-    debugPrint('📥 Error message    : ${provider.errorMessage}');
-    debugPrint('📥 Status           : ${provider.status}');
+    debugPrint('Register result  : success=$success');
+    debugPrint('Error message    : ${provider.errorMessage}');
+    debugPrint('Status           : ${provider.status}');
 
     if (!mounted) return;
 
     if (success) {
-      debugPrint('✅ Navegando a /intereses');
+      debugPrint('Navegando a /intereses');
       Navigator.pushReplacementNamed(context, '/intereses');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

@@ -50,14 +50,14 @@ class ApiClient {
 
   Future<Response> post(String path, {Map<String, dynamic>? data}) async {
     try {
-      debugPrint('🌐 POST: $_baseUrl$path');
-      debugPrint('📦 Body: $data');
+      debugPrint('POST: $_baseUrl$path');
+      debugPrint('Body: $data');
       final response = await _dio.post(path, data: data);
-      debugPrint('✅ Response ${response.statusCode}: ${response.data}');
+      debugPrint('Response ${response.statusCode}: ${response.data}');
       return response;
     } on DioException catch (e) {
-      debugPrint('❌ DioError: ${e.type} - ${e.message}');
-      debugPrint('❌ Response: ${e.response?.statusCode} - ${e.response?.data}');
+      debugPrint('DioError: ${e.type} - ${e.message}');
+      debugPrint('Response: ${e.response?.statusCode} - ${e.response?.data}');
       _handleDioError(e);
     }
     throw const ServerException(message: 'Error desconocido');

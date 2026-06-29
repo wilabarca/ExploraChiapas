@@ -14,7 +14,7 @@ class AuthButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ✓ ConstrainedBox: altura mínima accesible garantizada, ancho flexible
+    // ConstrainedBox garantiza altura minima accesible y ancho flexible
     return ConstrainedBox(
       constraints: const BoxConstraints(
         minHeight: 52,

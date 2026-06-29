@@ -27,7 +27,7 @@ class _HomePageState extends State<HomePage> {
       _tipo = prefs.getString(AppConstants.tipoUsuarioKey);
       _loaded = true;
     });
-    debugPrint('🏠 HomePage — tipo cargado: $_tipo');
+    debugPrint('HomePage, tipo cargado: $_tipo');
   }
 
   bool get _esLocal => _tipo == AppConstants.tipoHabitanteLocal;

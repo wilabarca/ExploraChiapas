@@ -19,7 +19,6 @@ class LocationPermissionHelper {
         permission == LocationPermission.whileInUse;
   }
 
-  // ← método que faltaba, para el login
   Future<void> checkAndRequestOnLogin(BuildContext context) async {
     final has = await _service.hasPermission();
     if (!has) {
