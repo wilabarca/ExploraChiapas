@@ -75,7 +75,7 @@ class AuthProvider extends ChangeNotifier {
         // Si no existe (primer login en dispositivo nuevo),
         // lo dejamos vacío y HomePage usará HomeTuristaPage por defecto.
         debugPrint(
-          '✅ Login OK — tipo guardado: '
+          'Login OK, tipo guardado: '
           '${prefs.getString(AppConstants.tipoUsuarioKey)}',
         );
 
@@ -99,11 +99,11 @@ class AuthProvider extends ChangeNotifier {
       (data) async {
         _registroData = data;
 
-        // ← guarda el tipo seleccionado por el usuario
+        // Guarda el tipo seleccionado por el usuario
         final prefs = await SharedPreferences.getInstance();
         final tipoStr = _tipoToString(datos.tipoUsuario);
         await prefs.setString(AppConstants.tipoUsuarioKey, tipoStr);
-        debugPrint('✅ Registro OK — tipo guardado: $tipoStr');
+        debugPrint('Registro OK, tipo guardado: $tipoStr');
 
         _setSuccess();
         return true;

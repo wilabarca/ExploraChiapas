@@ -21,7 +21,6 @@ class UsuarioRegistro {
 
   bool get esLocal => tipoUsuario == TipoUsuario.habitanteLocal;
 
-  // ← mapea el enum al string que espera el backend
   String get userTypeId {
     switch (tipoUsuario) {
       case TipoUsuario.turistaNacional:

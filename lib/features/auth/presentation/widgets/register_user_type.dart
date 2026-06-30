@@ -26,7 +26,7 @@ class RegisterUserType extends StatelessWidget {
         ),
         const SizedBox(height: 10),
 
-        // ✓ Wrap: chips fluyen automáticamente si no caben en una línea
+        // Wrap: los chips fluyen automaticamente si no caben en una linea
         Wrap(
           spacing: 10,
           runSpacing: 8,

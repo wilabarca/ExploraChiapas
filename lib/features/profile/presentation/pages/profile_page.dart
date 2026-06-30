@@ -32,27 +32,12 @@ class _ProfilePageState extends State<ProfilePage> {
         automaticallyImplyLeading: false,
         title: Row(
           children: [
-            // Logo texto
-            RichText(
-              text: const TextSpan(
-                children: [
-                  TextSpan(
-                    text: '✦ ',
-                    style: TextStyle(
-                      color: Color(0xFF2E7D32),
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  TextSpan(
-                    text: 'ExploraChiapas',
-                    style: TextStyle(
-                      color: Color(0xFF1B5E20),
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+            const Text(
+              'ExploraChiapas',
+              style: TextStyle(
+                color: Color(0xFF1B5E20),
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ],

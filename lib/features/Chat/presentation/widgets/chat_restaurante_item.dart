@@ -5,14 +5,14 @@ class ChatRestauranteItem extends StatelessWidget {
   final String nombre;
   final String tipo;
   final String precio;
-  final String imageUrl;
+  final String? imageUrl;
 
   const ChatRestauranteItem({
     super.key,
     required this.nombre,
     required this.tipo,
     required this.precio,
-    required this.imageUrl,
+    this.imageUrl,
   });
 
   @override
@@ -35,23 +35,20 @@ class ChatRestauranteItem extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: CachedNetworkImage(
-              imageUrl: imageUrl,
-              width: 70,
-              height: 70,
-              fit: BoxFit.cover,
-              placeholder: (_, __) => Container(
-                width: 70,
-                height: 70,
-                color: const Color(0xFFD8F5D8),
-              ),
-              errorWidget: (_, __, ___) => Container(
-                width: 70,
-                height: 70,
-                color: const Color(0xFFD8F5D8),
-                child: const Icon(Icons.restaurant, color: Colors.white54),
-              ),
-            ),
+            child: imageUrl != null
+                ? CachedNetworkImage(
+                    imageUrl: imageUrl!,
+                    width: 70,
+                    height: 70,
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) => Container(
+                      width: 70,
+                      height: 70,
+                      color: const Color(0xFFD8F5D8),
+                    ),
+                    errorWidget: (_, __, ___) => _PlaceholderRestaurante(),
+                  )
+                : _PlaceholderRestaurante(),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -88,6 +85,18 @@ class ChatRestauranteItem extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _PlaceholderRestaurante extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 70,
+      height: 70,
+      color: const Color(0xFFD8F5D8),
+      child: const Icon(Icons.restaurant, color: Colors.white54),
     );
   }
 }

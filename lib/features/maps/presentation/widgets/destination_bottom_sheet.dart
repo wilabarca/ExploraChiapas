@@ -95,15 +95,29 @@ class DestinationBottomSheet extends StatelessWidget {
                     'Afluencia actual',
                     style: TextStyle(fontSize: 12, color: Color(0xFF777777)),
                   ),
-                  Text(
-                    destino.afluencia > 75 ? '⚠️ Alta' : 'Normal',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: destino.afluencia > 75
-                          ? Colors.orange
-                          : const Color(0xFF2E7D32),
-                    ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (destino.afluencia > 75)
+                        const Padding(
+                          padding: EdgeInsets.only(right: 4),
+                          child: Icon(
+                            Icons.warning_amber_rounded,
+                            size: 14,
+                            color: Colors.orange,
+                          ),
+                        ),
+                      Text(
+                        destino.afluencia > 75 ? 'Alta' : 'Normal',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: destino.afluencia > 75
+                              ? Colors.orange
+                              : const Color(0xFF2E7D32),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

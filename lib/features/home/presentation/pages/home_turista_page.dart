@@ -16,7 +16,7 @@ class HomeTuristaPage extends StatefulWidget {
 }
 
 class _HomeTuristaPageState extends State<HomeTuristaPage> {
-  int _selectedIndex = 0; // ✅ Variable de estado declarada correctamente
+  int _selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +34,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
 
           // Destinos para ti
           SectionHeader(
-            emoji: '📍',
+            icon: Icons.location_on_outlined,
             titulo: 'Destinos para ti',
             mostrarVerTodos: true,
             onVerTodos: () {},
@@ -82,7 +82,10 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
           const SizedBox(height: 24),
 
           // Restaurantes destacados
-          const SectionHeader(emoji: '🍽', titulo: 'Restaurantes destacados'),
+          const SectionHeader(
+            icon: Icons.restaurant_outlined,
+            titulo: 'Restaurantes destacados',
+          ),
 
           const SizedBox(height: 14),
 
@@ -107,7 +110,10 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
           const SizedBox(height: 24),
 
           // Hoteles recomendados
-          const SectionHeader(emoji: '🏨', titulo: 'Hoteles recomendados'),
+          const SectionHeader(
+            icon: Icons.hotel_outlined,
+            titulo: 'Hoteles recomendados',
+          ),
 
           const SizedBox(height: 14),
 
@@ -137,14 +143,12 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
         ],
       ),
 
-      // FAB chat
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () => Navigator.pushNamed(context, '/chat'),
         backgroundColor: const Color(0xFF2E7D32),
         child: const Icon(Icons.smart_toy_outlined, color: Colors.white),
       ),
 
-      // ✅ Bottom navigation bar corregido
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF2E7D32),

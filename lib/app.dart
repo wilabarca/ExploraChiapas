@@ -8,6 +8,7 @@ import 'features/auth/presentation/pages/login_page.dart';
 import 'features/auth/presentation/pages/interests_page.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/profile/presentation/providers/profile_provider.dart';
+import 'features/Chat/presentation/providers/chat_provider.dart';
 import 'features/home/presentation/pages/home_page.dart';
 import 'features/profile/presentation/pages/profile_page.dart';
 import 'features/Chat/presentation/pages/chat_routes_page.dart';
@@ -25,6 +26,9 @@ class ExploraChiapasApp extends StatelessWidget {
         ChangeNotifierProvider<ProfileProvider>(
           create: (_) => getIt<ProfileProvider>(),
         ),
+        ChangeNotifierProvider<ChatProvider>(
+          create: (_) => getIt<ChatProvider>(),
+        ),
       ],
       child: MaterialApp(
         title: 'ExploraChiapas',
@@ -32,7 +36,7 @@ class ExploraChiapasApp extends StatelessWidget {
         theme: ThemeData(textTheme: GoogleFonts.poppinsTextTheme()),
         initialRoute: '/',
         onGenerateRoute: (settings) {
-          debugPrint('➡️ Navegando a: ${settings.name}');
+          debugPrint('Navegando a: ${settings.name}');
 
           switch (settings.name) {
             case '/':
@@ -71,7 +75,7 @@ class ExploraChiapasApp extends StatelessWidget {
                 settings: settings,
               );
             default:
-              debugPrint('❌ Ruta no encontrada: ${settings.name}');
+              debugPrint('Ruta no encontrada: ${settings.name}');
               return MaterialPageRoute(builder: (_) => const WelcomePage());
           }
         },

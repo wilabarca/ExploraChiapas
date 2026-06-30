@@ -12,6 +12,16 @@
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 
+import '../../features/Chat/data/datasource/chat_remote_datasource.dart'
+    as _i9001;
+import '../../features/Chat/data/repositories/chat_repository_impl.dart'
+    as _i9002;
+import '../../features/Chat/domain/repositories/i_chat_repository.dart'
+    as _i9003;
+import '../../features/Chat/domain/usecases/enviar_mensaje_usecase.dart'
+    as _i9004;
+import '../../features/Chat/presentation/providers/chat_provider.dart'
+    as _i9005;
 import '../../features/auth/data/datasource/auth_remote_datasource.dart'
     as _i175;
 import '../../features/auth/data/reposiories/auth_repository_impl.dart'
@@ -43,6 +53,7 @@ import '../../features/profile/domain/usecases/update_perfil_usecase.dart'
 import '../../features/profile/presentation/providers/profile_provider.dart'
     as _i919;
 import '../network/api_client.dart' as _i557;
+import '../network/ml_api_client.dart' as _i9000;
 import '../services/avatar/avatar_service.dart' as _i45;
 import '../services/avatar/avatar_service_impl.dart' as _i149;
 
@@ -54,7 +65,20 @@ extension GetItInjectableX on _i174.GetIt {
   }) {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     gh.lazySingleton<_i557.ApiClient>(() => _i557.ApiClient());
+    gh.lazySingleton<_i9000.MlApiClient>(() => _i9000.MlApiClient());
     gh.lazySingleton<_i45.AvatarService>(() => _i149.AvatarServiceImpl());
+    gh.lazySingleton<_i9001.IChatRemoteDatasource>(
+      () => _i9001.ChatRemoteDatasourceImpl(gh<_i9000.MlApiClient>()),
+    );
+    gh.factory<_i9003.IChatRepository>(
+      () => _i9002.ChatRepositoryImpl(gh<_i9001.IChatRemoteDatasource>()),
+    );
+    gh.factory<_i9004.EnviarMensajeUseCase>(
+      () => _i9004.EnviarMensajeUseCase(gh<_i9003.IChatRepository>()),
+    );
+    gh.factory<_i9005.ChatProvider>(
+      () => _i9005.ChatProvider(gh<_i9004.EnviarMensajeUseCase>()),
+    );
     gh.factory<_i1017.IHomeRemoteDatasource>(
       () => _i1017.HomeRemoteDatasourceImpl(),
     );

@@ -71,7 +71,6 @@ class _InterestsPageState extends State<InterestsPage> {
     if (!mounted) return;
     setState(() => _isLoading = false);
 
-    // ← navega al home
     Navigator.pushReplacementNamed(context, '/home');
   }
 

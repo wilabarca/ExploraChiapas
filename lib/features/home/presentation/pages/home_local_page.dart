@@ -23,7 +23,7 @@ class HomeLocalPage extends StatelessWidget {
           const SizedBox(height: 24),
 
           SectionHeader(
-            emoji: '📍',
+            icon: Icons.location_on_outlined,
             titulo: 'Destinos para ti',
             mostrarVerTodos: true,
             onVerTodos: () {},
@@ -58,7 +58,10 @@ class HomeLocalPage extends StatelessWidget {
 
           const SizedBox(height: 24),
 
-          const SectionHeader(emoji: '🍽', titulo: 'Restaurantes destacados'),
+          const SectionHeader(
+            icon: Icons.restaurant_outlined,
+            titulo: 'Restaurantes destacados',
+          ),
 
           const SizedBox(height: 14),
 
@@ -82,7 +85,10 @@ class HomeLocalPage extends StatelessWidget {
 
           const SizedBox(height: 24),
 
-          const SectionHeader(emoji: '🏨', titulo: 'Hoteles recomendados'),
+          const SectionHeader(
+            icon: Icons.hotel_outlined,
+            titulo: 'Hoteles recomendados',
+          ),
 
           const SizedBox(height: 14),
 
@@ -113,7 +119,7 @@ class HomeLocalPage extends StatelessWidget {
       ),
 
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () => Navigator.pushNamed(context, '/chat'),
         backgroundColor: const Color(0xFF2E7D32),
         child: const Icon(Icons.smart_toy_outlined, color: Colors.white),
       ),

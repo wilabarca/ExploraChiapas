@@ -5,16 +5,16 @@ class ChatDestinoCard extends StatelessWidget {
   final String nombre;
   final String duracion;
   final String precio;
-  final double calificacion;
-  final String imageUrl;
+  final double? calificacion;
+  final String? imageUrl;
 
   const ChatDestinoCard({
     super.key,
     required this.nombre,
     required this.duracion,
     required this.precio,
-    required this.calificacion,
-    required this.imageUrl,
+    this.calificacion,
+    this.imageUrl,
   });
 
   @override
@@ -41,51 +41,49 @@ class ChatDestinoCard extends StatelessWidget {
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(20)),
-                child: CachedNetworkImage(
-                  imageUrl: imageUrl,
-                  height: 200,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  placeholder: (_, __) => Container(
-                    height: 200,
-                    color: const Color(0xFFD8F5D8),
-                  ),
-                  errorWidget: (_, __, ___) => Container(
-                    height: 200,
-                    color: const Color(0xFFD8F5D8),
-                    child: const Icon(Icons.image_not_supported,
-                        color: Colors.white54, size: 40),
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 12,
-                right: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.star,
-                          color: Color(0xFFFFC107), size: 14),
-                      const SizedBox(width: 4),
-                      Text(
-                        '$calificacion',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1B1B1B),
+                child: imageUrl != null
+                    ? CachedNetworkImage(
+                        imageUrl: imageUrl!,
+                        height: 200,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        placeholder: (_, __) => Container(
+                          height: 200,
+                          color: const Color(0xFFD8F5D8),
                         ),
-                      ),
-                    ],
+                        errorWidget: (_, __, ___) => _PlaceholderImagen(),
+                      )
+                    : _PlaceholderImagen(),
+              ),
+              if (calificacion != null)
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.star,
+                            color: Color(0xFFFFC107), size: 14),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$calificacion',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1B1B1B),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
 
@@ -159,6 +157,18 @@ class ChatDestinoCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _PlaceholderImagen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 200,
+      width: double.infinity,
+      color: const Color(0xFFD8F5D8),
+      child: const Icon(Icons.landscape, color: Colors.white54, size: 40),
     );
   }
 }

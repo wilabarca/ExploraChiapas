@@ -13,7 +13,7 @@ import '../datasource/auth_remote_datasource.dart';
 @LazySingleton(as: AuthRepository)
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _dataSource;
-  final AvatarService _avatarService; // ← inyectado automáticamente por get_it
+  final AvatarService _avatarService; // Inyectado automaticamente por get_it
 
   AuthRepositoryImpl(this._dataSource, this._avatarService);
 
@@ -45,7 +45,7 @@ class AuthRepositoryImpl implements AuthRepository {
         result['email'] as String? ?? '',
       );
 
-      // ← detecta género por nombre y asigna avatar de DiceBear
+      // Detecta genero por nombre y asigna avatar de DiceBear
       await _avatarService.asignarAvatarPorNombre(usuario.nombre);
 
       return Right(result);
