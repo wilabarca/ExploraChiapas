@@ -10,7 +10,8 @@ class AppConstants {
 
   // Capa 1 (NLP/Groq) corre como microservicio independiente del backend
   // principal; usa su propio host y no requiere JWT.
-  static const String mlServiceBaseUrl = 'http://localhost:3001';
+  // En dispositivo fisico usar la IP local de la PC (no localhost).
+  static const String mlServiceBaseUrl = 'http://192.168.1.133:3001';
   static const String planearEndpoint = '/planear';
 
   static const String jwtTokenKey = 'jwt_token';
