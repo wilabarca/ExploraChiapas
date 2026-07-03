@@ -231,11 +231,6 @@ class _ProfilePageState extends State<ProfilePage> {
                     onTap: () => _confirmarEliminarCuenta(context, provider),
                   ),
 
-                  const SizedBox(height: 16),
-
-                  // ── Banner Premium ────────────────────────
-                  if (!perfil.isPremium) _PremiumBanner(),
-
                   const SizedBox(height: 100),
                 ],
               ),
@@ -455,61 +450,6 @@ class _MenuItem extends StatelessWidget {
             Icon(Icons.chevron_right, color: c.withOpacity(0.5), size: 20),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _PremiumBanner extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1B3A2A),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  'Explora Premium',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                SizedBox(height: 6),
-                Text(
-                  'Accede a rutas exclusivas y guías offline.',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 13,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.white30, width: 1.5),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.verified_outlined,
-              color: Colors.white,
-              size: 28,
-            ),
-          ),
-        ],
       ),
     );
   }
