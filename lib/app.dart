@@ -6,12 +6,23 @@ import 'features/auth/presentation/pages/welcome_page.dart';
 import 'features/auth/presentation/pages/register_page.dart';
 import 'features/auth/presentation/pages/login_page.dart';
 import 'features/auth/presentation/pages/interests_page.dart';
+import 'features/auth/presentation/pages/permitir_acceso_page.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/profile/presentation/providers/profile_provider.dart';
 import 'features/Chat/presentation/providers/chat_provider.dart';
 import 'features/home/presentation/pages/home_page.dart';
 import 'features/profile/presentation/pages/profile_page.dart';
 import 'features/Chat/presentation/pages/chat_routes_page.dart';
+import 'features/favoritos/presentation/pages/favoritos_page.dart';
+import 'features/eventos/presentation/pages/eventos_page.dart';
+import 'features/maps/presentation/pages/map_page.dart';
+import 'features/maps/presentation/providers/map_provider.dart';
+import 'features/maps/domain/usecases/get_destinations_usecase.dart';
+import 'features/maps/domain/usecases/get_routes_usecase.dart';
+import 'features/maps/data/repositories/map_repository_impl.dart';
+import 'features/maps/data/datasources/map_remote_datasource.dart';
+import 'features/explorar/presentation/pages/explorar_cerca_page.dart';
+import 'features/explorar/presentation/pages/recomendar_lugar_page.dart';
 
 class ExploraChiapasApp extends StatelessWidget {
   const ExploraChiapasApp({super.key});
@@ -59,6 +70,11 @@ class ExploraChiapasApp extends StatelessWidget {
                 builder: (_) => const InterestsPage(),
                 settings: settings,
               );
+            case '/permisos':
+              return MaterialPageRoute(
+                builder: (_) => const PermitirAccesoPage(),
+                settings: settings,
+              );
             case '/home':
               return MaterialPageRoute(
                 builder: (_) => const HomePage(),
@@ -72,6 +88,41 @@ class ExploraChiapasApp extends StatelessWidget {
             case '/chat':
               return MaterialPageRoute(
                 builder: (_) => const ChatRoutesPage(),
+                settings: settings,
+              );
+            case '/favoritos':
+              return MaterialPageRoute(
+                builder: (_) => const FavoritosPage(),
+                settings: settings,
+              );
+            case '/eventos':
+              return MaterialPageRoute(
+                builder: (_) => const EventosPage(),
+                settings: settings,
+              );
+            case '/mapa':
+              return MaterialPageRoute(
+                builder: (_) => ChangeNotifierProvider<MapProvider>(
+                  create: (_) => MapProvider(
+                    GetDestinationsUseCase(
+                      MapRepositoryImpl(MapRemoteDatasourceImpl()),
+                    ),
+                    GetRouteUseCase(
+                      MapRepositoryImpl(MapRemoteDatasourceImpl()),
+                    ),
+                  ),
+                  child: const MapPage(),
+                ),
+                settings: settings,
+              );
+            case '/cerca':
+              return MaterialPageRoute(
+                builder: (_) => const ExplorarCercaPage(),
+                settings: settings,
+              );
+            case '/recomendar':
+              return MaterialPageRoute(
+                builder: (_) => const RecomendarLugarPage(),
                 settings: settings,
               );
             default:

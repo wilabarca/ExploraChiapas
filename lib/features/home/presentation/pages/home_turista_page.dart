@@ -7,6 +7,7 @@ import '../widgets/restaurante_item.dart';
 import '../widgets/hotel_card.dart';
 import '../widgets/accesos_rapidos.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
+import '../../../destinos/presentation/pages/lugar_detail_page.dart';
 
 class HomeTuristaPage extends StatefulWidget {
   const HomeTuristaPage({super.key});
@@ -47,7 +48,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              children: const [
+              children: [
                 DestinoCard(
                   nombre: 'Cascadas de Agua Azul',
                   categoria: 'Naturaleza',
@@ -55,6 +56,18 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
                   imageUrl:
                       'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
                   esFavorito: true,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const LugarDetailPage(
+                        nombre: 'Cascadas de Agua Azul',
+                        categoria: 'Naturaleza',
+                        calificacion: 4.9,
+                        imageUrl:
+                            'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
+                      ),
+                    ),
+                  ),
                 ),
                 DestinoCard(
                   nombre: 'Zona Arqueológica Palenque',
@@ -62,6 +75,18 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
                   calificacion: 4.8,
                   imageUrl:
                       'https://images.unsplash.com/photo-1518638150340-f706e86654de?w=800&q=80',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const LugarDetailPage(
+                        nombre: 'Zona Arqueológica Palenque',
+                        categoria: 'Cultura',
+                        calificacion: 4.8,
+                        imageUrl:
+                            'https://images.unsplash.com/photo-1518638150340-f706e86654de?w=800&q=80',
+                      ),
+                    ),
+                  ),
                 ),
                 DestinoCard(
                   nombre: 'Cañón del Sumidero',
@@ -69,6 +94,18 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
                   calificacion: 4.7,
                   imageUrl:
                       'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const LugarDetailPage(
+                        nombre: 'Cañón del Sumidero',
+                        categoria: 'Naturaleza',
+                        calificacion: 4.7,
+                        imageUrl:
+                            'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80',
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -155,14 +192,14 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
         unselectedItemColor: const Color(0xFF999999),
         currentIndex: _selectedIndex,
         onTap: (index) {
-          if (index == 3) {
-            // Tab Perfil - navega a la pantalla de perfil
+          if (index == 1) {
+            Navigator.pushNamed(context, '/mapa');
+          } else if (index == 2) {
+            Navigator.pushNamed(context, '/favoritos');
+          } else if (index == 3) {
             Navigator.pushNamed(context, '/perfil');
           } else {
-            // Para los otros tabs, actualiza el índice seleccionado
-            setState(() {
-              _selectedIndex = index;
-            });
+            setState(() => _selectedIndex = index);
           }
         },
         items: const [
