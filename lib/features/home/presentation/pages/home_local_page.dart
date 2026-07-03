@@ -5,9 +5,17 @@ import '../widgets/section_header.dart';
 import '../widgets/destino_card.dart';
 import '../widgets/restaurante_item.dart';
 import '../widgets/hotel_card.dart';
+import '../../../destinos/presentation/pages/lugar_detail_page.dart';
 
-class HomeLocalPage extends StatelessWidget {
+class HomeLocalPage extends StatefulWidget {
   const HomeLocalPage({super.key});
+
+  @override
+  State<HomeLocalPage> createState() => _HomeLocalPageState();
+}
+
+class _HomeLocalPageState extends State<HomeLocalPage> {
+  int _selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +44,7 @@ class HomeLocalPage extends StatelessWidget {
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              children: const [
+              children: [
                 DestinoCard(
                   nombre: 'Cascadas de Agua Azul',
                   categoria: 'Naturaleza',
@@ -44,6 +52,18 @@ class HomeLocalPage extends StatelessWidget {
                   imageUrl:
                       'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
                   esFavorito: true,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const LugarDetailPage(
+                        nombre: 'Cascadas de Agua Azul',
+                        categoria: 'Naturaleza',
+                        calificacion: 4.9,
+                        imageUrl:
+                            'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
+                      ),
+                    ),
+                  ),
                 ),
                 DestinoCard(
                   nombre: 'Zona Arqueológica Palenque',
@@ -51,6 +71,18 @@ class HomeLocalPage extends StatelessWidget {
                   calificacion: 4.8,
                   imageUrl:
                       'https://images.unsplash.com/photo-1518638150340-f706e86654de?w=800&q=80',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const LugarDetailPage(
+                        nombre: 'Zona Arqueológica Palenque',
+                        categoria: 'Cultura',
+                        calificacion: 4.8,
+                        imageUrl:
+                            'https://images.unsplash.com/photo-1518638150340-f706e86654de?w=800&q=80',
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -124,12 +156,22 @@ class HomeLocalPage extends StatelessWidget {
         child: const Icon(Icons.smart_toy_outlined, color: Colors.white),
       ),
 
-      // Bottom nav local — 5 tabs
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF2E7D32),
         unselectedItemColor: const Color(0xFF999999),
-        currentIndex: 0,
+        currentIndex: _selectedIndex,
+        onTap: (index) {
+          if (index == 1) {
+            Navigator.pushNamed(context, '/mapa');
+          } else if (index == 2) {
+            Navigator.pushNamed(context, '/favoritos');
+          } else if (index == 4) {
+            Navigator.pushNamed(context, '/perfil');
+          } else {
+            setState(() => _selectedIndex = index);
+          }
+        },
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.explore_outlined),
