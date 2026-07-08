@@ -6,8 +6,8 @@ import '../widgets/destino_card.dart';
 import '../widgets/restaurante_item.dart';
 import '../widgets/hotel_card.dart';
 import '../widgets/accesos_rapidos.dart';
-import '../../../profile/presentation/pages/profile_page.dart';
 import '../../../destinos/presentation/pages/lugar_detail_page.dart';
+import '../../data/home_api_service.dart';
 
 class HomeTuristaPage extends StatefulWidget {
   const HomeTuristaPage({super.key});
@@ -19,6 +19,34 @@ class HomeTuristaPage extends StatefulWidget {
 class _HomeTuristaPageState extends State<HomeTuristaPage> {
   int _selectedIndex = 0;
 
+  final HomeApiService _apiService = HomeApiService();
+
+  List<PromocionItem> _promociones = [];
+  List<EventoItem> _eventos = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarDatos();
+  }
+
+  Future<void> _cargarDatos() async {
+    try {
+      final resultados = await Future.wait([
+        _apiService.fetchPromociones(),
+        _apiService.fetchEventos(),
+      ]);
+      if (mounted) {
+        setState(() {
+          _promociones = resultados[0] as List<PromocionItem>;
+          _eventos = resultados[1] as List<EventoItem>;
+        });
+      }
+    } catch (_) {
+      // Si falla la red, las secciones simplemente no se muestran
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,7 +56,6 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
         children: [
           const SizedBox(height: 16),
 
-          // Banner planifica
           const PlanificaBanner(),
 
           const SizedBox(height: 24),
@@ -113,10 +140,43 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
 
           const SizedBox(height: 8),
 
-          // Accesos rápidos
           const AccesosRapidos(),
 
           const SizedBox(height: 24),
+
+          // Promociones activas (solo si hay datos del backend)
+          if (_promociones.isNotEmpty) ...[
+            const SectionHeader(
+              icon: Icons.local_offer_outlined,
+              titulo: 'Promociones activas',
+            ),
+            const SizedBox(height: 14),
+            SizedBox(
+              height: 130,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: _promociones.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (context, index) {
+                  final promo = _promociones[index];
+                  return _PromocionCard(promo: promo);
+                },
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
+
+          // Próximos eventos (solo si hay datos del backend)
+          if (_eventos.isNotEmpty) ...[
+            const SectionHeader(
+              icon: Icons.event_outlined,
+              titulo: 'Próximos eventos',
+            ),
+            const SizedBox(height: 14),
+            ..._eventos.map((evento) => _EventoItem(evento: evento)),
+            const SizedBox(height: 24),
+          ],
 
           // Restaurantes destacados
           const SectionHeader(
@@ -220,6 +280,200 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
             label: 'Perfil',
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PromocionCard extends StatelessWidget {
+  final PromocionItem promo;
+
+  const _PromocionCard({required this.promo});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 220,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE8F5E9)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.local_offer,
+                size: 16,
+                color: Color(0xFF2E7D32),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  promo.titulo,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1B1B1B),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (promo.negocioNombre != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              promo.negocioNombre!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF666666),
+              ),
+            ),
+          ],
+          if (promo.descripcion != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              promo.descripcion!,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF888888),
+              ),
+            ),
+          ],
+          const Spacer(),
+          if (promo.precio != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8F5E9),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '\$${promo.precio!.toStringAsFixed(0)}',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2E7D32),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EventoItem extends StatelessWidget {
+  final EventoItem evento;
+
+  const _EventoItem({required this.evento});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8F5E9),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.event,
+                color: Color(0xFF2E7D32),
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    evento.titulo,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1B1B1B),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.calendar_today_outlined,
+                        size: 12,
+                        color: Color(0xFF888888),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        evento.fechaInicio,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF888888),
+                        ),
+                      ),
+                      if (evento.municipio != null) ...[
+                        const SizedBox(width: 10),
+                        const Icon(
+                          Icons.place_outlined,
+                          size: 12,
+                          color: Color(0xFF888888),
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            evento.municipio!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF888888),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
