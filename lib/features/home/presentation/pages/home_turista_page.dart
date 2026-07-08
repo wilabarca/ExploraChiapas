@@ -42,9 +42,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
           _eventos = resultados[1] as List<EventoItem>;
         });
       }
-    } catch (_) {
-      // Si falla la red, las secciones simplemente no se muestran
-    }
+    } catch (_) {}
   }
 
   @override
@@ -60,7 +58,6 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
 
           const SizedBox(height: 24),
 
-          // Destinos para ti
           SectionHeader(
             icon: Icons.location_on_outlined,
             titulo: 'Destinos para ti',
@@ -144,7 +141,6 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
 
           const SizedBox(height: 24),
 
-          // Promociones activas (solo si hay datos del backend)
           if (_promociones.isNotEmpty) ...[
             const SectionHeader(
               icon: Icons.local_offer_outlined,
@@ -167,7 +163,6 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
             const SizedBox(height: 24),
           ],
 
-          // Próximos eventos (solo si hay datos del backend)
           if (_eventos.isNotEmpty) ...[
             const SectionHeader(
               icon: Icons.event_outlined,
@@ -178,7 +173,6 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
             const SizedBox(height: 24),
           ],
 
-          // Restaurantes destacados
           const SectionHeader(
             icon: Icons.restaurant_outlined,
             titulo: 'Restaurantes destacados',
@@ -206,7 +200,6 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
 
           const SizedBox(height: 24),
 
-          // Hoteles recomendados
           const SectionHeader(
             icon: Icons.hotel_outlined,
             titulo: 'Hoteles recomendados',
