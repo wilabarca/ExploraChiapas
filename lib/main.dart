@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'core/di/injector.dart';
+import 'core/services/notifications/onesignal_service.dart';
 import 'app.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Debe ejecutarse antes de runApp para que getIt ya tenga todo registrado
   await configureDependencies();
+  await OneSignalService.initialize();
 
   runApp(const ExploraChiapasApp());
 }

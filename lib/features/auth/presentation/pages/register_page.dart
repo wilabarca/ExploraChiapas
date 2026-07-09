@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../widgets/register_field.dart';
 import '../widgets/register_user_type.dart';
 import '../providers/auth_provider.dart';
 import '../../domain/entities/usuario_registro.dart';
+import '../../../../core/utils/app_constants.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -14,6 +16,7 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   String _tipoUsuario = 'Turista Nacional';
+  bool _aceptoTerminos = false;
 
   final _nombreCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
@@ -31,6 +34,14 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
+  // ── Abre URL en el navegador del sistema ──────────────────────────────────
+  Future<void> _abrirUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   Future<void> _handleRegister() async {
     if (_nombreCtrl.text.isEmpty ||
         _emailCtrl.text.isEmpty ||
@@ -39,6 +50,17 @@ class _RegisterPageState extends State<RegisterPage> {
         _confirmCtrl.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Por favor completa todos los campos.')),
+      );
+      return;
+    }
+
+    if (!_aceptoTerminos) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Debes aceptar los Términos y Condiciones y la Política de Privacidad.',
+          ),
+        ),
       );
       return;
     }
@@ -61,7 +83,6 @@ class _RegisterPageState extends State<RegisterPage> {
 
     final provider = context.read<AuthProvider>();
 
-    // Mapea el string del selector al enum correcto
     TipoUsuario tipo;
     switch (_tipoUsuario) {
       case 'Turista Nacional':
@@ -74,13 +95,6 @@ class _RegisterPageState extends State<RegisterPage> {
         tipo = TipoUsuario.habitanteLocal;
     }
 
-    debugPrint(
-      'Registrando: '
-      'nombre=${_nombreCtrl.text.trim()} '
-      'email=${_emailCtrl.text.trim()} '
-      'tipo=$tipo',
-    );
-
     final success = await provider.register(
       UsuarioRegistro(
         nombre: _nombreCtrl.text.trim(),
@@ -91,14 +105,9 @@ class _RegisterPageState extends State<RegisterPage> {
       ),
     );
 
-    debugPrint('Register result  : success=$success');
-    debugPrint('Error message    : ${provider.errorMessage}');
-    debugPrint('Status           : ${provider.status}');
-
     if (!mounted) return;
 
     if (success) {
-      debugPrint('Navegando a /intereses');
       Navigator.pushReplacementNamed(context, '/intereses');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -130,8 +139,9 @@ class _RegisterPageState extends State<RegisterPage> {
             children: [
               SizedBox(height: size.height * 0.05),
 
+              // ── Logo más grande ← cambio aquí ──────────────────────
               ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 60),
+                constraints: const BoxConstraints(maxHeight: 90), // era 60
                 child: Image.asset(
                   'assets/images/ExploraChiapas Logo.png',
                   fit: BoxFit.contain,
@@ -170,6 +180,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // ← Dropdown en lugar de chips
                     RegisterUserType(
                       selected: _tipoUsuario,
                       onChanged: (val) => setState(() => _tipoUsuario = val),
@@ -215,7 +226,73 @@ class _RegisterPageState extends State<RegisterPage> {
                       isPassword: true,
                     ),
 
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 20),
+
+                    // ── Checkbox + URLs externas ← cambio aquí ─────
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Checkbox(
+                          value: _aceptoTerminos,
+                          activeColor: const Color(0xFF2E7D32),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          onChanged: (val) =>
+                              setState(() => _aceptoTerminos = val ?? false),
+                        ),
+                        Expanded(
+                          child: Wrap(
+                            children: [
+                              const Text(
+                                'Acepto los ',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF4A4A4A),
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () =>
+                                    _abrirUrl(AppConstants.terminosUrl),
+                                child: const Text(
+                                  'Términos y Condiciones',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Color(0xFF2E7D32),
+                                    fontWeight: FontWeight.bold,
+                                    decoration: TextDecoration.underline,
+                                    decorationColor: Color(0xFF2E7D32),
+                                  ),
+                                ),
+                              ),
+                              const Text(
+                                ' y la ',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF4A4A4A),
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () =>
+                                    _abrirUrl(AppConstants.privacidadUrl),
+                                child: const Text(
+                                  'Política de Privacidad',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Color(0xFF2E7D32),
+                                    fontWeight: FontWeight.bold,
+                                    decoration: TextDecoration.underline,
+                                    decorationColor: Color(0xFF2E7D32),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
 
                     ConstrainedBox(
                       constraints: const BoxConstraints(

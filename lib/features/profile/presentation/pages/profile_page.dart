@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../providers/profile_provider.dart';
 import '../widgets/profile_avatar.dart';
 import '../widgets/profile_interests.dart';
+import '../widgets/profile_stats.dart';
+import '../widgets/profile_menu_item.dart';
 import 'edit_profile_page.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -23,6 +25,12 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final mq = MediaQuery.of(context);
+    final screenW = mq.size.width;
+    final screenH = mq.size.height;
+    final isSmall = screenW < 360;
+    final avatarRadius = screenW * 0.135;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF2F7F2),
       appBar: AppBar(
@@ -30,17 +38,13 @@ class _ProfilePageState extends State<ProfilePage> {
         elevation: 0,
         centerTitle: false,
         automaticallyImplyLeading: false,
-        title: Row(
-          children: [
-            const Text(
-              'ExploraChiapas',
-              style: TextStyle(
-                color: Color(0xFF1B5E20),
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
+        title: const Text(
+          'ExploraChiapas',
+          style: TextStyle(
+            color: Color(0xFF1B5E20),
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: Consumer<ProfileProvider>(
@@ -64,8 +68,10 @@ class _ProfilePageState extends State<ProfilePage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF2E7D32),
                     ),
-                    child: const Text('Reintentar',
-                        style: TextStyle(color: Colors.white)),
+                    child: const Text(
+                      'Reintentar',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
                 ],
               ),
@@ -74,49 +80,32 @@ class _ProfilePageState extends State<ProfilePage> {
 
           return SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: screenW * 0.04),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 24),
+                  SizedBox(height: screenH * 0.025),
 
-                  // ── Avatar + nombre + email ───────────────
+                  // ── Avatar + nombre + email ──────────────
                   Center(
                     child: Column(
                       children: [
-                        Stack(
-                          alignment: Alignment.bottomRight,
-                          children: [
-                            const ProfileAvatar(radius: 52),
-                            GestureDetector(
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const EditProfilePage(),
-                                ),
-                              ),
-                              child: Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFF2E7D32),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.edit,
-                                  color: Colors.white,
-                                  size: 14,
-                                ),
-                              ),
-                            ),
-                          ],
+                        SizedBox(
+                          width: avatarRadius * 2,
+                          height: avatarRadius * 2,
+                          child: ProfileAvatar(
+                            radius: avatarRadius,
+                            showEditButton: true,
+                            onTap: () => _irAEditarPerfil(context),
+                          ),
                         ),
-                        const SizedBox(height: 12),
+                        SizedBox(height: screenH * 0.012),
                         Text(
                           perfil.nombre,
-                          style: const TextStyle(
-                            fontSize: 22,
+                          style: TextStyle(
+                            fontSize: isSmall ? 18 : 22,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1B1B1B),
+                            color: const Color(0xFF1B1B1B),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -131,22 +120,18 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
 
-                  const SizedBox(height: 24),
+                  SizedBox(height: screenH * 0.025),
 
-                  // ── Stats en 3 cards ──────────────────────
-                  Row(
-                    children: [
-                      _StatCard(valor: '12', label: 'Rutas\ncreadas'),
-                      const SizedBox(width: 10),
-                      _StatCard(valor: '24', label: 'Favoritos'),
-                      const SizedBox(width: 10),
-                      _StatCard(valor: '8',  label: 'Reseñas'),
-                    ],
+                  // ── Stats (valores fijos hasta que el backend los soporte) ──
+                  const ProfileStats(
+                    rutasCreadas: '0',
+                    favoritos: '0',
+                    resenas: '0',
                   ),
 
-                  const SizedBox(height: 16),
+                  SizedBox(height: screenH * 0.016),
 
-                  // ── Mis Intereses ─────────────────────────
+                  // ── Mis Intereses ────────────────────────
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
@@ -169,10 +154,8 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                             ),
                             GestureDetector(
-                              onTap: () => Navigator.pushNamed(
-                                context,
-                                '/intereses',
-                              ),
+                              onTap: () =>
+                                  Navigator.pushNamed(context, '/intereses'),
                               child: const Row(
                                 children: [
                                   Icon(
@@ -200,41 +183,27 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  SizedBox(height: screenH * 0.016),
 
-                  // ── Menú items ────────────────────────────
-                  _MenuItem(
+                  // ── Menú ─────────────────────────────────
+                  ProfileMenuItem(
                     icon: Icons.manage_accounts_outlined,
                     label: 'Editar perfil',
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const EditProfilePage(),
-                      ),
-                    ),
+                    onTap: () => _irAEditarPerfil(context),
                   ),
-
-                  const SizedBox(height: 10),
-
-                  _MenuItem(
+                  SizedBox(height: screenH * 0.01),
+                  ProfileMenuItem(
                     icon: Icons.logout_outlined,
                     label: 'Cerrar sesión',
                     onTap: () => _confirmarCerrarSesion(context),
                   ),
-
-                  const SizedBox(height: 10),
-
-                  _MenuItem(
+                  SizedBox(height: screenH * 0.01),
+                  ProfileMenuItem(
                     icon: Icons.delete_outline,
                     label: 'Eliminar cuenta',
-                    color: const Color(0xFFD32F2F),
+                    dangerColor: const Color(0xFFD32F2F),
                     onTap: () => _confirmarEliminarCuenta(context, provider),
                   ),
-
-                  const SizedBox(height: 16),
-
-                  // ── Banner Premium ────────────────────────
-                  if (!perfil.isPremium) _PremiumBanner(),
 
                   const SizedBox(height: 100),
                 ],
@@ -243,8 +212,6 @@ class _ProfilePageState extends State<ProfilePage> {
           );
         },
       ),
-
-      // ── Bottom Nav ────────────────────────────────────────
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF2E7D32),
@@ -285,20 +252,26 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  void _irAEditarPerfil(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const EditProfilePage()),
+    ).then((_) {
+      if (mounted) context.read<ProfileProvider>().loadPerfil();
+    });
+  }
+
   void _confirmarCerrarSesion(BuildContext context) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Cerrar sesión'),
-        content:
-            const Text('¿Estás seguro que deseas cerrar sesión?'),
+        content: const Text('¿Estás seguro que deseas cerrar sesión?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar',
-                style: TextStyle(color: Colors.grey)),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -311,8 +284,10 @@ class _ProfilePageState extends State<ProfilePage> {
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: const Text('Cerrar sesión',
-                style: TextStyle(color: Colors.white)),
+            child: const Text(
+              'Cerrar sesión',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -326,8 +301,7 @@ class _ProfilePageState extends State<ProfilePage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Eliminar cuenta'),
         content: const Text(
           '¿Estás seguro? Esta acción es permanente y no se puede deshacer.',
@@ -335,17 +309,14 @@ class _ProfilePageState extends State<ProfilePage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar',
-                style: TextStyle(color: Colors.grey)),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
               final success = await provider.deletePerfil();
               if (!context.mounted) return;
-              if (success) {
-                Navigator.pushReplacementNamed(context, '/');
-              }
+              if (success) Navigator.pushReplacementNamed(context, '/');
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
@@ -353,160 +324,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: const Text('Eliminar',
-                style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Widgets privados ──────────────────────────────────────────
-
-class _StatCard extends StatelessWidget {
-  final String valor;
-  final String label;
-  const _StatCard({required this.valor, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Column(
-          children: [
-            Text(
-              valor,
-              style: const TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1B5E20),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 11,
-                color: Color(0xFF777777),
-                height: 1.3,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MenuItem extends StatelessWidget {
-  final IconData     icon;
-  final String       label;
-  final VoidCallback onTap;
-  final Color?       color;
-
-  const _MenuItem({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final c = color ?? const Color(0xFF1B1B1B);
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color != null
-                    ? const Color(0xFFFFEBEE)
-                    : const Color(0xFFE8F5E9),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: c, size: 20),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  color: c,
-                ),
-              ),
-            ),
-            Icon(Icons.chevron_right, color: c.withOpacity(0.5), size: 20),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PremiumBanner extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1B3A2A),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  'Explora Premium',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                SizedBox(height: 6),
-                Text(
-                  'Accede a rutas exclusivas y guías offline.',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 13,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.white30, width: 1.5),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.verified_outlined,
-              color: Colors.white,
-              size: 28,
+            child: const Text(
+              'Eliminar',
+              style: TextStyle(color: Colors.white),
             ),
           ),
         ],
