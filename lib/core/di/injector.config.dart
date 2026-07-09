@@ -26,7 +26,7 @@ import '../../features/auth/data/datasource/auth_remote_datasource.dart'
     as _i175;
 import '../../features/auth/data/reposiories/auth_repository_impl.dart'
     as _i797;
-import '../../features/auth/domain/repostories/auth_repository.dart' as _i355;
+import '../../features/auth/domain/repositories/auth_repository.dart' as _i355;
 import '../../features/auth/domain/usecases/get_profile_usecase.dart' as _i568;
 import '../../features/auth/domain/usecases/login_usecase.dart' as _i188;
 import '../../features/auth/domain/usecases/register_usecase.dart' as _i941;

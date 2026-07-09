@@ -7,7 +7,7 @@ import '../../../../core/utils/app_constants.dart';
 import '../../../../core/services/avatar/avatar_service.dart';
 import '../../domain/entities/usuario.dart';
 import '../../domain/entities/usuario_registro.dart';
-import '../../../auth/domain/repostories/auth_repository.dart';
+import '../../domain/repositories/auth_repository.dart';
 import '../datasource/auth_remote_datasource.dart';
 
 @LazySingleton(as: AuthRepository)
