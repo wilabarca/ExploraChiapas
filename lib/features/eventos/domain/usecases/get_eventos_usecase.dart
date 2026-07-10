@@ -8,6 +8,14 @@ import '../repositories/eventos_repository.dart';
 @injectable
 class GetEventosUseCase {
   final EventosRepository _repository;
-  GetEventosUseCase(this._repository);
-  Future<Either<Failure, List<Evento>>> call() => _repository.getEventos();
+
+  const GetEventosUseCase(this._repository);
+
+  Future<Either<Failure, List<Evento>>> call({
+    bool? proximas,
+  }) {
+    return _repository.getEventos(
+      proximas: proximas,
+    );
+  }
 }
