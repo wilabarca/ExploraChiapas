@@ -7,7 +7,6 @@ import '../widgets/restaurante_item.dart';
 import '../widgets/hotel_card.dart';
 import '../widgets/accesos_rapidos.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
-import '../../../destinos/presentation/pages/lugar_detail_page.dart';
 import '../../data/home_api_service.dart';
 
 class HomeTuristaPage extends StatefulWidget {
@@ -18,16 +17,14 @@ class HomeTuristaPage extends StatefulWidget {
 }
 
 class _HomeTuristaPageState extends State<HomeTuristaPage> {
-  int _selectedIndex = 0;
-
   final HomeApiService _apiService = HomeApiService();
-
   List<PromocionItem> _promociones = [];
   List<EventoItem> _eventos = [];
 
   @override
   void initState() {
     super.initState();
+    // ✅ Solo lógica pura aquí, sin MediaQuery ni context de widgets
     _cargarDatos();
   }
 
@@ -46,34 +43,43 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
     } catch (_) {}
   }
 
-  void _onNavTap(int index) {
-    if (index == 1) {
-      Navigator.pushNamed(context, '/mapa');
-    } else if (index == 2) {
-      Navigator.pushNamed(context, '/favoritos');
-    } else if (index == 3) {
-      Navigator.pushNamed(context, '/perfil');
-    } else {
-      setState(() => _selectedIndex = index);
+  void _onNavTap(BottomNavTab tab) {
+    switch (tab) {
+      case BottomNavTab.mapa:
+        Navigator.pushNamed(context, '/mapa');
+        break;
+      case BottomNavTab.favoritos:
+        Navigator.pushNamed(context, '/favoritos');
+        break;
+      case BottomNavTab.resenas:
+        Navigator.pushNamed(context, '/resenas');
+        break;
+      case BottomNavTab.perfil:
+        Navigator.pushNamed(context, '/perfil');
+        break;
+      case BottomNavTab.explorar:
+        break; // ya estamos aquí
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // MediaQuery: adapta el padding inferior del contenido según el alto
-    // real de la barra + el "safe area" del dispositivo (notch, gestos, etc).
-    final bottomSafePadding = MediaQuery.of(context).padding.bottom;
+    // ✅ MediaQuery SOLO dentro de build()
+    final mq = MediaQuery.of(context);
+    final screenW = mq.size.width;
+    final isTablet = screenW >= 600;
+    final isLarge = screenW >= 900;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8F8),
       appBar: const HomeAppBar(),
       body: ListView(
-        padding: EdgeInsets.only(bottom: 90 + bottomSafePadding),
+        padding: EdgeInsets.symmetric(
+          horizontal: isTablet ? (isLarge ? 40 : 24) : 0,
+        ),
         children: [
           const SizedBox(height: 16),
-
           const PlanificaBanner(),
-
           const SizedBox(height: 24),
 
           SectionHeader(
@@ -82,23 +88,20 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
             mostrarVerTodos: true,
             onVerTodos: () {},
           ),
-
           const SizedBox(height: 14),
 
-          // LayoutBuilder: la altura del carrusel se adapta al ancho de pantalla
-          // para evitar overflow en pantallas pequeñas (como el que se ve en
-          // tu captura "BOTTOM OVERFLOWED BY 5.0 PIXELS").
+          // LayoutBuilder para decidir grid vs horizontal
           LayoutBuilder(
             builder: (context, constraints) {
-              final screenWidth = MediaQuery.of(context).size.width;
-              final cardHeight = screenWidth < 360 ? 225.0 : 210.0;
-
-              return SizedBox(
-                height: cardHeight,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
+              if (constraints.maxWidth >= 600) {
+                return GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: constraints.maxWidth >= 900 ? 3 : 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  children: [
+                  children: const [
                     DestinoCard(
                       nombre: 'Cascadas de Agua Azul',
                       categoria: 'Naturaleza',
@@ -106,18 +109,6 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
                       imageUrl:
                           'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
                       esFavorito: true,
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const LugarDetailPage(
-                            nombre: 'Cascadas de Agua Azul',
-                            categoria: 'Naturaleza',
-                            calificacion: 4.9,
-                            imageUrl:
-                                'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
-                          ),
-                        ),
-                      ),
                     ),
                     DestinoCard(
                       nombre: 'Zona Arqueológica Palenque',
@@ -125,18 +116,6 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
                       calificacion: 4.8,
                       imageUrl:
                           'https://images.unsplash.com/photo-1518638150340-f706e86654de?w=800&q=80',
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const LugarDetailPage(
-                            nombre: 'Zona Arqueológica Palenque',
-                            categoria: 'Cultura',
-                            calificacion: 4.8,
-                            imageUrl:
-                                'https://images.unsplash.com/photo-1518638150340-f706e86654de?w=800&q=80',
-                          ),
-                        ),
-                      ),
                     ),
                     DestinoCard(
                       nombre: 'Cañón del Sumidero',
@@ -144,18 +123,37 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
                       calificacion: 4.7,
                       imageUrl:
                           'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80',
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const LugarDetailPage(
-                            nombre: 'Cañón del Sumidero',
-                            categoria: 'Naturaleza',
-                            calificacion: 4.7,
-                            imageUrl:
-                                'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80',
-                          ),
-                        ),
-                      ),
+                    ),
+                  ],
+                );
+              }
+              return SizedBox(
+                height: 210,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  children: const [
+                    DestinoCard(
+                      nombre: 'Cascadas de Agua Azul',
+                      categoria: 'Naturaleza',
+                      calificacion: 4.9,
+                      imageUrl:
+                          'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
+                      esFavorito: true,
+                    ),
+                    DestinoCard(
+                      nombre: 'Zona Arqueológica Palenque',
+                      categoria: 'Cultura',
+                      calificacion: 4.8,
+                      imageUrl:
+                          'https://images.unsplash.com/photo-1518638150340-f706e86654de?w=800&q=80',
+                    ),
+                    DestinoCard(
+                      nombre: 'Cañón del Sumidero',
+                      categoria: 'Naturaleza',
+                      calificacion: 4.7,
+                      imageUrl:
+                          'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80',
                     ),
                   ],
                 ),
@@ -164,9 +162,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
           ),
 
           const SizedBox(height: 8),
-
           const AccesosRapidos(),
-
           const SizedBox(height: 24),
 
           if (_promociones.isNotEmpty) ...[
@@ -175,18 +171,34 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
               titulo: 'Promociones activas',
             ),
             const SizedBox(height: 14),
-            SizedBox(
-              height: 130,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: _promociones.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 12),
-                itemBuilder: (context, index) {
-                  final promo = _promociones[index];
-                  return _PromocionCard(promo: promo);
-                },
-              ),
+            // LayoutBuilder para grid vs horizontal en promociones
+            LayoutBuilder(
+              builder: (context, constraints) {
+                if (constraints.maxWidth >= 600) {
+                  return GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    children: _promociones
+                        .map((p) => _PromocionCard(promo: p))
+                        .toList(),
+                  );
+                }
+                return SizedBox(
+                  height: 130,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    itemCount: _promociones.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 12),
+                    itemBuilder: (_, i) =>
+                        _PromocionCard(promo: _promociones[i]),
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 24),
           ],
@@ -197,7 +209,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
               titulo: 'Próximos eventos',
             ),
             const SizedBox(height: 14),
-            ..._eventos.map((evento) => _EventoItem(evento: evento)),
+            ..._eventos.map((e) => _EventoItem(evento: e)),
             const SizedBox(height: 24),
           ],
 
@@ -205,167 +217,240 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
             icon: Icons.restaurant_outlined,
             titulo: 'Restaurantes destacados',
           ),
-
           const SizedBox(height: 14),
-
-          RestauranteItem(
-            nombre: 'El Fogón de Jovel',
-            calificacion: 4.7,
-            distanciaKm: 2.4,
-            descripcion: 'Especialidad en cocina de autor regional.',
-            imageUrl:
-                'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80',
-          ),
-
-          RestauranteItem(
-            nombre: 'Café Maya Luxury',
-            calificacion: 4.9,
-            distanciaKm: 0.8,
-            descripcion: 'El mejor café de altura de San Cristóbal.',
-            imageUrl:
-                'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&q=80',
+          // LayoutBuilder para restaurantes
+          LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth >= 600) {
+                return GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  children: const [
+                    RestauranteItem(
+                      nombre: 'El Fogón de Jovel',
+                      calificacion: 4.7,
+                      distanciaKm: 2.4,
+                      descripcion: 'Especialidad en cocina de autor regional.',
+                      imageUrl:
+                          'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80',
+                    ),
+                    RestauranteItem(
+                      nombre: 'Café Maya Luxury',
+                      calificacion: 4.9,
+                      distanciaKm: 0.8,
+                      descripcion: 'El mejor café de altura de San Cristóbal.',
+                      imageUrl:
+                          'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&q=80',
+                    ),
+                  ],
+                );
+              }
+              return const Column(
+                children: [
+                  RestauranteItem(
+                    nombre: 'El Fogón de Jovel',
+                    calificacion: 4.7,
+                    distanciaKm: 2.4,
+                    descripcion: 'Especialidad en cocina de autor regional.',
+                    imageUrl:
+                        'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80',
+                  ),
+                  RestauranteItem(
+                    nombre: 'Café Maya Luxury',
+                    calificacion: 4.9,
+                    distanciaKm: 0.8,
+                    descripcion: 'El mejor café de altura de San Cristóbal.',
+                    imageUrl:
+                        'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&q=80',
+                  ),
+                ],
+              );
+            },
           ),
 
           const SizedBox(height: 24),
-
           const SectionHeader(
             icon: Icons.hotel_outlined,
             titulo: 'Hoteles recomendados',
           ),
-
           const SizedBox(height: 14),
-
-          SizedBox(
-            height: 200,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              children: const [
-                HotelCard(
-                  nombre: 'Selva Verde Eco-Resort',
-                  precioPorNoche: 2400.0,
-                  imageUrl:
-                      'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=400&q=80',
+          LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth >= 600) {
+                return GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  children: const [
+                    HotelCard(
+                      nombre: 'Selva Verde Eco-Resort',
+                      precioPorNoche: 2400.0,
+                      imageUrl:
+                          'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=400&q=80',
+                    ),
+                    HotelCard(
+                      nombre: 'Boutique Casa Lum',
+                      precioPorNoche: 3100.0,
+                      imageUrl:
+                          'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&q=80',
+                    ),
+                  ],
+                );
+              }
+              return SizedBox(
+                height: 200,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  children: const [
+                    HotelCard(
+                      nombre: 'Selva Verde Eco-Resort',
+                      precioPorNoche: 2400.0,
+                      imageUrl:
+                          'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=400&q=80',
+                    ),
+                    HotelCard(
+                      nombre: 'Boutique Casa Lum',
+                      precioPorNoche: 3100.0,
+                      imageUrl:
+                          'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&q=80',
+                    ),
+                  ],
                 ),
-                HotelCard(
-                  nombre: 'Boutique Casa Lum',
-                  precioPorNoche: 3100.0,
-                  imageUrl:
-                      'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&q=80',
-                ),
-              ],
-            ),
+              );
+            },
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 100),
         ],
       ),
-
       floatingActionButton: FloatingActionButton(
         onPressed: () => Navigator.pushNamed(context, '/chat'),
         backgroundColor: const Color(0xFF2E7D32),
         child: const Icon(Icons.smart_toy_outlined, color: Colors.white),
       ),
-      // El FAB queda por encima de la pill de navegación gracias a que la
-      // barra ahora es "flotante" (con margen) en lugar de pegada al borde.
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-
-      // Nueva barra de navegación tipo "pill", responsiva.
-      bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: _selectedIndex,
+      // ✅ currentTab siempre explorar — esta página ES explorar
+      bottomNavigationBar: AppBottomNav(
+        navItems: AppBottomNav.items,
+        currentTab: BottomNavTab.explorar,
         onTap: _onNavTap,
       ),
     );
   }
 }
 
+// ── Widgets auxiliares ────────────────────────────────────────
+
 class _PromocionCard extends StatelessWidget {
   final PromocionItem promo;
-
   const _PromocionCard({required this.promo});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 220,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE8F5E9)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.local_offer, size: 16, color: Color(0xFF2E7D32)),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  promo.titulo,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1B1B1B),
-                  ),
-                ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isTablet = constraints.maxWidth > 300;
+        return Container(
+          width: isTablet ? double.infinity : 220,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFE8F5E9)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
-          if (promo.negocioNombre != null) ...[
-            const SizedBox(height: 6),
-            Text(
-              promo.negocioNombre!,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 12, color: Color(0xFF666666)),
-            ),
-          ],
-          if (promo.descripcion != null) ...[
-            const SizedBox(height: 6),
-            Text(
-              promo.descripcion!,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 12, color: Color(0xFF888888)),
-            ),
-          ],
-          const Spacer(),
-          if (promo.precio != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8F5E9),
-                borderRadius: BorderRadius.circular(8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.local_offer,
+                    size: 16,
+                    color: Color(0xFF2E7D32),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      promo.titulo,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1B1B1B),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              child: Text(
-                '\$${promo.precio!.toStringAsFixed(0)}',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2E7D32),
+              if (promo.negocioNombre != null) ...[
+                const SizedBox(height: 6),
+                Text(
+                  promo.negocioNombre!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF666666),
+                  ),
                 ),
-              ),
-            ),
-        ],
-      ),
+              ],
+              if (promo.descripcion != null) ...[
+                const SizedBox(height: 6),
+                Text(
+                  promo.descripcion!,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF888888),
+                  ),
+                ),
+              ],
+              const Spacer(),
+              if (promo.precio != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F5E9),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '\$${promo.precio!.toStringAsFixed(0)}',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2E7D32),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
 
 class _EventoItem extends StatelessWidget {
   final EventoItem evento;
-
   const _EventoItem({required this.evento});
 
   @override

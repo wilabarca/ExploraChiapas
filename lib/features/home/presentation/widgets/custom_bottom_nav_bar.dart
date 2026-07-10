@@ -1,67 +1,102 @@
 import 'package:flutter/material.dart';
 
-class CustomBottomNavBar extends StatelessWidget {
-  final int currentIndex;
-  final ValueChanged<int> onTap;
+enum BottomNavTab {
+  explorar,
+  mapa,
+  favoritos,
+  resenas,
+  perfil,
+}
 
-  const CustomBottomNavBar({
-    super.key,
-    required this.currentIndex,
-    required this.onTap,
+class AppBottomNavItem {
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  final BottomNavTab tab;
+
+  const AppBottomNavItem({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+    required this.tab,
   });
+}
 
-  static const List<_NavItemData> _items = [
-    _NavItemData(
-      icon: Icons.home_outlined,
-      activeIcon: Icons.home,
-      label: 'Inicio',
+class AppBottomNav extends StatelessWidget {
+  final BottomNavTab currentTab;
+  final ValueChanged<BottomNavTab> onTap;
+  final List<AppBottomNavItem> navItems;
+
+  static const List<AppBottomNavItem> items = [
+    AppBottomNavItem(
+      icon: Icons.explore_outlined,
+      activeIcon: Icons.explore,
+      label: 'Explorar',
+      tab: BottomNavTab.explorar,
     ),
-    _NavItemData(
+    AppBottomNavItem(
       icon: Icons.map_outlined,
       activeIcon: Icons.map,
       label: 'Mapa',
+      tab: BottomNavTab.mapa,
     ),
-    _NavItemData(
+    AppBottomNavItem(
       icon: Icons.favorite_outline,
       activeIcon: Icons.favorite,
       label: 'Favoritos',
+      tab: BottomNavTab.favoritos,
     ),
-    _NavItemData(
+    AppBottomNavItem(
+      icon: Icons.rate_review_outlined,
+      activeIcon: Icons.rate_review,
+      label: 'Reseñas',
+      tab: BottomNavTab.resenas,
+    ),
+    AppBottomNavItem(
       icon: Icons.person_outline,
       activeIcon: Icons.person,
       label: 'Perfil',
+      tab: BottomNavTab.perfil,
     ),
   ];
 
+  const AppBottomNav({
+    super.key,
+    required this.currentTab,
+    required this.onTap,
+    this.navItems = items,
+  });
+
+  int get _currentIndex => navItems.indexWhere((item) => item.tab == currentTab);
+
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isCompact = screenWidth < 360;
+    final isTablet = screenWidth >= 600;
+    final isLargeScreen = screenWidth >= 900;
+
+    final horizontalMargin = isTablet 
+        ? (isLargeScreen ? screenWidth * 0.20 : screenWidth * 0.15) 
+        : 16.0;
+    final barHeight = isCompact ? 60.0 : (isTablet ? 76.0 : 68.0);
+    final iconSize = isCompact ? 20.0 : (isTablet ? 26.0 : 22.0);
+    final fontSize = isCompact ? 11.0 : (isTablet ? 15.0 : 13.0);
+    final horizontalPadding = isCompact ? 8.0 : 14.0;
+    final verticalPadding = isCompact ? 6.0 : 8.0;
+
     return SafeArea(
       top: false,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final screenWidth = MediaQuery.of(context).size.width;
-
-          // --- Detectores de restricciones / breakpoints ---
-          final isCompact = screenWidth < 360;
-          final isTablet = screenWidth >= 600;
-
-          final horizontalMargin = isTablet ? screenWidth * 0.15 : 16.0;
-          final barHeight = isCompact ? 60.0 : (isTablet ? 76.0 : 68.0);
-          final iconSize = isCompact ? 20.0 : (isTablet ? 26.0 : 22.0);
-          final fontSize = isCompact ? 12.0 : (isTablet ? 15.0 : 13.0);
-          final horizontalPadding = isCompact ? 10.0 : 14.0;
-
           return Container(
-            margin: EdgeInsets.symmetric(
-              horizontal: horizontalMargin,
-              vertical: 10,
+            margin: EdgeInsets.symmetric(horizontal: horizontalMargin, vertical: 10),
+            padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: verticalPadding),
+            constraints: BoxConstraints(
+              maxHeight: barHeight,
+              minHeight: 52,
+              maxWidth: isTablet ? 800 : double.infinity,
             ),
-            padding: EdgeInsets.symmetric(
-              horizontal: horizontalPadding,
-              vertical: 8,
-            ),
-            // ConstrainedBox implícito: fija un rango seguro de alto.
-            constraints: BoxConstraints(maxHeight: barHeight, minHeight: 52),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(barHeight),
@@ -75,27 +110,24 @@ class CustomBottomNavBar extends StatelessWidget {
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: List.generate(_items.length, (index) {
-                final selected = index == currentIndex;
-                final item = _items[index];
+              children: List.generate(navItems.length, (index) {
+                final isSelected = index == _currentIndex;
+                final item = navItems[index];
 
-                // Distribución proporcional: el activo "pesa" más (Flexible/flex).
                 return Flexible(
-                  flex: selected ? 3 : 1,
+                  flex: isSelected ? 3 : 1,
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
-                    onTap: () => onTap(index),
+                    onTap: () => onTap(item.tab),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 220),
                       curve: Curves.easeOut,
                       padding: EdgeInsets.symmetric(
-                        horizontal: selected ? 14 : 8,
-                        vertical: 10,
+                        horizontal: isSelected ? (isCompact ? 10 : 14) : 6,
+                        vertical: isCompact ? 6 : 10,
                       ),
                       decoration: BoxDecoration(
-                        color: selected
-                            ? const Color(0xFF2E7D32)
-                            : Colors.transparent,
+                        color: isSelected ? const Color(0xFF2E7D32) : Colors.transparent,
                         borderRadius: BorderRadius.circular(30),
                       ),
                       child: Row(
@@ -103,13 +135,11 @@ class CustomBottomNavBar extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            selected ? item.activeIcon : item.icon,
-                            size: iconSize,
-                            color: selected
-                                ? Colors.white
-                                : const Color(0xFF999999),
+                            isSelected ? item.activeIcon : item.icon,
+                            size: isSelected ? iconSize * 1.1 : iconSize,
+                            color: isSelected ? Colors.white : const Color(0xFF999999),
                           ),
-                          if (selected) ...[
+                          if (isSelected) ...[
                             const SizedBox(width: 6),
                             Flexible(
                               child: Text(
@@ -136,16 +166,4 @@ class CustomBottomNavBar extends StatelessWidget {
       ),
     );
   }
-}
-
-class _NavItemData {
-  final IconData icon;
-  final IconData activeIcon;
-  final String label;
-
-  const _NavItemData({
-    required this.icon,
-    required this.activeIcon,
-    required this.label,
-  });
 }

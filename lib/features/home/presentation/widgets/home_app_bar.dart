@@ -35,58 +35,43 @@ class _HomeAppBarState extends State<HomeAppBar> {
 
   @override
   Widget build(BuildContext context) {
-    // MediaQuery para adaptar tamaños al ancho real de pantalla
     final screenW = MediaQuery.of(context).size.width;
     final isSmall = screenW < 360;
-
-    // Tamaños proporcionales
-    final logoHeight = isSmall ? 30.0 : 36.0;
-    final fontSize = isSmall ? 17.0 : 20.0;
-    final avatarRadius = isSmall ? 18.0 : 21.0;
+    final logoHeight = isSmall ? 28.0 : 34.0;
+    final fontSize = isSmall ? 16.0 : 19.0;
+    final avatarRadius = isSmall ? 17.0 : 20.0;
 
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 0,
-      titleSpacing: 0,
-      title: LayoutBuilder(
-        builder: (context, constraints) {
-          return Padding(
-            // Padding proporcional al ancho disponible
-            padding: EdgeInsets.only(left: constraints.maxWidth * 0.05),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // AspectRatio mantiene proporciones del logo sin distorsión
-                AspectRatio(
-                  aspectRatio: 1,
-                  child: SizedBox(
-                    height: logoHeight,
-                    child: Image.asset(
-                      'assets/images/ExploraChiapas Logo.png',
-                      height: logoHeight,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-                SizedBox(width: screenW * 0.025),
-                Flexible(
-                  child: Text(
-                    'ExploraChiapas',
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: const Color(0xFF2E7D32),
-                      fontWeight: FontWeight.bold,
-                      fontSize: fontSize,
-                    ),
-                  ),
-                ),
-              ],
+      titleSpacing: screenW * 0.04,
+      // ✅ Sin LayoutBuilder, sin AspectRatio — solo Row con SizedBox fijo
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: logoHeight,
+            height: logoHeight,
+            child: Image.asset(
+              'assets/images/ExploraChiapas Logo.png',
+              fit: BoxFit.contain,
             ),
-          );
-        },
+          ),
+          SizedBox(width: screenW * 0.02),
+          Flexible(
+            child: Text(
+              'ExploraChiapas',
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: const Color(0xFF2E7D32),
+                fontWeight: FontWeight.bold,
+                fontSize: fontSize,
+              ),
+            ),
+          ),
+        ],
       ),
       actions: [
-        // Spacer implícito via padding proporcional
         Padding(
           padding: EdgeInsets.only(right: screenW * 0.04),
           child: CircleAvatar(

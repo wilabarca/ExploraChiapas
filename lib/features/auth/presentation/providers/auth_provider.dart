@@ -34,6 +34,7 @@ class AuthProvider extends ChangeNotifier {
   Usuario? _usuario;
   Usuario? get usuario => _usuario;
 
+  // ── Datos temporales del registro para auto-login ──
   Map<String, dynamic>? _registroData;
   Map<String, dynamic>? get registroData => _registroData;
 
@@ -43,13 +44,19 @@ class AuthProvider extends ChangeNotifier {
 
     final loginResult = await _loginUseCase(email: email, password: password);
 
-    final tokenOk = loginResult.fold(
-      (failure) {
+    final tokenOk = await loginResult.fold(
+      (failure) async {
         _setError(failure.message);
         return false;
       },
-      (token) {
+      (token) async {
         _token = token;
+
+        // ✅ Guardar JWT en SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(AppConstants.jwtTokenKey, token);
+        debugPrint('✅ JWT guardado: ${token.substring(0, 30)}...');
+
         return true;
       },
     );
@@ -60,7 +67,7 @@ class AuthProvider extends ChangeNotifier {
 
     return profileResult.fold(
       (failure) {
-        // Si falla el perfil navegamos igual al home
+        debugPrint('⚠️ Perfil no cargado tras login: ${failure.message}');
         _setSuccess();
         return true;
       },
@@ -71,12 +78,8 @@ class AuthProvider extends ChangeNotifier {
         await prefs.setString(AppConstants.userNameKey, usuario.name);
         await prefs.setString(AppConstants.userEmailKey, usuario.email);
 
-        // El tipo ya fue guardado durante el registro.
-        // Si no existe (primer login en dispositivo nuevo),
-        // lo dejamos vacío y HomePage usará HomeTuristaPage por defecto.
         debugPrint(
-          'Login OK, tipo guardado: '
-          '${prefs.getString(AppConstants.tipoUsuarioKey)}',
+          '✅ Login OK — tipo: ${prefs.getString(AppConstants.tipoUsuarioKey)}',
         );
 
         _setSuccess();
@@ -97,18 +100,41 @@ class AuthProvider extends ChangeNotifier {
         return false;
       },
       (data) async {
-        _registroData = data;
+        // ✅ Guardar email y password TEMPORALMENTE para auto-login
+        //    (se limpian después en InterestsPage)
+        _registroData = {
+          ...data,
+          'email': datos.correo, // <-- email para auto-login
+          'password': datos.contrasena, // <-- password para auto-login
+        };
 
-        // Guarda el tipo seleccionado por el usuario
         final prefs = await SharedPreferences.getInstance();
         final tipoStr = _tipoToString(datos.tipoUsuario);
         await prefs.setString(AppConstants.tipoUsuarioKey, tipoStr);
-        debugPrint('Registro OK, tipo guardado: $tipoStr');
 
+        // Si el registro devuelve token, guardarlo también
+        final token = data['token'] as String?;
+        if (token != null) {
+          _token = token;
+          await prefs.setString(AppConstants.jwtTokenKey, token);
+          debugPrint(
+            '✅ JWT guardado tras registro: ${token.substring(0, 30)}...',
+          );
+        } else {
+          debugPrint('⚠️ Registro sin token — se requiere login manual');
+        }
+
+        debugPrint('✅ Registro OK — tipo: $tipoStr');
         _setSuccess();
         return true;
       },
     );
+  }
+
+  // ── Limpiar datos temporales del registro ──
+  void clearRegistroData() {
+    _registroData = null;
+    notifyListeners();
   }
 
   String _tipoToString(TipoUsuario tipo) {

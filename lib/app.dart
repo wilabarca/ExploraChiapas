@@ -34,6 +34,7 @@ class ExploraChiapasApp extends StatelessWidget {
         ChangeNotifierProvider<AuthProvider>(
           create: (_) => getIt<AuthProvider>(),
         ),
+        // ✅ lazySingleton: siempre la misma instancia en toda la app
         ChangeNotifierProvider<ProfileProvider>(
           create: (_) => getIt<ProfileProvider>(),
         ),
@@ -80,11 +81,17 @@ class ExploraChiapasApp extends StatelessWidget {
                 builder: (_) => const HomePage(),
                 settings: settings,
               );
+
+            // ✅ /perfil usa la instancia singleton del MultiProvider root
             case '/perfil':
               return MaterialPageRoute(
-                builder: (_) => const ProfilePage(),
+                builder: (ctx) => ChangeNotifierProvider<ProfileProvider>.value(
+                  value: getIt<ProfileProvider>(),
+                  child: const ProfilePage(),
+                ),
                 settings: settings,
               );
+
             case '/chat':
               return MaterialPageRoute(
                 builder: (_) => const ChatRoutesPage(),
