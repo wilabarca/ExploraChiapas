@@ -23,6 +23,7 @@ import 'features/maps/data/repositories/map_repository_impl.dart';
 import 'features/maps/data/datasources/map_remote_datasource.dart';
 import 'features/explorar/presentation/pages/explorar_cerca_page.dart';
 import 'features/explorar/presentation/pages/recomendar_lugar_page.dart';
+import 'features/resenas/presentation/pages/home_resenas_page.dart';
 
 class ExploraChiapasApp extends StatelessWidget {
   const ExploraChiapasApp({super.key});
@@ -107,6 +108,14 @@ class ExploraChiapasApp extends StatelessWidget {
                 builder: (_) => const EventosPage(),
                 settings: settings,
               );
+
+            // ✅ NUEVA RUTA: /resenas para HomeResenasPage
+            case '/resenas':
+              return MaterialPageRoute(
+                builder: (_) => const HomeResenasPage(),
+                settings: settings,
+              );
+
             case '/mapa':
               return MaterialPageRoute(
                 builder: (_) => ChangeNotifierProvider<MapProvider>(
