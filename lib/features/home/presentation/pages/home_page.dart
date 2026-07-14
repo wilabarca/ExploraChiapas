@@ -12,7 +12,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String? _tipo;
+  String _tipoUsuario = '';
   bool _loaded = false;
 
   @override
@@ -24,13 +24,13 @@ class _HomePageState extends State<HomePage> {
   Future<void> _cargarTipo() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _tipo = prefs.getString(AppConstants.tipoUsuarioKey);
+      _tipoUsuario = prefs.getString(AppConstants.tipoUsuarioKey) ?? '';
       _loaded = true;
     });
-    debugPrint('HomePage, tipo cargado: $_tipo');
+    debugPrint('🏠 Tipo de usuario cargado: $_tipoUsuario');
   }
 
-  bool get _esLocal => _tipo == AppConstants.tipoHabitanteLocal;
+  bool get _esLocal => _tipoUsuario == AppConstants.tipoHabitanteLocal;
 
   @override
   Widget build(BuildContext context) {

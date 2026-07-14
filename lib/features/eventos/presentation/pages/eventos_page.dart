@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../../home/presentation/widgets/custom_bottom_nav_bar.dart';
 
 class EventosPage extends StatefulWidget {
   const EventosPage({super.key});
@@ -80,12 +81,34 @@ class _EventosPageState extends State<EventosPage> {
     final busqueda = _busquedaController.text.toLowerCase();
     if (busqueda.isNotEmpty) {
       lista = lista
-          .where((e) =>
-              (e['nombre'] as String).toLowerCase().contains(busqueda) ||
-              (e['lugar'] as String).toLowerCase().contains(busqueda))
+          .where(
+            (e) =>
+                (e['nombre'] as String).toLowerCase().contains(busqueda) ||
+                (e['lugar'] as String).toLowerCase().contains(busqueda),
+          )
           .toList();
     }
     return lista;
+  }
+
+  void _onNavTap(BottomNavTab tab) {
+    switch (tab) {
+      case BottomNavTab.explorar:
+        Navigator.popUntil(context, (route) => route.isFirst);
+        break;
+      case BottomNavTab.mapa:
+        Navigator.pushNamed(context, '/mapa');
+        break;
+      case BottomNavTab.favoritos:
+        Navigator.pushNamed(context, '/favoritos');
+        break;
+      case BottomNavTab.resenas:
+        Navigator.pushNamed(context, '/resenas');
+        break;
+      case BottomNavTab.perfil:
+        Navigator.pushNamed(context, '/perfil');
+        break;
+    }
   }
 
   @override
@@ -125,8 +148,7 @@ class _EventosPageState extends State<EventosPage> {
               decoration: InputDecoration(
                 hintText: 'Buscar eventos...',
                 hintStyle: const TextStyle(color: Color(0xFFAAAAAA)),
-                prefixIcon:
-                    const Icon(Icons.search, color: Color(0xFF2E7D32)),
+                prefixIcon: const Icon(Icons.search, color: Color(0xFF2E7D32)),
                 filled: true,
                 fillColor: const Color(0xFFF5F5F5),
                 contentPadding: const EdgeInsets.symmetric(vertical: 0),
@@ -157,8 +179,9 @@ class _EventosPageState extends State<EventosPage> {
                       color: activo ? Colors.white : const Color(0xFF555555),
                       fontWeight: FontWeight.w600,
                     ),
-                    backgroundColor:
-                        activo ? const Color(0xFF2E7D32) : const Color(0xFFF0F0F0),
+                    backgroundColor: activo
+                        ? const Color(0xFF2E7D32)
+                        : const Color(0xFFF0F0F0),
                     side: BorderSide.none,
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                   ),
@@ -173,8 +196,11 @@ class _EventosPageState extends State<EventosPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.event_busy_outlined,
-                            size: 64, color: Colors.grey.shade300),
+                        Icon(
+                          Icons.event_busy_outlined,
+                          size: 64,
+                          color: Colors.grey.shade300,
+                        ),
                         const SizedBox(height: 16),
                         const Text(
                           'Sin eventos encontrados',
@@ -194,6 +220,12 @@ class _EventosPageState extends State<EventosPage> {
                   ),
           ),
         ],
+      ),
+      // 🔒 Bottom nav — mismo AppBottomNav usado en Home.
+      bottomNavigationBar: AppBottomNav(
+        navItems: AppBottomNav.items,
+        currentTab: BottomNavTab.explorar,
+        onTap: _onNavTap,
       ),
     );
   }
@@ -232,7 +264,10 @@ class _EventoCard extends StatelessWidget {
               errorWidget: (_, __, ___) => Container(
                 height: 160,
                 color: const Color(0xFFD8F5D8),
-                child: const Icon(Icons.image_not_supported, color: Colors.white54),
+                child: const Icon(
+                  Icons.image_not_supported,
+                  color: Colors.white54,
+                ),
               ),
             ),
           ),
@@ -242,8 +277,10 @@ class _EventoCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFE8F5E9),
                     borderRadius: BorderRadius.circular(8),
@@ -269,23 +306,33 @@ class _EventoCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(Icons.calendar_today_outlined,
-                        size: 13, color: Color(0xFF2E7D32)),
+                    const Icon(
+                      Icons.calendar_today_outlined,
+                      size: 13,
+                      color: Color(0xFF2E7D32),
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       evento['fecha'] as String,
                       style: const TextStyle(
-                          fontSize: 12, color: Color(0xFF666666)),
+                        fontSize: 12,
+                        color: Color(0xFF666666),
+                      ),
                     ),
                     const SizedBox(width: 14),
-                    const Icon(Icons.location_on_outlined,
-                        size: 13, color: Color(0xFF2E7D32)),
+                    const Icon(
+                      Icons.location_on_outlined,
+                      size: 13,
+                      color: Color(0xFF2E7D32),
+                    ),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         evento['lugar'] as String,
                         style: const TextStyle(
-                            fontSize: 12, color: Color(0xFF666666)),
+                          fontSize: 12,
+                          color: Color(0xFF666666),
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),

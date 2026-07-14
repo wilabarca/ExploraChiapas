@@ -128,6 +128,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i124.IChatRepository>(
       () => _i1018.ChatRepositoryImpl(gh<_i730.IChatRemoteDatasource>()),
     );
+    gh.factory<_i1031.IProfileRemoteDatasource>(
+      () => _i1031.ProfileRemoteDatasourceImpl(gh<_i557.ApiClient>()),
+    );
+    gh.factory<_i301.EnviarMensajeUseCase>(
+      () => _i301.EnviarMensajeUseCase(gh<_i124.IChatRepository>()),
+    );
     gh.lazySingleton<_i747.EventosRemoteDataSource>(
       () => _i747.EventosRemoteDataSourceImpl(gh<_i557.ApiClient>()),
     );
@@ -202,6 +208,7 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i568.GetProfileUseCase>(),
       ),
     );
+    gh.lazySingleton<_i919.ProfileProvider>(
     gh.factory<_i536.AddFavoritoUseCase>(
       () => _i536.AddFavoritoUseCase(gh<_i743.FavoritosRepository>()),
     );

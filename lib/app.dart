@@ -30,6 +30,7 @@ import 'features/maps/data/datasources/map_remote_datasource.dart';
 
 import 'features/explorar/presentation/pages/explorar_cerca_page.dart';
 import 'features/explorar/presentation/pages/recomendar_lugar_page.dart';
+import 'features/resenas/presentation/pages/home_resenas_page.dart';
 
 class ExploraChiapasApp extends StatelessWidget {
   const ExploraChiapasApp({super.key});
@@ -41,6 +42,7 @@ class ExploraChiapasApp extends StatelessWidget {
         ChangeNotifierProvider<AuthProvider>(
           create: (_) => getIt<AuthProvider>(),
         ),
+        // ✅ lazySingleton: siempre la misma instancia en toda la app
         ChangeNotifierProvider<ProfileProvider>(
           create: (_) => getIt<ProfileProvider>(),
         ),
@@ -98,9 +100,13 @@ class ExploraChiapasApp extends StatelessWidget {
                 settings: settings,
               );
 
+            // ✅ /perfil usa la instancia singleton del MultiProvider root
             case '/perfil':
               return MaterialPageRoute(
-                builder: (_) => const ProfilePage(),
+                builder: (ctx) => ChangeNotifierProvider<ProfileProvider>.value(
+                  value: getIt<ProfileProvider>(),
+                  child: const ProfilePage(),
+                ),
                 settings: settings,
               );
 
@@ -119,6 +125,13 @@ class ExploraChiapasApp extends StatelessWidget {
             case '/eventos':
               return MaterialPageRoute(
                 builder: (_) => const EventosPage(),
+                settings: settings,
+              );
+
+            // ✅ NUEVA RUTA: /resenas para HomeResenasPage
+            case '/resenas':
+              return MaterialPageRoute(
+                builder: (_) => const HomeResenasPage(),
                 settings: settings,
               );
 

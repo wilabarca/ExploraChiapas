@@ -6,6 +6,8 @@ import '../widgets/profile_interests.dart';
 import '../widgets/profile_stats.dart';
 import '../widgets/profile_menu_item.dart';
 import 'edit_profile_page.dart';
+// ajusta el import según tu path real:
+import '../../../home/presentation/widgets/custom_bottom_nav_bar.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -23,12 +25,31 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
+  void _onNavTap(BottomNavTab tab) {
+    switch (tab) {
+      case BottomNavTab.explorar:
+        Navigator.pushReplacementNamed(context, '/home');
+        break;
+      case BottomNavTab.mapa:
+        Navigator.pushReplacementNamed(context, '/mapa');
+        break;
+      case BottomNavTab.favoritos:
+        Navigator.pushReplacementNamed(context, '/favoritos');
+        break;
+      case BottomNavTab.resenas:
+        Navigator.pushReplacementNamed(context, '/resenas');
+        break;
+      case BottomNavTab.perfil:
+        break; // ya estamos aquí
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final mq = MediaQuery.of(context);
-    final screenW = mq.size.width;
-    final screenH = mq.size.height;
-    final isSmall = screenW < 360;
+    final mq           = MediaQuery.of(context);
+    final screenW      = mq.size.width;
+    final screenH      = mq.size.height;
+    final isSmall      = screenW < 360;
     final avatarRadius = screenW * 0.135;
 
     return Scaffold(
@@ -46,6 +67,12 @@ class _ProfilePageState extends State<ProfilePage> {
             fontWeight: FontWeight.bold,
           ),
         ),
+      ),
+      // ✅ Bottom nav de vuelta con perfil seleccionado
+      bottomNavigationBar: AppBottomNav(
+        navItems: AppBottomNav.items, // cambia a itemsLocal si es usuario Local
+        currentTab: BottomNavTab.perfil,
+        onTap: _onNavTap,
       ),
       body: Consumer<ProfileProvider>(
         builder: (context, provider, _) {
@@ -91,10 +118,10 @@ class _ProfilePageState extends State<ProfilePage> {
                     child: Column(
                       children: [
                         SizedBox(
-                          width: avatarRadius * 2,
+                          width:  avatarRadius * 2,
                           height: avatarRadius * 2,
                           child: ProfileAvatar(
-                            radius: avatarRadius,
+                            radius:         avatarRadius,
                             showEditButton: true,
                             onTap: () => _irAEditarPerfil(context),
                           ),
@@ -103,9 +130,9 @@ class _ProfilePageState extends State<ProfilePage> {
                         Text(
                           perfil.nombre,
                           style: TextStyle(
-                            fontSize: isSmall ? 18 : 22,
+                            fontSize:   isSmall ? 18 : 22,
                             fontWeight: FontWeight.bold,
-                            color: const Color(0xFF1B1B1B),
+                            color:      const Color(0xFF1B1B1B),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -113,7 +140,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           perfil.email,
                           style: const TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF777777),
+                            color:    Color(0xFF777777),
                           ),
                         ),
                       ],
@@ -122,16 +149,16 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   SizedBox(height: screenH * 0.025),
 
-                  // ── Stats (valores fijos hasta que el backend los soporte) ──
+                  // ── Stats ─────────────────────────────────
                   const ProfileStats(
                     rutasCreadas: '0',
-                    favoritos: '0',
-                    resenas: '0',
+                    favoritos:    '0',
+                    resenas:      '0',
                   ),
 
                   SizedBox(height: screenH * 0.016),
 
-                  // ── Mis Intereses ────────────────────────
+                  // ── Mis Intereses ─────────────────────────
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
@@ -148,9 +175,9 @@ class _ProfilePageState extends State<ProfilePage> {
                             const Text(
                               'Mis Intereses',
                               style: TextStyle(
-                                fontSize: 15,
+                                fontSize:   15,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF1B1B1B),
+                                color:      Color(0xFF1B1B1B),
                               ),
                             ),
                             GestureDetector(
@@ -158,17 +185,14 @@ class _ProfilePageState extends State<ProfilePage> {
                                   Navigator.pushNamed(context, '/intereses'),
                               child: const Row(
                                 children: [
-                                  Icon(
-                                    Icons.edit_outlined,
-                                    size: 14,
-                                    color: Color(0xFF2E7D32),
-                                  ),
+                                  Icon(Icons.edit_outlined,
+                                      size: 14, color: Color(0xFF2E7D32)),
                                   SizedBox(width: 4),
                                   Text(
                                     'Editar',
                                     style: TextStyle(
-                                      fontSize: 13,
-                                      color: Color(0xFF2E7D32),
+                                      fontSize:   13,
+                                      color:      Color(0xFF2E7D32),
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -185,24 +209,24 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   SizedBox(height: screenH * 0.016),
 
-                  // ── Menú ─────────────────────────────────
+                  // ── Menú ──────────────────────────────────
                   ProfileMenuItem(
-                    icon: Icons.manage_accounts_outlined,
+                    icon:  Icons.manage_accounts_outlined,
                     label: 'Editar perfil',
                     onTap: () => _irAEditarPerfil(context),
                   ),
                   SizedBox(height: screenH * 0.01),
                   ProfileMenuItem(
-                    icon: Icons.logout_outlined,
+                    icon:  Icons.logout_outlined,
                     label: 'Cerrar sesión',
                     onTap: () => _confirmarCerrarSesion(context),
                   ),
                   SizedBox(height: screenH * 0.01),
                   ProfileMenuItem(
-                    icon: Icons.delete_outline,
-                    label: 'Eliminar cuenta',
+                    icon:        Icons.delete_outline,
+                    label:       'Eliminar cuenta',
                     dangerColor: const Color(0xFFD32F2F),
-                    onTap: () => _confirmarEliminarCuenta(context, provider),
+                    onTap:       () => _confirmarEliminarCuenta(context, provider),
                   ),
 
                   const SizedBox(height: 100),
@@ -210,43 +234,6 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
           );
-        },
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF2E7D32),
-        unselectedItemColor: const Color(0xFF999999),
-        currentIndex: 4,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.explore_outlined),
-            activeIcon: Icon(Icons.explore),
-            label: 'Exploración',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.map_outlined),
-            activeIcon: Icon(Icons.map),
-            label: 'Mapas',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite_outline),
-            activeIcon: Icon(Icons.favorite),
-            label: 'Favoritos',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history_outlined),
-            activeIcon: Icon(Icons.history),
-            label: 'Historial',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Perfil',
-          ),
-        ],
-        onTap: (index) {
-          if (index == 0) Navigator.pushReplacementNamed(context, '/home');
         },
       ),
     );
@@ -265,13 +252,15 @@ class _ProfilePageState extends State<ProfilePage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20)),
         title: const Text('Cerrar sesión'),
         content: const Text('¿Estás seguro que deseas cerrar sesión?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+            child: const Text('Cancelar',
+                style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -281,13 +270,10 @@ class _ProfilePageState extends State<ProfilePage> {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF2E7D32),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
+                  borderRadius: BorderRadius.circular(10)),
             ),
-            child: const Text(
-              'Cerrar sesión',
-              style: TextStyle(color: Colors.white),
-            ),
+            child: const Text('Cerrar sesión',
+                style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -301,7 +287,8 @@ class _ProfilePageState extends State<ProfilePage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20)),
         title: const Text('Eliminar cuenta'),
         content: const Text(
           '¿Estás seguro? Esta acción es permanente y no se puede deshacer.',
@@ -309,7 +296,8 @@ class _ProfilePageState extends State<ProfilePage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+            child: const Text('Cancelar',
+                style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -321,13 +309,10 @@ class _ProfilePageState extends State<ProfilePage> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
+                  borderRadius: BorderRadius.circular(10)),
             ),
-            child: const Text(
-              'Eliminar',
-              style: TextStyle(color: Colors.white),
-            ),
+            child: const Text('Eliminar',
+                style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
