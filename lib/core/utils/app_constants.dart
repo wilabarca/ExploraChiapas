@@ -1,40 +1,49 @@
 class AppConstants {
   AppConstants._();
 
-  static const String baseUrl = 'https://explora-chiapas.onrender.com/v1/api';
+  static const String baseUrl =
+      'https://explora-chiapas.onrender.com/v1/api';
 
-  static const String registerEndpoint  = '/users/register';
-  static const String loginEndpoint     = '/users/login';
-  static const String profileEndpoint   = '/users/profile';
+  // Endpoints de autenticación y usuarios
+  static const String registerEndpoint = '/users/register';
+  static const String loginEndpoint = '/users/login';
+  static const String profileEndpoint = '/users/profile';
   static const String userTypesEndpoint = '/user-types';
+
+  // Endpoints principales
+  static const String destinationsEndpoint = '/destinations';
+  static const String eventsEndpoint = '/events';
+  static const String favoritesEndpoint = '/favorites';
 
   // Capa 1 (NLP/Groq) corre como microservicio independiente del backend
   // principal; usa su propio host y no requiere JWT.
-  // En dispositivo fisico usar la IP local de la PC (no localhost).
+  // En dispositivo físico usar la IP local de la PC, no localhost.
   static const String mlServiceBaseUrl = 'http://192.168.1.133:3001';
-  static const String planearEndpoint  = '/planear';
+  static const String planearEndpoint = '/planear';
 
   // SharedPreferences keys
-  static const String jwtTokenKey    = 'jwt_token';
+  static const String jwtTokenKey = 'jwt_token';
   static const String tipoUsuarioKey = 'tipo_usuario';
-  static const String onboardingKey  = 'onboarding_completo';
-  static const String interesesKey   = 'intereses';
-  static const String ubicacionKey   = 'ubicacion_concedida';
-  static const String fotoPerfil     = 'foto_perfil';
-  static const String userNameKey    = 'user_name';
-  static const String userEmailKey   = 'user_email';
+  static const String onboardingKey = 'onboarding_completo';
+  static const String interesesKey = 'intereses';
+  static const String ubicacionKey = 'ubicacion_concedida';
+  static const String fotoPerfil = 'foto_perfil';
+  static const String userNameKey = 'user_name';
+  static const String userEmailKey = 'user_email';
 
   // Tipos de usuario
-  static const String tipoTuristaNacional   = 'turista_nacional';
+  static const String tipoTuristaNacional = 'turista_nacional';
   static const String tipoTuristaExtranjero = 'turista_extranjero';
-  static const String tipoHabitanteLocal    = 'habitante_local';
+  static const String tipoHabitanteLocal = 'habitante_local';
 
-  // ← URLs legales
-  static const String terminosUrl   =
+  // URLs legales
+  static const String terminosUrl =
       'https://explorachiapas-legal.vercel.app/terminos-condiciones';
+
   static const String privacidadUrl =
       'https://explorachiapas-legal.vercel.app/politica-privacidad';
 
+  // Configuración de red
   static const Duration connectTimeout = Duration(seconds: 15);
   static const Duration receiveTimeout = Duration(seconds: 20);
 }
