@@ -1,8 +1,23 @@
-import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../domain/entities/favorito.dart';
+import '../providers/favoritos_provider.dart';
 
-class FavoritosPage extends StatelessWidget {
+class FavoritosPage extends StatefulWidget {
   const FavoritosPage({super.key});
+
+  @override
+  State<FavoritosPage> createState() => _FavoritosPageState();
+}
+
+class _FavoritosPageState extends State<FavoritosPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<FavoritosProvider>().cargarFavoritos();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,9 +53,24 @@ class FavoritosPage extends StatelessWidget {
         ),
         body: const TabBarView(
           children: [
-            _DestinosFavoritos(),
-            _RutasFavoritas(),
-            _ExperienciasFavoritas(),
+            _TabFavoritos(
+              targetType: 'destination',
+              emptyLabel: 'Sin destinos guardados',
+              emptySubLabel: 'Explora el mapa y guarda tus lugares favoritos',
+              icono: Icons.location_on_outlined,
+            ),
+            _TabFavoritos(
+              targetType: 'route',
+              emptyLabel: 'Sin rutas guardadas',
+              emptySubLabel: 'Planifica una ruta y guÃ¡rdala aquÃ­',
+              icono: Icons.route_outlined,
+            ),
+            _TabFavoritos(
+              targetType: 'experience',
+              emptyLabel: 'Sin experiencias guardadas',
+              emptySubLabel: 'Explora y guarda las que mÃ¡s te interesen',
+              icono: Icons.explore_outlined,
+            ),
           ],
         ),
       ),
@@ -48,149 +78,110 @@ class FavoritosPage extends StatelessWidget {
   }
 }
 
-class _DestinosFavoritos extends StatelessWidget {
-  const _DestinosFavoritos();
-
-  @override
-  Widget build(BuildContext context) {
-    final destinos = [
-      {
-        'nombre': 'Cascadas de Agua Azul',
-        'categoria': 'Naturaleza',
-        'calificacion': 4.9,
-        'imagen':
-            'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
-      },
-      {
-        'nombre': 'Zona Arqueológica Palenque',
-        'categoria': 'Cultura',
-        'calificacion': 4.8,
-        'imagen':
-            'https://images.unsplash.com/photo-1518638150340-f706e86654de?w=800&q=80',
-      },
-      {
-        'nombre': 'Cañón del Sumidero',
-        'categoria': 'Naturaleza',
-        'calificacion': 4.7,
-        'imagen':
-            'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80',
-      },
-    ];
-
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: destinos.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final d = destinos[index];
-        return _FavoritoCard(
-          nombre: d['nombre'] as String,
-          subtitulo: d['categoria'] as String,
-          calificacion: d['calificacion'] as double,
-          imageUrl: d['imagen'] as String,
-        );
-      },
-    );
-  }
-}
-
-class _RutasFavoritas extends StatelessWidget {
-  const _RutasFavoritas();
-
-  @override
-  Widget build(BuildContext context) {
-    final rutas = [
-      {
-        'nombre': 'Ruta Colonial San Cristóbal',
-        'subtitulo': '3 destinos • 1 día',
-        'calificacion': 4.6,
-        'imagen':
-            'https://images.unsplash.com/photo-1533587851505-d119e13fa0d7?w=800&q=80',
-      },
-      {
-        'nombre': 'Selva y Cascadas',
-        'subtitulo': '5 destinos • 2 días',
-        'calificacion': 4.8,
-        'imagen':
-            'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80',
-      },
-    ];
-
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: rutas.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final r = rutas[index];
-        return _FavoritoCard(
-          nombre: r['nombre'] as String,
-          subtitulo: r['subtitulo'] as String,
-          calificacion: r['calificacion'] as double,
-          imageUrl: r['imagen'] as String,
-          icono: Icons.route_outlined,
-        );
-      },
-    );
-  }
-}
-
-class _ExperienciasFavoritas extends StatelessWidget {
-  const _ExperienciasFavoritas();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.explore_outlined, size: 64, color: Colors.grey.shade300),
-          const SizedBox(height: 16),
-          const Text(
-            'Sin experiencias guardadas',
-            style: TextStyle(fontSize: 16, color: Color(0xFF999999)),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Explora y guarda las que más te interesen',
-            style: TextStyle(fontSize: 13, color: Color(0xFFBBBBBB)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FavoritoCard extends StatefulWidget {
-  final String nombre;
-  final String subtitulo;
-  final double calificacion;
-  final String imageUrl;
+class _TabFavoritos extends StatelessWidget {
+  final String targetType;
+  final String emptyLabel;
+  final String emptySubLabel;
   final IconData icono;
 
-  const _FavoritoCard({
-    required this.nombre,
-    required this.subtitulo,
-    required this.calificacion,
-    required this.imageUrl,
-    this.icono = Icons.location_on_outlined,
+  const _TabFavoritos({
+    required this.targetType,
+    required this.emptyLabel,
+    required this.emptySubLabel,
+    required this.icono,
   });
 
   @override
-  State<_FavoritoCard> createState() => _FavoritoCardState();
+  Widget build(BuildContext context) {
+    return Consumer<FavoritosProvider>(
+      builder: (context, provider, _) {
+        if (provider.status == FavoritosStatus.loading) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF2E7D32)),
+          );
+        }
+
+        if (provider.status == FavoritosStatus.error) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.cloud_off_outlined,
+                    size: 48, color: Color(0xFFCCCCCC)),
+                const SizedBox(height: 12),
+                Text(
+                  provider.errorMessage ?? 'Error al cargar favoritos',
+                  style: const TextStyle(fontSize: 14, color: Color(0xFF888888)),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: () => provider.cargarFavoritos(),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Reintentar'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF2E7D32),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        final items = provider.favoritos
+            .where((f) => f.targetType == targetType)
+            .toList();
+
+        if (items.isEmpty) {
+          return _EstadoVacio(
+            icono: icono,
+            label: emptyLabel,
+            subLabel: emptySubLabel,
+          );
+        }
+
+        return ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemCount: items.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemBuilder: (context, i) {
+            final f = items[i];
+            return _FavoritoTile(
+              favorito: f,
+              icono: icono,
+              onEliminar: () => provider.alternar(
+                targetType: f.targetType,
+                targetId: f.targetId,
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 }
 
-class _FavoritoCardState extends State<_FavoritoCard> {
-  bool _favorito = true;
+class _FavoritoTile extends StatelessWidget {
+  final Favorito favorito;
+  final IconData icono;
+  final VoidCallback onEliminar;
+
+  const _FavoritoTile({
+    required this.favorito,
+    required this.icono,
+    required this.onEliminar,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -198,82 +189,85 @@ class _FavoritoCardState extends State<_FavoritoCard> {
       ),
       child: Row(
         children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.horizontal(
-              left: Radius.circular(16),
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8F5E9),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: CachedNetworkImage(
-              imageUrl: widget.imageUrl,
-              width: 110,
-              height: 90,
-              fit: BoxFit.cover,
-              placeholder: (_, __) =>
-                  Container(width: 110, height: 90, color: const Color(0xFFD8F5D8)),
-              errorWidget: (_, __, ___) => Container(
-                width: 110,
-                height: 90,
-                color: const Color(0xFFD8F5D8),
-                child: const Icon(Icons.image_not_supported, color: Colors.white54),
-              ),
-            ),
+            child: Icon(icono, color: const Color(0xFF2E7D32), size: 24),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.nombre,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1B1B1B),
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  favorito.targetId,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1B1B1B),
                   ),
+                ),
+                if (favorito.addedAt != null) ...[
                   const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(widget.icono,
-                          size: 13, color: const Color(0xFF2E7D32)),
-                      const SizedBox(width: 4),
-                      Text(
-                        widget.subtitulo,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF888888),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      const Icon(Icons.star, size: 13, color: Color(0xFFFFC107)),
-                      const SizedBox(width: 3),
-                      Text(
-                        '${widget.calificacion}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF555555),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    'Guardado el ${_formatFecha(favorito.addedAt!)}',
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF888888)),
                   ),
                 ],
-              ),
+              ],
             ),
           ),
           IconButton(
-            onPressed: () => setState(() => _favorito = !_favorito),
-            icon: Icon(
-              _favorito ? Icons.favorite : Icons.favorite_outline,
-              color: _favorito ? Colors.red : Colors.grey,
-              size: 20,
+            onPressed: onEliminar,
+            icon: const Icon(Icons.favorite, color: Colors.red, size: 22),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatFecha(DateTime fecha) {
+    const meses = [
+      'ene', 'feb', 'mar', 'abr', 'may', 'jun',
+      'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+    ];
+    return '${fecha.day} ${meses[fecha.month - 1]} ${fecha.year}';
+  }
+}
+
+class _EstadoVacio extends StatelessWidget {
+  final IconData icono;
+  final String label;
+  final String subLabel;
+
+  const _EstadoVacio({
+    required this.icono,
+    required this.label,
+    required this.subLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icono, size: 64, color: Colors.grey.shade300),
+          const SizedBox(height: 16),
+          Text(label, style: const TextStyle(fontSize: 16, color: Color(0xFF999999))),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Text(
+              subLabel,
+              style: const TextStyle(fontSize: 13, color: Color(0xFFBBBBBB)),
+              textAlign: TextAlign.center,
             ),
           ),
         ],
@@ -281,3 +275,5 @@ class _FavoritoCardState extends State<_FavoritoCard> {
     );
   }
 }
+
+// end of file
