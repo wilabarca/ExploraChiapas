@@ -44,12 +44,14 @@ dependencies:
   dartz: ^0.10.1
   provider: ^6.1.5+1
   onesignal_flutter: ^5.2.6
+  url_launcher: ^6.3.2
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
   injectable_generator: ^3.1.0
   flutter_launcher_icons: ^0.14.4
+  build_runner: ^2.15.1
 
 flutter_launcher_icons:
   android: true

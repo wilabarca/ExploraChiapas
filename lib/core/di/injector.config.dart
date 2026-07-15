@@ -54,7 +54,7 @@ import '../../features/eventos/domain/usecases/get_evento_by_id_usecase.dart'
 import '../../features/eventos/domain/usecases/get_eventos_usecase.dart'
     as _i703;
 import '../../features/eventos/presentation/providers/eventos_provider.dart'
-    as _i901;
+    as _i902;
 import '../../features/favoritos/data/datasource/favoritos_remote_datasource.dart'
     as _i768;
 import '../../features/favoritos/data/repositories/favoritos_repository_impl.dart'
@@ -152,6 +152,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i124.IChatRepository>(
       () => _i1018.ChatRepositoryImpl(gh<_i730.IChatRemoteDatasource>()),
     );
+    gh.lazySingleton<_i747.EventosRemoteDataSource>(
+      () => _i747.EventosRemoteDataSourceImpl(gh<_i557.ApiClient>()),
+    );
     gh.factory<_i1031.IProfileRemoteDatasource>(
       () => _i1031.ProfileRemoteDatasourceImpl(gh<_i557.ApiClient>()),
     );
@@ -161,15 +164,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i45.AvatarService>(),
       ),
     );
-    gh.factory<_i301.EnviarMensajeUseCase>(
-      () => _i301.EnviarMensajeUseCase(gh<_i124.IChatRepository>()),
-    );
-    gh.lazySingleton<_i747.EventosRemoteDataSource>(
-      () => _i747.EventosRemoteDataSourceImpl(gh<_i557.ApiClient>()),
-    );
-    gh.factory<_i1031.IProfileRemoteDatasource>(
-      () => _i1031.ProfileRemoteDatasourceImpl(gh<_i557.ApiClient>()),
-    );
     gh.lazySingleton<_i768.FavoritosRemoteDataSource>(
       () => _i768.FavoritosRemoteDataSourceImpl(gh<_i557.ApiClient>()),
     );
@@ -178,9 +172,6 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i301.EnviarMensajeUseCase>(
       () => _i301.EnviarMensajeUseCase(gh<_i124.IChatRepository>()),
-    );
-    gh.lazySingleton<_i683.EventosRepository>(
-      () => _i696.EventosRepositoryImpl(gh<_i747.EventosRemoteDataSource>()),
     );
     gh.factory<_i116.ChatProvider>(
       () => _i116.ChatProvider(gh<_i301.EnviarMensajeUseCase>()),
@@ -199,6 +190,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i879.IProfileRepository>(
       () => _i334.ProfileRepositoryImpl(gh<_i1031.IProfileRemoteDatasource>()),
+    );
+    gh.lazySingleton<_i683.EventosRepository>(
+      () => _i696.EventosRepositoryImpl(gh<_i747.EventosRemoteDataSource>()),
     );
     gh.factory<_i247.GetEventoByIdUseCase>(
       () => _i247.GetEventoByIdUseCase(gh<_i683.EventosRepository>()),
@@ -225,8 +219,8 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i488.ListDestinosUseCase>(
       () => _i488.ListDestinosUseCase(gh<_i991.DestinoRepository>()),
     );
-    gh.factory<_i901.EventosProvider>(
-      () => _i901.EventosProvider(
+    gh.factory<_i902.EventosProvider>(
+      () => _i902.EventosProvider(
         gh<_i703.GetEventosUseCase>(),
         gh<_i247.GetEventoByIdUseCase>(),
       ),
@@ -238,7 +232,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i568.GetProfileUseCase>(),
       ),
     );
-    gh.lazySingleton<_i919.ProfileProvider>(
     gh.factory<_i536.AddFavoritoUseCase>(
       () => _i536.AddFavoritoUseCase(gh<_i743.FavoritosRepository>()),
     );
@@ -248,7 +241,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i662.RemoveFavoritoUseCase>(
       () => _i662.RemoveFavoritoUseCase(gh<_i743.FavoritosRepository>()),
     );
-    gh.factory<_i919.ProfileProvider>(
+    gh.lazySingleton<_i919.ProfileProvider>(
       () => _i919.ProfileProvider(
         gh<_i32.GetPerfilUseCase>(),
         gh<_i226.UpdatePerfilUseCase>(),

@@ -26,9 +26,9 @@ class EventosProvider extends ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
-  Future<bool> cargarEventos() async {
+  Future<bool> cargarEventos({bool? proximas}) async {
     _setLoading();
-    final result = await _getEventos();
+    final result = await _getEventos(proximas: proximas);
     return result.fold(
       (failure) {
         _setError(failure.message);
@@ -44,7 +44,7 @@ class EventosProvider extends ChangeNotifier {
 
   Future<bool> cargarDetalle(String id) async {
     _setLoading();
-    final result = await _getEventoById(id);
+    final result = await _getEventoById(id: id);
     return result.fold(
       (failure) {
         _setError(failure.message);
