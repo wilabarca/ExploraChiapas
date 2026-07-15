@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/interest_card.dart';
+import '../providers/auth_provider.dart';
 import '../../../../core/permissions/location_permission.dart';
 
 class InterestsPage extends StatefulWidget {
@@ -60,18 +62,51 @@ class _InterestsPageState extends State<InterestsPage> {
   Future<void> _handleContinuar() async {
     setState(() => _isLoading = true);
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList('intereses', _selected.toList());
-    await prefs.setBool('onboarding_completo', true);
+    try {
+      // 1. Guardar intereses y marcar onboarding completo
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList('intereses', _selected.toList());
+      await prefs.setBool('onboarding_completo', true);
 
-    if (mounted) {
+      if (!mounted) return;
+
+      // 2. 🔐 Auto-login tras registro usando credenciales guardadas
+      final authProvider = context.read<AuthProvider>();
+      final registroData = authProvider.registroData;
+
+      if (registroData != null) {
+        final email = registroData['email'] as String?;
+        final password = registroData['password'] as String?;
+
+        if (email != null && password != null) {
+          debugPrint('🔐 Auto-login tras registro: $email');
+          final success = await authProvider.login(
+            email: email,
+            password: password,
+          );
+          if (success) {
+            debugPrint('✅ Auto-login exitoso');
+          } else {
+            debugPrint('⚠️ Auto-login falló: ${authProvider.errorMessage}');
+          }
+        }
+      }
+
+      // 3. Limpiar datos sensibles de memoria
+      authProvider.clearRegistroData();
+
+      if (!mounted) return;
+
+      // 4. Pedir permisos de ubicación
       await LocationPermissionHelper().requestWithDialog(context);
+
+      if (!mounted) return;
+
+      // 5. Navegar al home
+      Navigator.pushReplacementNamed(context, '/home');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
-
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    Navigator.pushReplacementNamed(context, '/home');
   }
 
   @override
@@ -112,6 +147,7 @@ class _InterestsPageState extends State<InterestsPage> {
 
                     const SizedBox(height: 24),
 
+                    // ── Tarjetas de intereses ──
                     AspectRatio(
                       aspectRatio: 16 / 7,
                       child: InterestCard(
@@ -207,6 +243,7 @@ class _InterestsPageState extends State<InterestsPage> {
               ),
             ),
 
+            // ── Botón Continuar ──
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
               child: Column(

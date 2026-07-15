@@ -28,13 +28,27 @@ class ApiClient {
       InterceptorsWrapper(
         onRequest: (options, handler) async {
           final prefs = await SharedPreferences.getInstance();
-          final token = prefs.getString('jwt_token');
+          final token = prefs.getString(AppConstants.jwtTokenKey);
+          debugPrint(
+            '🔑 JWT interceptor: ${token != null ? "SÍ (${token.length} chars)" : "❌ NO HAY TOKEN"}',
+          );
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
           }
+          debugPrint('➡️  ${options.method} ${options.baseUrl}${options.path}');
+          debugPrint('📋 Headers: ${options.headers}');
           handler.next(options);
         },
+        onResponse: (response, handler) {
+          debugPrint(
+            '✅ ${response.statusCode} ${response.requestOptions.path}',
+          );
+          handler.next(response);
+        },
         onError: (error, handler) {
+          debugPrint(
+            '❌ Error ${error.response?.statusCode}: ${error.response?.data}',
+          );
           if (error.response?.statusCode == 401) {
             throw UnauthorizedException(
               message: error.response?.data['message'] ?? 'No autorizado',
@@ -50,14 +64,16 @@ class ApiClient {
 
   Future<Response> post(String path, {Map<String, dynamic>? data}) async {
     try {
-      debugPrint('POST: $_baseUrl$path');
-      debugPrint('Body: $data');
+      debugPrint('📤 POST: $_baseUrl$path');
+      debugPrint('📦 Body: $data');
       final response = await _dio.post(path, data: data);
-      debugPrint('Response ${response.statusCode}: ${response.data}');
+      debugPrint('📥 Response ${response.statusCode}: ${response.data}');
       return response;
     } on DioException catch (e) {
-      debugPrint('DioError: ${e.type} - ${e.message}');
-      debugPrint('Response: ${e.response?.statusCode} - ${e.response?.data}');
+      debugPrint('💥 DioError POST: ${e.type} - ${e.message}');
+      debugPrint(
+        '📥 Response: ${e.response?.statusCode} - ${e.response?.data}',
+      );
       _handleDioError(e);
     }
     throw const ServerException(message: 'Error desconocido');
@@ -68,8 +84,20 @@ class ApiClient {
     Map<String, dynamic>? queryParameters,
   }) async {
     try {
-      return await _dio.get(path, queryParameters: queryParameters);
+      debugPrint('📤 GET: $_baseUrl$path');
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString(AppConstants.jwtTokenKey);
+      debugPrint(
+        '🔑 JWT en prefs: ${token != null ? "SÍ (${token.substring(0, token.length.clamp(0, 30))}...)" : "❌ NO HAY TOKEN"}',
+      );
+      final response = await _dio.get(path, queryParameters: queryParameters);
+      debugPrint('📥 Response ${response.statusCode}: ${response.data}');
+      return response;
     } on DioException catch (e) {
+      debugPrint('💥 DioError GET: ${e.type} - ${e.message}');
+      debugPrint(
+        '📥 Response: ${e.response?.statusCode} - ${e.response?.data}',
+      );
       _handleDioError(e);
     }
     throw const ServerException(message: 'Error desconocido');
@@ -77,8 +105,16 @@ class ApiClient {
 
   Future<Response> patch(String path, {Map<String, dynamic>? data}) async {
     try {
-      return await _dio.patch(path, data: data);
+      debugPrint('📤 PATCH: $_baseUrl$path');
+      debugPrint('📦 Body: $data');
+      final response = await _dio.patch(path, data: data);
+      debugPrint('📥 Response ${response.statusCode}: ${response.data}');
+      return response;
     } on DioException catch (e) {
+      debugPrint('💥 DioError PATCH: ${e.type} - ${e.message}');
+      debugPrint(
+        '📥 Response: ${e.response?.statusCode} - ${e.response?.data}',
+      );
       _handleDioError(e);
     }
     throw const ServerException(message: 'Error desconocido');
@@ -86,8 +122,15 @@ class ApiClient {
 
   Future<Response> delete(String path) async {
     try {
-      return await _dio.delete(path);
+      debugPrint('📤 DELETE: $_baseUrl$path');
+      final response = await _dio.delete(path);
+      debugPrint('📥 Response ${response.statusCode}: ${response.data}');
+      return response;
     } on DioException catch (e) {
+      debugPrint('💥 DioError DELETE: ${e.type} - ${e.message}');
+      debugPrint(
+        '📥 Response: ${e.response?.statusCode} - ${e.response?.data}',
+      );
       _handleDioError(e);
     }
     throw const ServerException(message: 'Error desconocido');
