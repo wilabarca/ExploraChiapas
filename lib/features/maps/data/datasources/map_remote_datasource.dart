@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'remote/models/destination_model.dart';
 
 abstract class IMapRemoteDatasource {
@@ -97,17 +98,9 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
     },
   ];
 
-  // Ruta ficticia entre dos puntos (simulación de polyline)
-  static const List<List<double>> _mockRoute = [
-    [16.7370, -92.6376],
-    [16.7800, -92.7000],
-    [16.8200, -92.8500],
-    [16.8560, -93.0760],
-  ];
-
   @override
   Future<List<DestinationModel>> getDestinations({String? tipo}) async {
-    await Future.delayed(const Duration(milliseconds: 600)); // simula red
+    await Future.delayed(const Duration(milliseconds: 600));
     final data = tipo == null
         ? _mockDestinations
         : _mockDestinations.where((d) => d['tipo'] == tipo).toList();
@@ -121,7 +114,6 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
     required double radioKm,
   }) async {
     await Future.delayed(const Duration(milliseconds: 500));
-    // Mock: devuelve todos (el filtro real va en backend)
     return _mockDestinations.map(DestinationModel.fromJson).toList();
   }
 
@@ -132,7 +124,20 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
     required double destLat,
     required double destLng,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 700));
-    return _mockRoute;
+    final dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 10)));
+
+    final response = await dio.get<Map<String, dynamic>>(
+      'https://router.project-osrm.org/route/v1/driving/'
+      '$originLng,$originLat;$destLng,$destLat',
+      queryParameters: {'overview': 'full', 'geometries': 'geojson'},
+    );
+
+    final routes = response.data!['routes'] as List<dynamic>;
+    if (routes.isEmpty) throw Exception('No se encontró ruta');
+
+    final coords = (routes[0]['geometry']['coordinates'] as List<dynamic>)
+        .cast<List<dynamic>>();
+
+    return coords.map((c) => [(c[1] as num).toDouble(), (c[0] as num).toDouble()]).toList();
   }
 }
