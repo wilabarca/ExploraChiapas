@@ -238,7 +238,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i568.GetProfileUseCase>(),
       ),
     );
-    gh.lazySingleton<_i919.ProfileProvider>(
     gh.factory<_i536.AddFavoritoUseCase>(
       () => _i536.AddFavoritoUseCase(gh<_i743.FavoritosRepository>()),
     );
@@ -248,7 +247,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i662.RemoveFavoritoUseCase>(
       () => _i662.RemoveFavoritoUseCase(gh<_i743.FavoritosRepository>()),
     );
-    gh.factory<_i919.ProfileProvider>(
+    gh.lazySingleton<_i919.ProfileProvider>(
       () => _i919.ProfileProvider(
         gh<_i32.GetPerfilUseCase>(),
         gh<_i226.UpdatePerfilUseCase>(),
