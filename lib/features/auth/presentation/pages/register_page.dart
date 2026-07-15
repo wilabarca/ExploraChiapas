@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../widgets/register_field.dart';
 import '../widgets/register_user_type.dart';
 import '../providers/auth_provider.dart';
 import '../../domain/entities/usuario_registro.dart';
+import '../../../../core/utils/app_constants.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -32,6 +34,14 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
+  // ── Abre URL en el navegador del sistema ──────────────────────────────────
+  Future<void> _abrirUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   Future<void> _handleRegister() async {
     if (_nombreCtrl.text.isEmpty ||
         _emailCtrl.text.isEmpty ||
@@ -48,6 +58,9 @@ class _RegisterPageState extends State<RegisterPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Debes aceptar los Términos de uso y el Aviso de Privacidad.'),
+          content: Text(
+            'Debes aceptar los Términos y Condiciones y la Política de Privacidad.',
+          ),
         ),
       );
       return;
@@ -71,7 +84,6 @@ class _RegisterPageState extends State<RegisterPage> {
 
     final provider = context.read<AuthProvider>();
 
-    // Mapea el string del selector al enum correcto
     TipoUsuario tipo;
     switch (_tipoUsuario) {
       case 'Turista Nacional':
@@ -84,13 +96,6 @@ class _RegisterPageState extends State<RegisterPage> {
         tipo = TipoUsuario.habitanteLocal;
     }
 
-    debugPrint(
-      'Registrando: '
-      'nombre=${_nombreCtrl.text.trim()} '
-      'email=${_emailCtrl.text.trim()} '
-      'tipo=$tipo',
-    );
-
     final success = await provider.register(
       UsuarioRegistro(
         nombre: _nombreCtrl.text.trim(),
@@ -101,14 +106,9 @@ class _RegisterPageState extends State<RegisterPage> {
       ),
     );
 
-    debugPrint('Register result  : success=$success');
-    debugPrint('Error message    : ${provider.errorMessage}');
-    debugPrint('Status           : ${provider.status}');
-
     if (!mounted) return;
 
     if (success) {
-      debugPrint('Navegando a /intereses');
       Navigator.pushReplacementNamed(context, '/intereses');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -225,8 +225,9 @@ Cualquier modificación a este aviso será publicada dentro de la aplicación.
             children: [
               SizedBox(height: size.height * 0.05),
 
+              // ── Logo más grande ← cambio aquí ──────────────────────
               ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 60),
+                constraints: const BoxConstraints(maxHeight: 90), // era 60
                 child: Image.asset(
                   'assets/images/ExploraChiapas Logo.png',
                   fit: BoxFit.contain,
@@ -265,6 +266,7 @@ Cualquier modificación a este aviso será publicada dentro de la aplicación.
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // ← Dropdown en lugar de chips
                     RegisterUserType(
                       selected: _tipoUsuario,
                       onChanged: (val) => setState(() => _tipoUsuario = val),
@@ -344,11 +346,13 @@ Cualquier modificación a este aviso será publicada dentro de la aplicación.
                                     color: Color(0xFF2E7D32),
                                     fontWeight: FontWeight.bold,
                                     decoration: TextDecoration.underline,
+                                    decorationColor: Color(0xFF2E7D32),
                                   ),
                                 ),
                               ),
                               const Text(
                                 ' y el ',
+                                ' y la ',
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: Color(0xFF4A4A4A),
@@ -362,11 +366,16 @@ Cualquier modificación a este aviso será publicada dentro de la aplicación.
                                 ),
                                 child: const Text(
                                   'Aviso de Privacidad',
+                                onTap: () =>
+                                    _abrirUrl(AppConstants.privacidadUrl),
+                                child: const Text(
+                                  'Política de Privacidad',
                                   style: TextStyle(
                                     fontSize: 13,
                                     color: Color(0xFF2E7D32),
                                     fontWeight: FontWeight.bold,
                                     decoration: TextDecoration.underline,
+                                    decorationColor: Color(0xFF2E7D32),
                                   ),
                                 ),
                               ),

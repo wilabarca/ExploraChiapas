@@ -7,7 +7,7 @@ class HomeAppBar extends StatefulWidget implements PreferredSizeWidget {
   const HomeAppBar({super.key});
 
   @override
-  Size get preferredSize => const Size.fromHeight(60);
+  Size get preferredSize => const Size.fromHeight(64);
 
   @override
   State<HomeAppBar> createState() => _HomeAppBarState();
@@ -35,52 +35,70 @@ class _HomeAppBarState extends State<HomeAppBar> {
 
   @override
   Widget build(BuildContext context) {
+    final screenW = MediaQuery.of(context).size.width;
+    final isSmall = screenW < 360;
+    final logoHeight = isSmall ? 28.0 : 34.0;
+    final fontSize = isSmall ? 16.0 : 19.0;
+    final avatarRadius = isSmall ? 17.0 : 20.0;
+
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 0,
-      titleSpacing: 20,
+      titleSpacing: screenW * 0.04,
+      // ✅ Sin LayoutBuilder, sin AspectRatio — solo Row con SizedBox fijo
       title: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset('assets/images/ExploraChiapas Logo.png', height: 26),
-          const SizedBox(width: 8),
-          const Text(
-            'ExploraChiapas',
-            style: TextStyle(
-              color: Color(0xFF2E7D32),
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
+          SizedBox(
+            width: logoHeight,
+            height: logoHeight,
+            child: Image.asset(
+              'assets/images/ExploraChiapas Logo.png',
+              fit: BoxFit.contain,
+            ),
+          ),
+          SizedBox(width: screenW * 0.02),
+          Flexible(
+            child: Text(
+              'ExploraChiapas',
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: const Color(0xFF2E7D32),
+                fontWeight: FontWeight.bold,
+                fontSize: fontSize,
+              ),
             ),
           ),
         ],
       ),
       actions: [
         Padding(
-          padding: const EdgeInsets.only(right: 16),
+          padding: EdgeInsets.only(right: screenW * 0.04),
           child: CircleAvatar(
-            radius: 20,
+            radius: avatarRadius,
             backgroundColor: const Color(0xFFD8F5D8),
             child: ClipOval(
               child: _loaded && _avatarUrl.isNotEmpty
                   ? CachedNetworkImage(
                       imageUrl: _avatarUrl,
-                      width: 40,
-                      height: 40,
+                      width: avatarRadius * 2,
+                      height: avatarRadius * 2,
                       fit: BoxFit.cover,
-                      placeholder: (_, __) => const Icon(
+                      placeholder: (_, __) => Icon(
                         Icons.person,
-                        color: Color(0xFF2E7D32),
-                        size: 20,
+                        color: const Color(0xFF2E7D32),
+                        size: avatarRadius,
                       ),
-                      errorWidget: (_, __, ___) => const Icon(
+                      errorWidget: (_, __, ___) => Icon(
                         Icons.person,
-                        color: Color(0xFF2E7D32),
-                        size: 20,
+                        color: const Color(0xFF2E7D32),
+                        size: avatarRadius,
                       ),
                     )
-                  : const Icon(
+                  : Icon(
                       Icons.person,
-                      color: Color(0xFF2E7D32),
-                      size: 20,
+                      color: const Color(0xFF2E7D32),
+                      size: avatarRadius,
                     ),
             ),
           ),

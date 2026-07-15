@@ -1,4 +1,4 @@
-import '../models/destination_model.dart';
+import 'remote/models/destination_model.dart';
 
 abstract class IMapRemoteDatasource {
   Future<List<DestinationModel>> getDestinations({String? tipo});
