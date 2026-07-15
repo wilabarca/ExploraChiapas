@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
 class SectionHeader extends StatelessWidget {
-  final String emoji;
+  final IconData icon;
   final String titulo;
   final bool mostrarVerTodos;
   final VoidCallback? onVerTodos;
 
   const SectionHeader({
     super.key,
-    required this.emoji,
+    required this.icon,
     required this.titulo,
     this.mostrarVerTodos = false,
     this.onVerTodos,
@@ -23,7 +23,7 @@ class SectionHeader extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(emoji, style: const TextStyle(fontSize: 18)),
+              Icon(icon, size: 20, color: const Color(0xFF2E7D32)),
               const SizedBox(width: 6),
               Text(
                 titulo,

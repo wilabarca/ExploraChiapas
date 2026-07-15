@@ -8,7 +8,7 @@ class InterestCard extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
-  // ✓ Sin width/height fijos — usa LayoutBuilder internamente
+  // Sin width/height fijos: usa LayoutBuilder internamente
   const InterestCard({
     super.key,
     required this.nombre,
@@ -30,7 +30,7 @@ class InterestCard extends StatelessWidget {
               ? Border.all(color: const Color(0xFF4CAF50), width: 3)
               : null,
         ),
-        // ✓ LayoutBuilder: adapta contenido al espacio real disponible
+        // LayoutBuilder adapta el contenido al espacio real disponible
         child: LayoutBuilder(
           builder: (context, constraints) {
             return ClipRRect(

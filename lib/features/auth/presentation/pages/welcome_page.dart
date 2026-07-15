@@ -27,8 +27,8 @@ class WelcomePage extends StatelessWidget {
               children: [
                 SizedBox(height: size.height * 0.05),
 
-                // ✓ SizedBox con dimensiones proporcionales directas
-                // sin AspectRatio ni FractionallySizedBox anidados
+                // Dimensiones proporcionales directas, sin AspectRatio
+                // ni FractionallySizedBox anidados
                 SizedBox(
                   width: size.width * 0.52,
                   height: size.height * 0.30,

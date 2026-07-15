@@ -5,7 +5,7 @@ import '../services/location_service.dart';
 class LocationPermissionHelper {
   final LocationService _service = LocationService();
 
-  /// Usado en onboarding (InterestsPage): pide permiso la primera vez.
+  // Para el onboarding (interests_page)
   Future<bool> requestWithDialog(BuildContext context) async {
     final permission = await _service.requestPermission();
 
@@ -19,14 +19,13 @@ class LocationPermissionHelper {
         permission == LocationPermission.whileInUse;
   }
 
-  /// Usado en login: solo pide si el usuario revocó el permiso.
-  /// No bloquea la navegación al home.
   Future<void> checkAndRequestOnLogin(BuildContext context) async {
-    final alreadyGranted = await _service.hasPermission();
-    if (alreadyGranted) return; // permiso vigente, no molestamos
-
-    if (!context.mounted) return;
-    await requestWithDialog(context);
+    final has = await _service.hasPermission();
+    if (!has) {
+      if (!context.mounted) return;
+      await requestWithDialog(context);
+    }
+    // Si ya tiene permiso no hace nada
   }
 
   Future<void> _showBlockedDialog(BuildContext context) async {
@@ -34,13 +33,14 @@ class LocationPermissionHelper {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Row(
           children: [
-            Icon(Icons.location_off_outlined,
-                color: Color(0xFF2E7D32), size: 26),
+            Icon(
+              Icons.location_off_outlined,
+              color: Color(0xFF2E7D32),
+              size: 26,
+            ),
             SizedBox(width: 10),
             Text(
               'Ubicación bloqueada',
@@ -57,19 +57,12 @@ class LocationPermissionHelper {
           'Para activarlo ve a:\n'
           'Ajustes → Aplicaciones → ExploraChiapas '
           '→ Permisos → Ubicación',
-          style: TextStyle(
-            fontSize: 14,
-            color: Color(0xFF555555),
-            height: 1.6,
-          ),
+          style: TextStyle(fontSize: 14, color: Color(0xFF555555), height: 1.6),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text(
-              'Ahora no',
-              style: TextStyle(color: Colors.grey),
-            ),
+            child: const Text('Ahora no', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () {

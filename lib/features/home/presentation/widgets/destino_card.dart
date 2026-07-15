@@ -7,6 +7,7 @@ class DestinoCard extends StatelessWidget {
   final double calificacion;
   final String imageUrl;
   final bool esFavorito;
+  final VoidCallback? onTap;
 
   const DestinoCard({
     super.key,
@@ -15,11 +16,14 @@ class DestinoCard extends StatelessWidget {
     required this.calificacion,
     required this.imageUrl,
     this.esFavorito = false,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
       width: 200,
       margin: const EdgeInsets.only(right: 12),
       decoration: BoxDecoration(
@@ -88,17 +92,23 @@ class DestinoCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  '$categoria • $calificacion ★',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF888888),
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      '$categoria • $calificacion ',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF888888),
+                      ),
+                    ),
+                    const Icon(Icons.star, size: 12, color: Color(0xFFFFC107)),
+                  ],
                 ),
               ],
             ),
           ),
         ],
+      ),
       ),
     );
   }

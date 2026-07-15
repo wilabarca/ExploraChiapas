@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../widgets/register_field.dart';
 import '../widgets/register_user_type.dart';
+import '../providers/auth_provider.dart';
+import '../../domain/entities/usuario_registro.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -10,8 +13,8 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  String _tipoUsuario = 'Turista';
-  bool _isLoading = false;
+  String _tipoUsuario = 'Turista Nacional';
+  bool _aceptoTerminos = false;
 
   final _nombreCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
@@ -30,7 +33,6 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Future<void> _handleRegister() async {
-    // Validacion basica
     if (_nombreCtrl.text.isEmpty ||
         _emailCtrl.text.isEmpty ||
         _telefonoCtrl.text.isEmpty ||
@@ -42,6 +44,15 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
+    if (!_aceptoTerminos) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Debes aceptar los Términos de uso y el Aviso de Privacidad.'),
+        ),
+      );
+      return;
+    }
+
     if (_passCtrl.text != _confirmCtrl.text) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Las contraseñas no coinciden.')),
@@ -49,21 +60,161 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    setState(() => _isLoading = true);
+    if (_passCtrl.text.length < 8) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('La contraseña debe tener al menos 8 caracteres.'),
+        ),
+      );
+      return;
+    }
 
-    // TODO: reemplazar con llamada real al backend
-    await Future.delayed(const Duration(milliseconds: 800));
+    final provider = context.read<AuthProvider>();
+
+    // Mapea el string del selector al enum correcto
+    TipoUsuario tipo;
+    switch (_tipoUsuario) {
+      case 'Turista Nacional':
+        tipo = TipoUsuario.turistaNacional;
+        break;
+      case 'Turista Extranjero':
+        tipo = TipoUsuario.turistaExtranjero;
+        break;
+      default:
+        tipo = TipoUsuario.habitanteLocal;
+    }
+
+    debugPrint(
+      'Registrando: '
+      'nombre=${_nombreCtrl.text.trim()} '
+      'email=${_emailCtrl.text.trim()} '
+      'tipo=$tipo',
+    );
+
+    final success = await provider.register(
+      UsuarioRegistro(
+        nombre: _nombreCtrl.text.trim(),
+        correo: _emailCtrl.text.trim(),
+        telefono: _telefonoCtrl.text.trim(),
+        contrasena: _passCtrl.text.trim(),
+        tipoUsuario: tipo,
+      ),
+    );
+
+    debugPrint('Register result  : success=$success');
+    debugPrint('Error message    : ${provider.errorMessage}');
+    debugPrint('Status           : ${provider.status}');
 
     if (!mounted) return;
-    setState(() => _isLoading = false);
 
-    // Registro siempre va a intereses (primera vez)
-    Navigator.pushReplacementNamed(context, '/intereses');
+    if (success) {
+      debugPrint('Navegando a /intereses');
+      Navigator.pushReplacementNamed(context, '/intereses');
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(provider.errorMessage ?? 'Error al registrarse'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+      provider.resetStatus();
+    }
   }
+
+  void _mostrarDialog(BuildContext context, String titulo, String contenido) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          titulo,
+          style: const TextStyle(
+            color: Color(0xFF1B5E20),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: Text(
+              contenido,
+              style: const TextStyle(fontSize: 13, height: 1.6, color: Color(0xFF333333)),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Cerrar',
+              style: TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static const String _terminosTexto = '''
+ExploraChiapas es una plataforma digital de turismo sostenible desarrollada como proyecto académico por estudiantes de la Universidad Politécnica de Chiapas.
+
+1. Uso de la plataforma
+   Al crear una cuenta aceptas utilizar ExploraChiapas únicamente con fines lícitos y de manera respetuosa con las comunidades y destinos que forman parte del catálogo.
+
+2. Cuenta de usuario
+   Eres responsable de mantener la confidencialidad de tu contraseña y de todas las actividades realizadas desde tu cuenta. Debes notificarnos de inmediato ante cualquier uso no autorizado.
+
+3. Contenido generado por el usuario
+   Las reseñas y recomendaciones que publiques deben ser honestas, respetuosas y no contener información falsa, ofensiva o que dañe a terceros.
+
+4. Propiedad intelectual
+   Todo el contenido de la plataforma (textos, imágenes, logotipos) es propiedad de ExploraChiapas o de sus respectivos autores. Queda prohibida su reproducción sin autorización.
+
+5. Limitación de responsabilidad
+   ExploraChiapas no garantiza la disponibilidad ininterrumpida del servicio ni se hace responsable de daños derivados del uso de la información publicada.
+
+6. Modificaciones
+   Nos reservamos el derecho de actualizar estos Términos en cualquier momento. Los cambios serán comunicados mediante la aplicación.
+''';
+
+  static const String _avisoPrivacidadTexto = '''
+De conformidad con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP), ExploraChiapas te informa lo siguiente:
+
+Responsable del tratamiento
+ExploraChiapas — Proyecto académico, Universidad Politécnica de Chiapas, Tuxtla Gutiérrez, Chiapas, México.
+
+Datos personales que recopilamos
+• Nombre completo
+• Correo electrónico
+• Número de teléfono
+• Tipo de usuario (turista nacional, extranjero o habitante local)
+• Intereses turísticos seleccionados
+
+Finalidad del tratamiento
+Los datos son utilizados para:
+• Crear y gestionar tu cuenta de usuario
+• Personalizar las recomendaciones de destinos y rutas
+• Mejorar la experiencia dentro de la plataforma
+• Fines estadísticos y de investigación académica (datos anonimizados)
+
+No compartimos tus datos con terceros salvo por obligación legal.
+
+Derechos ARCO
+Tienes derecho a Acceder, Rectificar, Cancelar u Oponerte al tratamiento de tus datos personales enviando una solicitud a: explorachiapas@upchiapas.edu.mx
+
+Cambios al aviso
+Cualquier modificación a este aviso será publicada dentro de la aplicación.
+''';
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    final size = MediaQuery.sizeOf(context);
+    final isLoading =
+        context.watch<AuthProvider>().status == AuthStatus.loading;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF0FAF0),
@@ -74,7 +225,13 @@ class _RegisterPageState extends State<RegisterPage> {
             children: [
               SizedBox(height: size.height * 0.05),
 
-              Image.asset('assets/images/ExploraChiapas Logo.png', height: 52),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 60),
+                child: Image.asset(
+                  'assets/images/ExploraChiapas Logo.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
 
               SizedBox(height: size.height * 0.04),
 
@@ -140,7 +297,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                     RegisterField(
                       controller: _passCtrl,
-                      hint: 'Contraseña',
+                      hint: 'Contraseña (mín. 8 caracteres)',
                       icon: Icons.lock_outline,
                       isPassword: true,
                     ),
@@ -153,13 +310,81 @@ class _RegisterPageState extends State<RegisterPage> {
                       isPassword: true,
                     ),
 
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 20),
 
-                    SizedBox(
-                      width: double.infinity,
-                      height: 54,
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Checkbox(
+                          value: _aceptoTerminos,
+                          activeColor: const Color(0xFF2E7D32),
+                          onChanged: (val) =>
+                              setState(() => _aceptoTerminos = val ?? false),
+                        ),
+                        Expanded(
+                          child: Wrap(
+                            children: [
+                              const Text(
+                                'Acepto los ',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF4A4A4A),
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () => _mostrarDialog(
+                                  context,
+                                  'Términos de Uso',
+                                  _terminosTexto,
+                                ),
+                                child: const Text(
+                                  'Términos de Uso',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Color(0xFF2E7D32),
+                                    fontWeight: FontWeight.bold,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                              ),
+                              const Text(
+                                ' y el ',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF4A4A4A),
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () => _mostrarDialog(
+                                  context,
+                                  'Aviso de Privacidad',
+                                  _avisoPrivacidadTexto,
+                                ),
+                                child: const Text(
+                                  'Aviso de Privacidad',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Color(0xFF2E7D32),
+                                    fontWeight: FontWeight.bold,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        minHeight: 54,
+                        minWidth: double.infinity,
+                      ),
                       child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleRegister,
+                        onPressed: isLoading ? null : _handleRegister,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF2E7D32),
                           disabledBackgroundColor: const Color(0xFFB0BEC5),
@@ -168,7 +393,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                           elevation: 0,
                         ),
-                        child: _isLoading
+                        child: isLoading
                             ? const SizedBox(
                                 height: 22,
                                 width: 22,

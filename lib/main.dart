@@ -1,13 +1,13 @@
-// main.dart
 import 'package:flutter/material.dart';
-import 'package:device_preview/device_preview.dart';
+import 'core/di/injector.dart';
+import 'core/services/notifications/onesignal_service.dart';
 import 'app.dart';
 
-void main() {
-  runApp(
-    DevicePreview(
-      enabled: false, // cámbialo a false para producción
-      builder: (context) => const ExploraChiapasApp(),
-    ),
-  );
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await configureDependencies();
+  await OneSignalService.initialize();
+
+  runApp(const ExploraChiapasApp());
 }

@@ -25,7 +25,7 @@ class _RegisterFieldState extends State<RegisterField> {
 
   @override
   Widget build(BuildContext context) {
-    // ✓ ConstrainedBox garantiza altura mínima accesible para el campo
+    // ConstrainedBox garantiza altura minima accesible para el campo
     return ConstrainedBox(
       constraints: const BoxConstraints(minHeight: 52),
       child: Container(
