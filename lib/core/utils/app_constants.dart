@@ -15,10 +15,7 @@ class AppConstants {
   static const String eventsEndpoint = '/events';
   static const String favoritesEndpoint = '/favorites';
 
-  // Capa 1 (NLP/Groq) corre como microservicio independiente del backend
-  // principal; usa su propio host y no requiere JWT.
-  // En dispositivo físico usar la IP local de la PC, no localhost.
-  static const String mlServiceBaseUrl = 'http://192.168.1.133:3001';
+  static const String mlServiceBaseUrl = 'https://nlp-service-6hvo.onrender.com';
   static const String planearEndpoint = '/planear';
 
   // SharedPreferences keys
