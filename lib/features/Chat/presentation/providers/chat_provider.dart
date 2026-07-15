@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:injectable/injectable.dart';
+import '../../../../../core/utils/profanity_filter.dart';
 import '../../domain/entities/actividad_entity.dart';
 import '../../domain/usecases/enviar_mensaje_usecase.dart';
 import '../widgets/chat_bubble.dart';
@@ -46,6 +47,21 @@ class ChatProvider extends ChangeNotifier {
   Future<void> enviarMensaje(String texto) async {
     final textoLimpio = texto.trim();
     if (textoLimpio.isEmpty) return;
+
+    if (ProfanityFilter.contiene(textoLimpio)) {
+      _mensajes.add(ChatMensaje(
+        contenido: ProfanityFilter.censurar(textoLimpio),
+        hora: _horaActual(),
+        tipo: BubbleType.user,
+      ));
+      _mensajes.add(ChatMensaje(
+        contenido: 'Por favor utiliza un lenguaje apropiado para continuar.',
+        hora: _horaActual(),
+        tipo: BubbleType.bot,
+      ));
+      notifyListeners();
+      return;
+    }
 
     _mensajes.add(ChatMensaje(
       contenido: textoLimpio,
