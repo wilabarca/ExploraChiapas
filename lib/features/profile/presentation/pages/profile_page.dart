@@ -319,3 +319,101 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 }
+
+// ── Widgets privados ──────────────────────────────────────────
+
+class _StatCard extends StatelessWidget {
+  final String valor;
+  final String label;
+  const _StatCard({required this.valor, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Column(
+          children: [
+            Text(
+              valor,
+              style: const TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1B5E20),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF777777),
+                height: 1.3,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MenuItem extends StatelessWidget {
+  final IconData     icon;
+  final String       label;
+  final VoidCallback onTap;
+  final Color?       color;
+
+  const _MenuItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = color ?? const Color(0xFF1B1B1B);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color != null
+                    ? const Color(0xFFFFEBEE)
+                    : const Color(0xFFE8F5E9),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: c, size: 20),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: c,
+                ),
+              ),
+            ),
+            Icon(Icons.chevron_right, color: c.withOpacity(0.5), size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+}
