@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../widgets/register_field.dart';
 import '../providers/auth_provider.dart';
 import '../../../../core/permissions/location_permission.dart';
+import '../../../../core/utils/app_constants.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -14,7 +16,7 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _emailCtrl = TextEditingController();
-  final _passCtrl = TextEditingController();
+  final _passCtrl  = TextEditingController();
 
   @override
   void dispose() {
@@ -23,11 +25,19 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  // ── Abre URL en el navegador del sistema ──────────────────────────────────
+  Future<void> _abrirUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   Future<void> _handleLogin() async {
     final provider = context.read<AuthProvider>();
 
     final success = await provider.login(
-      email: _emailCtrl.text.trim(),
+      email:    _emailCtrl.text.trim(),
       password: _passCtrl.text.trim(),
     );
 
@@ -35,7 +45,8 @@ class _LoginPageState extends State<LoginPage> {
 
     if (success) {
       final prefs = await SharedPreferences.getInstance();
-      final onboardingCompleto = prefs.getBool('onboarding_completo') ?? false;
+      final onboardingCompleto =
+          prefs.getBool(AppConstants.onboardingKey) ?? false;
 
       if (onboardingCompleto) {
         await LocationPermissionHelper().checkAndRequestOnLogin(context);
@@ -61,10 +72,9 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.sizeOf(context);
-    // watch para que el botón reaccione al estado loading
-    final authStatus = context.watch<AuthProvider>().status;
-    final isLoading = authStatus == AuthStatus.loading;
+    final size      = MediaQuery.sizeOf(context);
+    final isLoading =
+        context.watch<AuthProvider>().status == AuthStatus.loading;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF0FAF0),
@@ -75,8 +85,9 @@ class _LoginPageState extends State<LoginPage> {
             children: [
               SizedBox(height: size.height * 0.06),
 
+              // ── Logo más grande ← cambio aquí ──────────────────────────
               ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 60),
+                constraints: const BoxConstraints(maxHeight: 90), // era 60
                 child: Image.asset(
                   'assets/images/ExploraChiapas Logo.png',
                   fit: BoxFit.contain,
@@ -205,6 +216,51 @@ class _LoginPageState extends State<LoginPage> {
                       style: TextStyle(
                         color: Color(0xFF1B5E20),
                         fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              SizedBox(height: size.height * 0.02),
+
+              // ── Links legales ← nuevo ─────────────────────────────────
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 4,
+                runSpacing: 4,
+                children: [
+                  const Text(
+                    'Al continuar aceptas los',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF888888)),
+                  ),
+                  GestureDetector(
+                    onTap: () => _abrirUrl(AppConstants.terminosUrl),
+                    child: const Text(
+                      'Términos y Condiciones',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF2E7D32),
+                        fontWeight: FontWeight.w600,
+                        decoration: TextDecoration.underline,
+                        decorationColor: Color(0xFF2E7D32),
+                      ),
+                    ),
+                  ),
+                  const Text(
+                    'y la',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF888888)),
+                  ),
+                  GestureDetector(
+                    onTap: () => _abrirUrl(AppConstants.privacidadUrl),
+                    child: const Text(
+                      'Política de Privacidad',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF2E7D32),
+                        fontWeight: FontWeight.w600,
+                        decoration: TextDecoration.underline,
+                        decorationColor: Color(0xFF2E7D32),
                       ),
                     ),
                   ),

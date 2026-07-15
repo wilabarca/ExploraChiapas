@@ -14,27 +14,27 @@ class UsuarioModel extends Usuario {
 
   factory UsuarioModel.fromJson(Map<String, dynamic> json) {
     return UsuarioModel(
-      id:           json['id'] as String,
-      name:         json['name'] as String,
-      email:        json['email'] as String,
-      phone:        json['phone'] as String?,
-      userTypeId:   json['userTypeId'] as String,
+      id: json['id'] as String,
+      name: json['name'] as String,
+      email: json['email'] as String,
+      phone: json['phone'] as String?,
+      userTypeId: json['userType'] as String, // ← 'userType', no 'userTypeId'
       registeredAt: DateTime.parse(json['registeredAt'] as String),
-      isPremium:    json['isPremium'] as bool? ?? false,
-      active:       json['active'] as bool? ?? true,
+      isPremium: json['isPremium'] as bool? ?? false,
+      active: json['active'] as bool? ?? true,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'id':           id,
-      'name':         name,
-      'email':        email,
-      'phone':        phone,
-      'userTypeId':   userTypeId,
+      'id': id,
+      'name': name,
+      'email': email,
+      'phone': phone,
+      'userTypeId': userTypeId,
       'registeredAt': registeredAt.toIso8601String(),
-      'isPremium':    isPremium,
-      'active':       active,
+      'isPremium': isPremium,
+      'active': active,
     };
   }
 }

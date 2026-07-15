@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../widgets/register_field.dart';
 import '../widgets/register_user_type.dart';
 import '../providers/auth_provider.dart';
 import '../../domain/entities/usuario_registro.dart';
+import '../../../../core/utils/app_constants.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -32,6 +34,14 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
+  // ── Abre URL en el navegador del sistema ──────────────────────────────────
+  Future<void> _abrirUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   Future<void> _handleRegister() async {
     if (_nombreCtrl.text.isEmpty ||
         _emailCtrl.text.isEmpty ||
@@ -47,7 +57,9 @@ class _RegisterPageState extends State<RegisterPage> {
     if (!_aceptoTerminos) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Debes aceptar los Términos de uso y el Aviso de Privacidad.'),
+          content: Text(
+            'Debes aceptar los Términos y Condiciones y la Política de Privacidad.',
+          ),
         ),
       );
       return;
@@ -71,7 +83,6 @@ class _RegisterPageState extends State<RegisterPage> {
 
     final provider = context.read<AuthProvider>();
 
-    // Mapea el string del selector al enum correcto
     TipoUsuario tipo;
     switch (_tipoUsuario) {
       case 'Turista Nacional':
@@ -84,13 +95,6 @@ class _RegisterPageState extends State<RegisterPage> {
         tipo = TipoUsuario.habitanteLocal;
     }
 
-    debugPrint(
-      'Registrando: '
-      'nombre=${_nombreCtrl.text.trim()} '
-      'email=${_emailCtrl.text.trim()} '
-      'tipo=$tipo',
-    );
-
     final success = await provider.register(
       UsuarioRegistro(
         nombre: _nombreCtrl.text.trim(),
@@ -101,14 +105,9 @@ class _RegisterPageState extends State<RegisterPage> {
       ),
     );
 
-    debugPrint('Register result  : success=$success');
-    debugPrint('Error message    : ${provider.errorMessage}');
-    debugPrint('Status           : ${provider.status}');
-
     if (!mounted) return;
 
     if (success) {
-      debugPrint('Navegando a /intereses');
       Navigator.pushReplacementNamed(context, '/intereses');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -125,91 +124,6 @@ class _RegisterPageState extends State<RegisterPage> {
     }
   }
 
-  void _mostrarDialog(BuildContext context, String titulo, String contenido) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          titulo,
-          style: const TextStyle(
-            color: Color(0xFF1B5E20),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: SingleChildScrollView(
-            child: Text(
-              contenido,
-              style: const TextStyle(fontSize: 13, height: 1.6, color: Color(0xFF333333)),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Cerrar',
-              style: TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  static const String _terminosTexto = '''
-ExploraChiapas es una plataforma digital de turismo sostenible desarrollada como proyecto académico por estudiantes de la Universidad Politécnica de Chiapas.
-
-1. Uso de la plataforma
-   Al crear una cuenta aceptas utilizar ExploraChiapas únicamente con fines lícitos y de manera respetuosa con las comunidades y destinos que forman parte del catálogo.
-
-2. Cuenta de usuario
-   Eres responsable de mantener la confidencialidad de tu contraseña y de todas las actividades realizadas desde tu cuenta. Debes notificarnos de inmediato ante cualquier uso no autorizado.
-
-3. Contenido generado por el usuario
-   Las reseñas y recomendaciones que publiques deben ser honestas, respetuosas y no contener información falsa, ofensiva o que dañe a terceros.
-
-4. Propiedad intelectual
-   Todo el contenido de la plataforma (textos, imágenes, logotipos) es propiedad de ExploraChiapas o de sus respectivos autores. Queda prohibida su reproducción sin autorización.
-
-5. Limitación de responsabilidad
-   ExploraChiapas no garantiza la disponibilidad ininterrumpida del servicio ni se hace responsable de daños derivados del uso de la información publicada.
-
-6. Modificaciones
-   Nos reservamos el derecho de actualizar estos Términos en cualquier momento. Los cambios serán comunicados mediante la aplicación.
-''';
-
-  static const String _avisoPrivacidadTexto = '''
-De conformidad con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP), ExploraChiapas te informa lo siguiente:
-
-Responsable del tratamiento
-ExploraChiapas — Proyecto académico, Universidad Politécnica de Chiapas, Tuxtla Gutiérrez, Chiapas, México.
-
-Datos personales que recopilamos
-• Nombre completo
-• Correo electrónico
-• Número de teléfono
-• Tipo de usuario (turista nacional, extranjero o habitante local)
-• Intereses turísticos seleccionados
-
-Finalidad del tratamiento
-Los datos son utilizados para:
-• Crear y gestionar tu cuenta de usuario
-• Personalizar las recomendaciones de destinos y rutas
-• Mejorar la experiencia dentro de la plataforma
-• Fines estadísticos y de investigación académica (datos anonimizados)
-
-No compartimos tus datos con terceros salvo por obligación legal.
-
-Derechos ARCO
-Tienes derecho a Acceder, Rectificar, Cancelar u Oponerte al tratamiento de tus datos personales enviando una solicitud a: explorachiapas@upchiapas.edu.mx
-
-Cambios al aviso
-Cualquier modificación a este aviso será publicada dentro de la aplicación.
-''';
-
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
@@ -225,8 +139,9 @@ Cualquier modificación a este aviso será publicada dentro de la aplicación.
             children: [
               SizedBox(height: size.height * 0.05),
 
+              // ── Logo más grande ← cambio aquí ──────────────────────
               ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 60),
+                constraints: const BoxConstraints(maxHeight: 90), // era 60
                 child: Image.asset(
                   'assets/images/ExploraChiapas Logo.png',
                   fit: BoxFit.contain,
@@ -265,6 +180,7 @@ Cualquier modificación a este aviso será publicada dentro de la aplicación.
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // ← Dropdown en lugar de chips
                     RegisterUserType(
                       selected: _tipoUsuario,
                       onChanged: (val) => setState(() => _tipoUsuario = val),
@@ -312,12 +228,16 @@ Cualquier modificación a este aviso será publicada dentro de la aplicación.
 
                     const SizedBox(height: 20),
 
+                    // ── Checkbox + URLs externas ← cambio aquí ─────
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Checkbox(
                           value: _aceptoTerminos,
                           activeColor: const Color(0xFF2E7D32),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
                           onChanged: (val) =>
                               setState(() => _aceptoTerminos = val ?? false),
                         ),
@@ -332,41 +252,37 @@ Cualquier modificación a este aviso será publicada dentro de la aplicación.
                                 ),
                               ),
                               GestureDetector(
-                                onTap: () => _mostrarDialog(
-                                  context,
-                                  'Términos de Uso',
-                                  _terminosTexto,
-                                ),
+                                onTap: () =>
+                                    _abrirUrl(AppConstants.terminosUrl),
                                 child: const Text(
-                                  'Términos de Uso',
+                                  'Términos y Condiciones',
                                   style: TextStyle(
                                     fontSize: 13,
                                     color: Color(0xFF2E7D32),
                                     fontWeight: FontWeight.bold,
                                     decoration: TextDecoration.underline,
+                                    decorationColor: Color(0xFF2E7D32),
                                   ),
                                 ),
                               ),
                               const Text(
-                                ' y el ',
+                                ' y la ',
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: Color(0xFF4A4A4A),
                                 ),
                               ),
                               GestureDetector(
-                                onTap: () => _mostrarDialog(
-                                  context,
-                                  'Aviso de Privacidad',
-                                  _avisoPrivacidadTexto,
-                                ),
+                                onTap: () =>
+                                    _abrirUrl(AppConstants.privacidadUrl),
                                 child: const Text(
-                                  'Aviso de Privacidad',
+                                  'Política de Privacidad',
                                   style: TextStyle(
                                     fontSize: 13,
                                     color: Color(0xFF2E7D32),
                                     fontWeight: FontWeight.bold,
                                     decoration: TextDecoration.underline,
+                                    decorationColor: Color(0xFF2E7D32),
                                   ),
                                 ),
                               ),
