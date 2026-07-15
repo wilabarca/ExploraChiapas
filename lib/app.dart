@@ -21,9 +21,10 @@ import 'features/maps/domain/usecases/get_destinations_usecase.dart';
 import 'features/maps/domain/usecases/get_routes_usecase.dart';
 import 'features/maps/data/repositories/map_repository_impl.dart';
 import 'features/maps/data/datasources/map_remote_datasource.dart';
-import 'features/explorar/presentation/pages/explorar_cerca_page.dart';
-import 'features/explorar/presentation/pages/recomendar_lugar_page.dart';
+import 'features/destinos/presentation/pages/explorar_cerca_page.dart';
+import 'features/destinos/presentation/pages/recomendar_lugar_page.dart';
 import 'features/resenas/presentation/pages/home_resenas_page.dart';
+import 'features/negocio/presentation/pages/negocio_lista_page.dart';
 
 class ExploraChiapasApp extends StatelessWidget {
   const ExploraChiapasApp({super.key});
@@ -141,6 +142,18 @@ class ExploraChiapasApp extends StatelessWidget {
                 builder: (_) => const RecomendarLugarPage(),
                 settings: settings,
               );
+
+            // ✅ NUEVA RUTA: /negocios — lista reutilizable por tipo
+            case '/negocios':
+              final args = settings.arguments as Map<String, dynamic>;
+              return MaterialPageRoute(
+                builder: (_) => NegocioListaPage(
+                  tipoNegocioId: args['tipoNegocioId'] as String,
+                  tituloTipo: args['tituloTipo'] as String,
+                ),
+                settings: settings,
+              );
+
             default:
               debugPrint('Ruta no encontrada: ${settings.name}');
               return MaterialPageRoute(builder: (_) => const WelcomePage());

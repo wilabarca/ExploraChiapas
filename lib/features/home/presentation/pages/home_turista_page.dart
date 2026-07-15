@@ -34,6 +34,15 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
     }
   }
 
+  // ── Navegación reutilizable hacia la lista de negocios por tipo ─────────
+  void _irANegocios(String tipoNegocioId, String tituloTipo) {
+    Navigator.pushNamed(
+      context,
+      '/negocios',
+      arguments: {'tipoNegocioId': tipoNegocioId, 'tituloTipo': tituloTipo},
+    );
+  }
+
   static const _destinos = [
     _DestinoData(
       nombre: 'Cascadas de Agua Azul',
@@ -132,9 +141,11 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
               const SizedBox(height: 24),
 
               // ── Restaurantes destacados ──────────────────────────────
-              const SectionHeader(
+              SectionHeader(
                 icon: Icons.restaurant_outlined,
                 titulo: 'Restaurantes destacados',
+                mostrarVerTodos: true,
+                onVerTodos: () => _irANegocios('restaurante', 'Restaurantes'),
               ),
               const SizedBox(height: 14),
               _buildRestaurantes(isTablet),
@@ -142,9 +153,11 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
               const SizedBox(height: 24),
 
               // ── Hoteles recomendados ─────────────────────────────────
-              const SectionHeader(
+              SectionHeader(
                 icon: Icons.hotel_outlined,
                 titulo: 'Hoteles recomendados',
+                mostrarVerTodos: true,
+                onVerTodos: () => _irANegocios('hotel', 'Hoteles'),
               ),
               const SizedBox(height: 14),
               _buildHoteles(isTablet, isLarge),
@@ -247,12 +260,15 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
         padding: const EdgeInsets.symmetric(horizontal: 20),
         children: _restaurantes
             .map(
-              (r) => RestauranteItem(
-                nombre: r.nombre,
-                calificacion: r.calificacion,
-                distanciaKm: r.distanciaKm,
-                descripcion: r.descripcion,
-                imageUrl: r.imageUrl,
+              (r) => GestureDetector(
+                onTap: () => _irANegocios('restaurante', 'Restaurantes'),
+                child: RestauranteItem(
+                  nombre: r.nombre,
+                  calificacion: r.calificacion,
+                  distanciaKm: r.distanciaKm,
+                  descripcion: r.descripcion,
+                  imageUrl: r.imageUrl,
+                ),
               ),
             )
             .toList(),
@@ -263,12 +279,15 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
       child: Column(
         children: _restaurantes
             .map(
-              (r) => RestauranteItem(
-                nombre: r.nombre,
-                calificacion: r.calificacion,
-                distanciaKm: r.distanciaKm,
-                descripcion: r.descripcion,
-                imageUrl: r.imageUrl,
+              (r) => GestureDetector(
+                onTap: () => _irANegocios('restaurante', 'Restaurantes'),
+                child: RestauranteItem(
+                  nombre: r.nombre,
+                  calificacion: r.calificacion,
+                  distanciaKm: r.distanciaKm,
+                  descripcion: r.descripcion,
+                  imageUrl: r.imageUrl,
+                ),
               ),
             )
             .toList(),
@@ -293,10 +312,13 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             children: _hoteles
                 .map(
-                  (h) => HotelCard(
-                    nombre: h.nombre,
-                    precioPorNoche: h.precioPorNoche,
-                    imageUrl: h.imageUrl,
+                  (h) => GestureDetector(
+                    onTap: () => _irANegocios('hotel', 'Hoteles'),
+                    child: HotelCard(
+                      nombre: h.nombre,
+                      precioPorNoche: h.precioPorNoche,
+                      imageUrl: h.imageUrl,
+                    ),
                   ),
                 )
                 .toList(),
@@ -316,10 +338,13 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
                 constraints: BoxConstraints(maxWidth: maxWidth),
                 child: FractionallySizedBox(
                   widthFactor: 0.5,
-                  child: HotelCard(
-                    nombre: h.nombre,
-                    precioPorNoche: h.precioPorNoche,
-                    imageUrl: h.imageUrl,
+                  child: GestureDetector(
+                    onTap: () => _irANegocios('hotel', 'Hoteles'),
+                    child: HotelCard(
+                      nombre: h.nombre,
+                      precioPorNoche: h.precioPorNoche,
+                      imageUrl: h.imageUrl,
+                    ),
                   ),
                 ),
               );
