@@ -13,6 +13,24 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+val releaseSigningPropertyNames =
+    listOf("keyAlias", "keyPassword", "storeFile", "storePassword")
+val hasReleaseSigningConfig =
+    keystorePropertiesFile.exists() &&
+        releaseSigningPropertyNames.all { propertyName ->
+            !keystoreProperties.getProperty(propertyName).isNullOrBlank()
+        }
+val isReleaseBuild = gradle.startParameter.taskNames.any { taskName ->
+    taskName.contains("release", ignoreCase = true)
+}
+
+if (isReleaseBuild && !hasReleaseSigningConfig) {
+    throw org.gradle.api.GradleException(
+        "Release signing is not configured. Add keyAlias, keyPassword, " +
+            "storeFile and storePassword to android/key.properties.",
+    )
+}
+
 android {
     namespace = "com.explorachiapas.app"
     compileSdk = flutter.compileSdkVersion
@@ -28,30 +46,29 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.explorachiapas"
+        applicationId = "com.explorachiapas.app"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
-    if (keystorePropertiesFile.exists()) {
-        signingConfigs {
+    signingConfigs {
+        if (hasReleaseSigningConfig) {
             create("release") {
-                keyAlias = keystoreProperties["keyAlias"] as String
-                keyPassword = keystoreProperties["keyPassword"] as String
-                storeFile = file(keystoreProperties["storeFile"] as String)
-                storePassword = keystoreProperties["storePassword"] as String
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
             }
         }
     }
 
     buildTypes {
         release {
-            if (keystorePropertiesFile.exists()) {
+            if (hasReleaseSigningConfig) {
                 signingConfig = signingConfigs.getByName("release")
             }
-            isMinifyEnabled = false
         }
     }
 }
