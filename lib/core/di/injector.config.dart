@@ -14,8 +14,8 @@ import 'package:injectable/injectable.dart' as _i526;
 
 import '../../features/auth/data/datasource/auth_remote_datasource.dart'
     as _i175;
-import '../../features/auth/data/reposiories/auth_repository_impl.dart'
-    as _i797;
+import '../../features/auth/data/repositories/auth_repository_impl.dart'
+    as _i153;
 import '../../features/auth/domain/repositories/auth_repository.dart' as _i787;
 import '../../features/auth/domain/usecases/get_profile_usecase.dart' as _i568;
 import '../../features/auth/domain/usecases/login_usecase.dart' as _i188;
@@ -54,7 +54,7 @@ import '../../features/eventos/domain/usecases/get_evento_by_id_usecase.dart'
 import '../../features/eventos/domain/usecases/get_eventos_usecase.dart'
     as _i703;
 import '../../features/eventos/presentation/providers/eventos_provider.dart'
-    as _i901;
+    as _i902;
 import '../../features/favoritos/data/datasource/favoritos_remote_datasource.dart'
     as _i768;
 import '../../features/favoritos/data/repositories/favoritos_repository_impl.dart'
@@ -76,6 +76,18 @@ import '../../features/home/data/repositories/home_repository_impl.dart'
 import '../../features/home/domain/repositories/i_home_repository.dart'
     as _i274;
 import '../../features/home/domain/usecases/get_destino_usecase.dart' as _i437;
+import '../../features/negocio/data/datasource/negocio_remote_datasource.dart'
+    as _i907;
+import '../../features/negocio/data/datasource/remote/models/tipo_negocio_models.dart'
+    as _i820;
+import '../../features/negocio/data/repositories/negocio_repository_impl.dart'
+    as _i722;
+import '../../features/negocio/domain/repositories/negocio_repository.dart'
+    as _i252;
+import '../../features/negocio/domain/usecases/buscar_negocio.dart' as _i901;
+import '../../features/negocio/domain/usecases/obtener_negocio.dart' as _i933;
+import '../../features/negocio/domain/usecases/obtener_negocio_por_id.dart'
+    as _i810;
 import '../../features/profile/data/datasource/profile_remote_datasource.dart'
     as _i1031;
 import '../../features/profile/data/repositories/profile_repository_impl.dart'
@@ -104,8 +116,26 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i557.ApiClient>(() => _i557.ApiClient());
     gh.lazySingleton<_i322.MlApiClient>(() => _i322.MlApiClient());
     gh.lazySingleton<_i45.AvatarService>(() => _i149.AvatarServiceImpl());
+    gh.lazySingleton<_i907.NegocioRemoteDataSource>(
+      () => _i907.NegocioRemoteDataSourceMock(),
+    );
+    gh.lazySingleton<_i252.NegocioRepository>(
+      () => _i722.NegocioRepositoryImpl(gh<_i907.NegocioRemoteDataSource>()),
+    );
     gh.lazySingleton<_i730.IChatRemoteDatasource>(
       () => _i730.ChatRemoteDatasourceImpl(gh<_i322.MlApiClient>()),
+    );
+    gh.factory<_i820.BuscarNegocios>(
+      () => _i820.BuscarNegocios(gh<_i252.NegocioRepository>()),
+    );
+    gh.factory<_i901.BuscarNegocios>(
+      () => _i901.BuscarNegocios(gh<_i252.NegocioRepository>()),
+    );
+    gh.factory<_i933.ObtenerNegocios>(
+      () => _i933.ObtenerNegocios(gh<_i252.NegocioRepository>()),
+    );
+    gh.factory<_i810.ObtenerNegocioPorId>(
+      () => _i810.ObtenerNegocioPorId(gh<_i252.NegocioRepository>()),
     );
     gh.factory<_i1017.IHomeRemoteDatasource>(
       () => _i1017.HomeRemoteDatasourceImpl(),
@@ -119,26 +149,20 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i437.GetDestinosUseCase>(
       () => _i437.GetDestinosUseCase(gh<_i274.IHomeRepository>()),
     );
-    gh.lazySingleton<_i787.AuthRepository>(
-      () => _i797.AuthRepositoryImpl(
-        gh<_i175.AuthRemoteDataSource>(),
-        gh<_i45.AvatarService>(),
-      ),
-    );
     gh.factory<_i124.IChatRepository>(
       () => _i1018.ChatRepositoryImpl(gh<_i730.IChatRemoteDatasource>()),
-    );
-    gh.factory<_i1031.IProfileRemoteDatasource>(
-      () => _i1031.ProfileRemoteDatasourceImpl(gh<_i557.ApiClient>()),
-    );
-    gh.factory<_i301.EnviarMensajeUseCase>(
-      () => _i301.EnviarMensajeUseCase(gh<_i124.IChatRepository>()),
     );
     gh.lazySingleton<_i747.EventosRemoteDataSource>(
       () => _i747.EventosRemoteDataSourceImpl(gh<_i557.ApiClient>()),
     );
     gh.factory<_i1031.IProfileRemoteDatasource>(
       () => _i1031.ProfileRemoteDatasourceImpl(gh<_i557.ApiClient>()),
+    );
+    gh.lazySingleton<_i787.AuthRepository>(
+      () => _i153.AuthRepositoryImpl(
+        gh<_i175.AuthRemoteDataSource>(),
+        gh<_i45.AvatarService>(),
+      ),
     );
     gh.lazySingleton<_i768.FavoritosRemoteDataSource>(
       () => _i768.FavoritosRemoteDataSourceImpl(gh<_i557.ApiClient>()),
@@ -148,9 +172,6 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i301.EnviarMensajeUseCase>(
       () => _i301.EnviarMensajeUseCase(gh<_i124.IChatRepository>()),
-    );
-    gh.lazySingleton<_i683.EventosRepository>(
-      () => _i696.EventosRepositoryImpl(gh<_i747.EventosRemoteDataSource>()),
     );
     gh.factory<_i116.ChatProvider>(
       () => _i116.ChatProvider(gh<_i301.EnviarMensajeUseCase>()),
@@ -169,6 +190,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i879.IProfileRepository>(
       () => _i334.ProfileRepositoryImpl(gh<_i1031.IProfileRemoteDatasource>()),
+    );
+    gh.lazySingleton<_i683.EventosRepository>(
+      () => _i696.EventosRepositoryImpl(gh<_i747.EventosRemoteDataSource>()),
     );
     gh.factory<_i247.GetEventoByIdUseCase>(
       () => _i247.GetEventoByIdUseCase(gh<_i683.EventosRepository>()),
@@ -195,8 +219,8 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i488.ListDestinosUseCase>(
       () => _i488.ListDestinosUseCase(gh<_i991.DestinoRepository>()),
     );
-    gh.factory<_i901.EventosProvider>(
-      () => _i901.EventosProvider(
+    gh.factory<_i902.EventosProvider>(
+      () => _i902.EventosProvider(
         gh<_i703.GetEventosUseCase>(),
         gh<_i247.GetEventoByIdUseCase>(),
       ),
@@ -208,7 +232,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i568.GetProfileUseCase>(),
       ),
     );
-    gh.lazySingleton<_i919.ProfileProvider>(
     gh.factory<_i536.AddFavoritoUseCase>(
       () => _i536.AddFavoritoUseCase(gh<_i743.FavoritosRepository>()),
     );
@@ -218,7 +241,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i662.RemoveFavoritoUseCase>(
       () => _i662.RemoveFavoritoUseCase(gh<_i743.FavoritosRepository>()),
     );
-    gh.factory<_i919.ProfileProvider>(
+    gh.lazySingleton<_i919.ProfileProvider>(
       () => _i919.ProfileProvider(
         gh<_i32.GetPerfilUseCase>(),
         gh<_i226.UpdatePerfilUseCase>(),

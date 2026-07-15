@@ -17,7 +17,7 @@ class PerfilModel extends PerfilEntity {
     nombre: json['name'] as String,
     email: json['email'] as String,
     telefono: json['phone'] as String?,
-    userTypeId: json['userTypeId'] as String,
+    userTypeId: json['userType'] as String, // ← 'userType', no 'userTypeId'
     isPremium: json['isPremium'] as bool? ?? false,
     active: json['active'] as bool? ?? true,
     registeredAt: DateTime.parse(json['registeredAt'] as String),

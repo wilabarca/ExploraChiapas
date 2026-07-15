@@ -7,8 +7,6 @@ class EventosBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // LayoutBuilder + AspectRatio: la tarjeta mantiene una proporción
-    // consistente sin importar el ancho de pantalla.
     return LayoutBuilder(
       builder: (context, constraints) {
         final isTablet = constraints.maxWidth >= 560;
@@ -45,7 +43,6 @@ class EventosBanner extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    // Flexible: la descripción se recorta si no cabe.
                     Flexible(
                       child: Text(
                         'Festivales, talleres artesanales y ceremonias '
@@ -60,7 +57,8 @@ class EventosBanner extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    InkWell(
+                    // 🟢 Aquí el cambio: InkWell → GestureDetector
+                    GestureDetector(
                       onTap: onExplorar,
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
@@ -68,12 +66,17 @@ class EventosBanner extends StatelessWidget {
                           Text(
                             'Explorar',
                             style: TextStyle(
+                              fontSize: 14, // tal como pediste
                               color: Color(0xFF2E7D32),
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                           SizedBox(width: 4),
-                          Icon(Icons.arrow_forward, size: 16, color: Color(0xFF2E7D32)),
+                          Icon(
+                            Icons.arrow_forward,
+                            size: 16, // tal como pediste
+                            color: Color(0xFF2E7D32),
+                          ),
                         ],
                       ),
                     ),
