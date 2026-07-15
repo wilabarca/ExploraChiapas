@@ -84,41 +84,12 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
     }
   }
 
-  void _onNavTap(int index) {
-    if (index == 1) {
-      Navigator.pushNamed(context, '/mapa');
-      return;
-    }
-
-    if (index == 2) {
-      Navigator.pushNamed(context, '/favoritos');
-      return;
-    }
-
-    if (index == 3) {
-      Navigator.pushNamed(context, '/perfil');
-      return;
-    }
-
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
-  void _openDestinoDetail({
-    required String nombre,
-    required double calificacion,
-  }) {
-    Navigator.push(
+  // ── Navegación reutilizable hacia la lista de negocios por tipo ─────────
+  void _irANegocios(String tipoNegocioId, String tituloTipo) {
+    Navigator.pushNamed(
       context,
-      MaterialPageRoute(
-        builder: (_) => LugarDetailPage(
-          nombre: nombre,
-          categoria: 'Destino turístico',
-          calificacion: calificacion,
-          imageUrl: '',
-        ),
-      ),
+      '/negocios',
+      arguments: {'tipoNegocioId': tipoNegocioId, 'tituloTipo': tituloTipo},
     );
   }
 
@@ -406,9 +377,11 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
               const SizedBox(height: 24),
 
               // ── Restaurantes destacados ──────────────────────────────
-              const SectionHeader(
+              SectionHeader(
                 icon: Icons.restaurant_outlined,
                 titulo: 'Restaurantes destacados',
+                mostrarVerTodos: true,
+                onVerTodos: () => _irANegocios('restaurante', 'Restaurantes'),
               ),
               const SizedBox(height: 14),
               _buildRestaurantes(isTablet),
@@ -435,9 +408,11 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
               const SizedBox(height: 24),
 
               // ── Hoteles recomendados ─────────────────────────────────
-              const SectionHeader(
+              SectionHeader(
                 icon: Icons.hotel_outlined,
                 titulo: 'Hoteles recomendados',
+                mostrarVerTodos: true,
+                onVerTodos: () => _irANegocios('hotel', 'Hoteles'),
               ),
               const SizedBox(height: 14),
               _buildHoteles(isTablet, isLarge),
@@ -675,46 +650,15 @@ class _PromocionCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20),
         children: _restaurantes
             .map(
-              (r) => RestauranteItem(
-                nombre: r.nombre,
-                calificacion: r.calificacion,
-                distanciaKm: r.distanciaKm,
-                descripcion: r.descripcion,
-                imageUrl: r.imageUrl,
-          if (promo.negocioNombre != null) ...[
-            const SizedBox(height: 6),
-            Text(
-              promo.negocioNombre!,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFF666666),
-              ),
-            ),
-          ],
-          if (promo.descripcion != null) ...[
-            const SizedBox(height: 6),
-            Text(
-              promo.descripcion!,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFF888888),
-              ),
-            ),
-          ],
-          const Spacer(),
-          if (promo.precio != null)
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: 4,
-              ),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8F5E9),
-                borderRadius: BorderRadius.circular(8),
+              (r) => GestureDetector(
+                onTap: () => _irANegocios('restaurante', 'Restaurantes'),
+                child: RestauranteItem(
+                  nombre: r.nombre,
+                  calificacion: r.calificacion,
+                  distanciaKm: r.distanciaKm,
+                  descripcion: r.descripcion,
+                  imageUrl: r.imageUrl,
+                ),
               ),
             )
             .toList(),
@@ -725,12 +669,15 @@ class _PromocionCard extends StatelessWidget {
       child: Column(
         children: _restaurantes
             .map(
-              (r) => RestauranteItem(
-                nombre: r.nombre,
-                calificacion: r.calificacion,
-                distanciaKm: r.distanciaKm,
-                descripcion: r.descripcion,
-                imageUrl: r.imageUrl,
+              (r) => GestureDetector(
+                onTap: () => _irANegocios('restaurante', 'Restaurantes'),
+                child: RestauranteItem(
+                  nombre: r.nombre,
+                  calificacion: r.calificacion,
+                  distanciaKm: r.distanciaKm,
+                  descripcion: r.descripcion,
+                  imageUrl: r.imageUrl,
+                ),
               ),
             )
             .toList(),
@@ -755,10 +702,13 @@ class _PromocionCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             children: _hoteles
                 .map(
-                  (h) => HotelCard(
-                    nombre: h.nombre,
-                    precioPorNoche: h.precioPorNoche,
-                    imageUrl: h.imageUrl,
+                  (h) => GestureDetector(
+                    onTap: () => _irANegocios('hotel', 'Hoteles'),
+                    child: HotelCard(
+                      nombre: h.nombre,
+                      precioPorNoche: h.precioPorNoche,
+                      imageUrl: h.imageUrl,
+                    ),
                   ),
                 )
                 .toList(),
@@ -778,108 +728,13 @@ class _PromocionCard extends StatelessWidget {
                 constraints: BoxConstraints(maxWidth: maxWidth),
                 child: FractionallySizedBox(
                   widthFactor: 0.5,
-                  child: HotelCard(
-                    nombre: h.nombre,
-                    precioPorNoche: h.precioPorNoche,
-                    imageUrl: h.imageUrl,
-}
-
-class _EventoItem extends StatelessWidget {
-  final EventoItem evento;
-
-  const _EventoItem({
-    required this.evento,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 20,
-        vertical: 6,
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8F5E9),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.event,
-                color: Color(0xFF2E7D32),
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    evento.titulo,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1B1B1B),
+                  child: GestureDetector(
+                    onTap: () => _irANegocios('hotel', 'Hoteles'),
+                    child: HotelCard(
+                      nombre: h.nombre,
+                      precioPorNoche: h.precioPorNoche,
+                      imageUrl: h.imageUrl,
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.calendar_today_outlined,
-                        size: 12,
-                        color: Color(0xFF888888),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        evento.fechaInicio,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF888888),
-                        ),
-                      ),
-                      if (evento.municipio != null) ...[
-                        const SizedBox(width: 10),
-                        const Icon(
-                          Icons.place_outlined,
-                          size: 12,
-                          color: Color(0xFF888888),
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            evento.municipio!,
-                            maxLines: 1,
-                            overflow:
-                                TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF888888),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
                   ),
                 ),
               );

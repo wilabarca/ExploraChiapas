@@ -35,6 +35,15 @@ class _HomeLocalPageState extends State<HomeLocalPage> {
     }
   }
 
+  // ── Navegación reutilizable hacia la lista de negocios por tipo ─────────
+  void _irANegocios(String tipoNegocioId, String tituloTipo) {
+    Navigator.pushNamed(
+      context,
+      '/negocios',
+      arguments: {'tipoNegocioId': tipoNegocioId, 'tituloTipo': tituloTipo},
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
@@ -177,24 +186,32 @@ class _HomeLocalPageState extends State<HomeLocalPage> {
           SectionHeader(
             icon: Icons.restaurant_outlined,
             titulo: 'Restaurantes destacados',
+            mostrarVerTodos: true,
+            onVerTodos: () => _irANegocios('restaurante', 'Restaurantes'),
           ),
           const SizedBox(height: 14),
 
-          RestauranteItem(
-            nombre: 'El Fogón de Jovel',
-            calificacion: 4.7,
-            distanciaKm: 2.4,
-            descripcion: 'Especialidad en cocina de autor regional.',
-            imageUrl:
-                'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80',
+          GestureDetector(
+            onTap: () => _irANegocios('restaurante', 'Restaurantes'),
+            child: RestauranteItem(
+              nombre: 'El Fogón de Jovel',
+              calificacion: 4.7,
+              distanciaKm: 2.4,
+              descripcion: 'Especialidad en cocina de autor regional.',
+              imageUrl:
+                  'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80',
+            ),
           ),
-          RestauranteItem(
-            nombre: 'Café Maya Luxury',
-            calificacion: 4.9,
-            distanciaKm: 0.8,
-            descripcion: 'El mejor café de altura de San Cristóbal.',
-            imageUrl:
-                'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&q=80',
+          GestureDetector(
+            onTap: () => _irANegocios('restaurante', 'Restaurantes'),
+            child: RestauranteItem(
+              nombre: 'Café Maya Luxury',
+              calificacion: 4.9,
+              distanciaKm: 0.8,
+              descripcion: 'El mejor café de altura de San Cristóbal.',
+              imageUrl:
+                  'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&q=80',
+            ),
           ),
 
           const SizedBox(height: 24),
@@ -268,6 +285,8 @@ class _HomeLocalPageState extends State<HomeLocalPage> {
           SectionHeader(
             icon: Icons.hotel_outlined,
             titulo: 'Hoteles recomendados',
+            mostrarVerTodos: true,
+            onVerTodos: () => _irANegocios('hotel', 'Hoteles'),
           ),
           const SizedBox(height: 14),
 
@@ -276,18 +295,24 @@ class _HomeLocalPageState extends State<HomeLocalPage> {
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              children: const [
-                HotelCard(
-                  nombre: 'Selva Verde Eco-Resort',
-                  precioPorNoche: 2400.0,
-                  imageUrl:
-                      'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=400&q=80',
+              children: [
+                GestureDetector(
+                  onTap: () => _irANegocios('hotel', 'Hoteles'),
+                  child: const HotelCard(
+                    nombre: 'Selva Verde Eco-Resort',
+                    precioPorNoche: 2400.0,
+                    imageUrl:
+                        'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=400&q=80',
+                  ),
                 ),
-                HotelCard(
-                  nombre: 'Boutique Casa Lum',
-                  precioPorNoche: 3100.0,
-                  imageUrl:
-                      'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&q=80',
+                GestureDetector(
+                  onTap: () => _irANegocios('hotel', 'Hoteles'),
+                  child: const HotelCard(
+                    nombre: 'Boutique Casa Lum',
+                    precioPorNoche: 3100.0,
+                    imageUrl:
+                        'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&q=80',
+                  ),
                 ),
               ],
             ),

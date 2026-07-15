@@ -96,6 +96,7 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, Usuario>> getProfile() async {
     try {
       final usuario = await _dataSource.getProfile();
+      debugPrint('🔍 userTypeId RAW del backend: "${usuario.userTypeId}"');
 
       // ← Cuando carga el perfil guarda el tipo del servidor
       // Esto sincroniza el tipo en caso de que haya cambiado
