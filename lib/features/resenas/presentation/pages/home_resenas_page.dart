@@ -15,22 +15,11 @@ class HomeResenasPage extends StatefulWidget {
 class _HomeResenasPageState extends State<HomeResenasPage> {
   // ← Solo 3 categorías: General, Restaurante, Hotel
   String _filtroActivo = 'General';
-  final _filtros = ['General', 'Restaurante', 'Hotel'];
+  final _filtros = ['General', 'Naturaleza', 'Cultura', 'Restaurante', 'Hotel'];
 
   List<DestinoResenaEntity> get _destinosFiltrados {
-    switch (_filtroActivo) {
-      case 'Restaurante':
-        return destinosFake
-            .where((d) => d.tipo == 'Restaurante')
-            .toList();
-      case 'Hotel':
-        return destinosFake
-            .where((d) => d.tipo == 'Hotel')
-            .toList();
-      default:
-        // General → muestra todos
-        return destinosFake;
-    }
+    if (_filtroActivo == 'General') return destinosFake;
+    return destinosFake.where((d) => d.tipo == _filtroActivo).toList();
   }
 
   @override

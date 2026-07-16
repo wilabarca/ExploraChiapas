@@ -14,6 +14,8 @@ import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/profile/presentation/providers/profile_provider.dart';
 import 'features/Chat/presentation/providers/chat_provider.dart';
 import 'features/destinos/presentation/providers/destinos_provider.dart';
+import 'features/favoritos/presentation/providers/favoritos_provider.dart';
+import 'features/eventos/presentation/providers/eventos_provider.dart';
 
 import 'features/home/presentation/pages/home_page.dart';
 import 'features/profile/presentation/pages/profile_page.dart';
@@ -51,6 +53,12 @@ class ExploraChiapasApp extends StatelessWidget {
         ),
         ChangeNotifierProvider<DestinoProvider>(
           create: (_) => getIt<DestinoProvider>(),
+        ),
+        ChangeNotifierProvider<FavoritosProvider>(
+          create: (_) => getIt<FavoritosProvider>(),
+        ),
+        ChangeNotifierProvider<EventosProvider>(
+          create: (_) => getIt<EventosProvider>(),
         ),
       ],
       child: MaterialApp(
