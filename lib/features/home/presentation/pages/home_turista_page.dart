@@ -53,9 +53,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
       final promos = await _apiService.fetchPromociones();
       if (!mounted) return;
       setState(() => _promociones = promos);
-    } catch (_) {
-      // Las promociones no bloquean la pantalla principal.
-    }
+    } catch (_) {}
   }
 
   void _onNavTap(BottomNavTab tab) {
@@ -73,11 +71,10 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
         Navigator.pushNamed(context, '/perfil');
         break;
       case BottomNavTab.explorar:
-        break; // ya estamos aquí
+        break;
     }
   }
 
-  // ── Navegación al detalle de un destino turístico ───────────────────────
   void _openDestinoDetail({
     required String nombre,
     required double calificacion,
@@ -88,7 +85,6 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
     );
   }
 
-  // ── Navegación reutilizable hacia la lista de negocios por tipo ─────────
   void _irANegocios(String tipoNegocioId, String tituloTipo) {
     Navigator.pushNamed(
       context,
@@ -133,7 +129,6 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ MediaQuery SOLO dentro de build()
     final mq = MediaQuery.of(context);
     final screenW = mq.size.width;
     final isTablet = screenW >= 600;
@@ -296,7 +291,6 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
                 const SizedBox(height: 24),
               ],
 
-              // ── Próximos eventos (dinámico vía EventosProvider) ──────
               Consumer<EventosProvider>(
                 builder: (context, eventosProvider, child) {
                   if (eventosProvider.status == EventosStatus.loading) {
@@ -647,26 +641,14 @@ class _PromocionCard extends StatelessWidget {
   }
 }
 
-// ── Formatea una fecha como "14 jul" sin depender del paquete intl ─────────
 String _formatearFecha(DateTime fecha) {
   const meses = [
-    'ene',
-    'feb',
-    'mar',
-    'abr',
-    'may',
-    'jun',
-    'jul',
-    'ago',
-    'sep',
-    'oct',
-    'nov',
-    'dic',
+    'ene', 'feb', 'mar', 'abr', 'may', 'jun',
+    'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
   ];
   return '${fecha.day} ${meses[fecha.month - 1]}';
 }
 
-// ── Card de evento — usa Evento del dominio ─────────────────────────────────
 class _EventoItem extends StatelessWidget {
   final Evento evento;
 

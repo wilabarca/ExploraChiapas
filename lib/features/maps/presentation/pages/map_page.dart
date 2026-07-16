@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../providers/map_provider.dart';
 import '../widgets/destination_bottom_sheet.dart';
@@ -13,13 +14,9 @@ class MapPage extends StatefulWidget {
 }
 
 class _MapPageState extends State<MapPage> {
-  GoogleMapController? _mapController;
+  final MapController _mapController = MapController();
 
-  // Centro de Chiapas
-  static const _chiapasCenter = CameraPosition(
-    target: LatLng(16.7521, -93.1152),
-    zoom: 7.5,
-  );
+  static const _chiapasCenter = LatLng(16.7521, -93.1152);
 
   @override
   void initState() {
@@ -29,16 +26,23 @@ class _MapPageState extends State<MapPage> {
     });
   }
 
-  @override
-  void dispose() {
-    _mapController?.dispose();
-    super.dispose();
+  void _moverCamaraA(double lat, double lng) {
+    _mapController.move(LatLng(lat, lng), 13);
   }
 
-  void _moverCamaraA(double lat, double lng) {
-    _mapController?.animateCamera(
-      CameraUpdate.newLatLngZoom(LatLng(lat, lng), 13),
-    );
+  Color _colorPorTipo(String tipo) {
+    switch (tipo) {
+      case 'naturaleza':
+        return const Color(0xFF2E7D32);
+      case 'cultura':
+        return const Color(0xFF1565C0);
+      case 'gastronomia':
+        return const Color(0xFFE65100);
+      case 'aventura':
+        return const Color(0xFF6A1B9A);
+      default:
+        return const Color(0xFF00838F);
+    }
   }
 
   @override
@@ -46,26 +50,59 @@ class _MapPageState extends State<MapPage> {
     return Scaffold(
       body: Stack(
         children: [
-          // ── Mapa ──────────────────────────────────────────
           Consumer<MapProvider>(
-            builder: (_, provider, __) => GoogleMap(
-              initialCameraPosition: _chiapasCenter,
-              markers: provider.markers,
-              polylines: provider.polylines,
-              myLocationEnabled: true,
-              myLocationButtonEnabled: false,
-              zoomControlsEnabled: false,
-              mapToolbarEnabled: false,
-              onMapCreated: (c) => _mapController = c,
-              onTap: (_) => provider.clearSelection(),
+            builder: (_, provider, __) => FlutterMap(
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: _chiapasCenter,
+                initialZoom: 7.5,
+                onTap: (_, __) => provider.clearSelection(),
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate:
+                      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.explorachiapas.app',
+                ),
+                if (provider.routePoints.isNotEmpty)
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: provider.routePoints
+                            .map((p) => LatLng(p[0], p[1]))
+                            .toList(),
+                        color: const Color(0xFF2E7D32),
+                        strokeWidth: 4,
+                      ),
+                    ],
+                  ),
+                MarkerLayer(
+                  markers: provider.destinations.map((d) {
+                    return Marker(
+                      point: LatLng(d.lat, d.lng),
+                      width: 36,
+                      height: 36,
+                      child: GestureDetector(
+                        onTap: () => provider.selectDestination(d),
+                        child: Icon(
+                          Icons.location_on,
+                          color: _colorPorTipo(d.tipo),
+                          size: 36,
+                          shadows: const [
+                            Shadow(color: Colors.black26, blurRadius: 4),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
             ),
           ),
 
-          // ── Barra superior con filtros ─────────────────────
           SafeArea(
             child: Column(
               children: [
-                // Header
                 Container(
                   margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                   padding: const EdgeInsets.symmetric(
@@ -75,7 +112,7 @@ class _MapPageState extends State<MapPage> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
+                        color: Colors.black.withValues(alpha: 0.08),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -108,8 +145,6 @@ class _MapPageState extends State<MapPage> {
                     ],
                   ),
                 ),
-
-                // Filtros
                 MapFilterBar(
                   onFilterChanged: (tipo) =>
                       context.read<MapProvider>().loadDestinations(tipo: tipo),
@@ -118,7 +153,6 @@ class _MapPageState extends State<MapPage> {
             ),
           ),
 
-          // ── Loading indicator ──────────────────────────────
           Consumer<MapProvider>(
             builder: (_, provider, __) {
               if (provider.status != MapStatus.loading) {
@@ -132,7 +166,6 @@ class _MapPageState extends State<MapPage> {
             },
           ),
 
-          // ── Bottom sheet del destino seleccionado ──────────
           Consumer<MapProvider>(
             builder: (_, provider, __) {
               final selected = provider.selected;
@@ -165,20 +198,14 @@ class _MapPageState extends State<MapPage> {
             },
           ),
 
-          // ── Botón de ubicación actual ──────────────────────
           Positioned(
             right: 16,
             bottom: 200,
             child: FloatingActionButton.small(
-              onPressed: () {
-                _mapController?.animateCamera(
-                  CameraUpdate.newCameraPosition(_chiapasCenter),
-                );
-              },
+              onPressed: () => _mapController.move(_chiapasCenter, 7.5),
               backgroundColor: Colors.white,
               elevation: 4,
-              child: const Icon(Icons.my_location,
-                  color: Color(0xFF2E7D32)),
+              child: const Icon(Icons.my_location, color: Color(0xFF2E7D32)),
             ),
           ),
         ],
