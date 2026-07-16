@@ -44,6 +44,11 @@ class _HomeLocalPageState extends State<HomeLocalPage> {
     );
   }
 
+  // ── Navegación a la vista de promociones ─────────────────────────────────
+  void _irAPromociones() {
+    Navigator.pushNamed(context, '/promociones');
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
@@ -178,6 +183,14 @@ class _HomeLocalPageState extends State<HomeLocalPage> {
                 ),
               ),
             ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // ── 🔥 Promociones ───────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: _PromocionesBanner(onTap: _irAPromociones),
           ),
 
           const SizedBox(height: 24),
@@ -327,6 +340,128 @@ class _HomeLocalPageState extends State<HomeLocalPage> {
         currentTab: BottomNavTab.explorar,
         onTap: _onNavTap,
       ),
+    );
+  }
+}
+
+// ── Card "🔥 Promociones" — reutilizable, responsiva ────────────────────────
+class _PromocionesBanner extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _PromocionesBanner({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    // LayoutBuilder: adapta proporción y tamaños según el ancho real
+    // disponible (no solo el ancho de pantalla).
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isTablet = constraints.maxWidth >= 560;
+
+        return GestureDetector(
+          onTap: onTap,
+          child: AspectRatio(
+            // AspectRatio: la card mantiene proporción consistente sin
+            // importar el ancho de pantalla.
+            aspectRatio: isTablet ? 4.6 / 1.6 : 2.9 / 1.6,
+            child: Container(
+              padding: EdgeInsets.all(isTablet ? 22 : 18),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFFFF7A45), Color(0xFFD84315)],
+                ),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Stack(
+                children: [
+                  Positioned(
+                    right: -12,
+                    bottom: -12,
+                    child: Icon(
+                      Icons.local_fire_department,
+                      size: isTablet ? 100 : 78,
+                      color: Colors.white.withOpacity(0.14),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      // Expanded: el texto ocupa el espacio disponible sin
+                      // empujar el ícono.
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text(
+                                  '🔥',
+                                  style: TextStyle(fontSize: 15),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'PROMOCIONES',
+                                  style: TextStyle(
+                                    fontSize: isTablet ? 12 : 10.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                    letterSpacing: 0.8,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: isTablet ? 10 : 8),
+                            // Flexible: la descripción se recorta si no cabe.
+                            Flexible(
+                              child: Text(
+                                'Descubre descuentos exclusivos de '
+                                'hoteles, restaurantes, tours y más.',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: isTablet ? 14 : 12.5,
+                                  color: Colors.white.withOpacity(0.92),
+                                  height: 1.35,
+                                ),
+                              ),
+                            ),
+                            // Spacer: empuja el enlace hacia el fondo cuando
+                            // hay espacio vertical disponible.
+                            const Spacer(),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Ver promociones',
+                                  style: TextStyle(
+                                    fontSize: isTablet ? 13.5 : 12.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                const Icon(
+                                  Icons.arrow_forward,
+                                  size: 15,
+                                  color: Colors.white,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

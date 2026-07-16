@@ -1,3 +1,4 @@
+import 'package:explorachiapas/features/resena/domain/entities/DestinoResenaEntity.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../domain/entities/resena_entity.dart';

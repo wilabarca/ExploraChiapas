@@ -1,9 +1,9 @@
 import 'package:injectable/injectable.dart';
 
-import '../../../../../core/error/exceptions.dart';
-import '../../../../../core/network/api_client.dart';
-import '../../../../../core/utils/app_constants.dart';
-import '../../models/destino_model.dart';
+import '../../../../core/error/exceptions.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../../core/utils/app_constants.dart';
+import 'remote/models/destino_model.dart';
 
 abstract class DestinoRemoteDataSource {
   Future<List<DestinoModel>> getDestinos({

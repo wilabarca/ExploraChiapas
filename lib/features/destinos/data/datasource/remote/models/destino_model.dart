@@ -1,4 +1,4 @@
-import '../../domain/entities/destino.dart';
+import '../../../../domain/entities/destino.dart';
 
 class DestinoModel extends Destino {
   const DestinoModel({

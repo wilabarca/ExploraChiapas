@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../domain/entities/resena_entity.dart';
-import '../widgets/star_rating.dart';
+
+import '../../domain/entities/DestinoResenaEntity.dart';
+import '../providers/ResenasProvider.dart';
+import '../../../home/presentation/widgets/home_app_bar.dart';
 
 class EscribirResenaPage extends StatefulWidget {
   final DestinoResenaEntity destino;
@@ -15,7 +18,6 @@ class EscribirResenaPage extends StatefulWidget {
 class _EscribirResenaPageState extends State<EscribirResenaPage> {
   double _calificacion = 0;
   final _comentarioCtrl = TextEditingController();
-  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -44,52 +46,56 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
       return;
     }
 
-    setState(() => _isLoading = true);
-    // TODO: conectar con la API
-    await Future.delayed(const Duration(milliseconds: 800));
-    if (!mounted) return;
-    setState(() => _isLoading = false);
+    final provider = context.read<ResenasProvider>();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('¡Reseña publicada exitosamente!'),
-        backgroundColor: Color(0xFF2E7D32),
-      ),
+    final exito = await provider.publicarResena(
+      targetType: widget.destino.targetType,
+      targetId: widget.destino.id,
+      rating: _calificacion.toInt(),
+      comment: _comentarioCtrl.text.trim(),
     );
-    Navigator.pop(context);
+
+    if (!mounted) return;
+
+    if (exito) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('¡Reseña publicada exitosamente!'),
+          backgroundColor: Color(0xFF2E7D32),
+        ),
+      );
+      Navigator.pop(context, true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            provider.publicarError ?? 'No fue posible publicar la reseña',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      provider.resetPublicarStatus();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // ✓ MediaQuery: paddings/alturas proporcionales al alto real.
     final size = MediaQuery.sizeOf(context);
+    final publicando =
+        context.watch<ResenasProvider>().publicarStatus ==
+        PublicarStatus.loading;
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF2E7D32)),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'ExploraChiapas',
-          style: TextStyle(
-            color: Color(0xFF2E7D32),
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
-        ),
-        centerTitle: true,
-      ),
+      appBar: const HomeAppBar(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
           children: [
             const SizedBox(height: 20),
 
-            // ── Imagen del destino ──────────────────────────────────────
-            // ✓ AspectRatio para imagen proporcional
+            // ✓ AspectRatio: imagen del destino con proporción fija.
             AspectRatio(
               aspectRatio: 16 / 7,
               child: ClipRRect(
@@ -110,7 +116,7 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            Colors.black.withOpacity(0.6),
+                            Colors.black.withValues(alpha: 0.6),
                           ],
                           stops: const [0.4, 1.0],
                         ),
@@ -159,11 +165,14 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
                                 size: 12,
                               ),
                               const SizedBox(width: 3),
-                              Text(
-                                widget.destino.ubicacion,
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 12,
+                              Flexible(
+                                child: Text(
+                                  widget.destino.ubicacion,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12,
+                                  ),
                                 ),
                               ),
                             ],
@@ -178,7 +187,6 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
 
             SizedBox(height: size.height * 0.04),
 
-            // ── Calificación ────────────────────────────────────────────
             const Text(
               '¿Qué tal fue tu visita?',
               style: TextStyle(
@@ -196,7 +204,6 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
 
             SizedBox(height: size.height * 0.03),
 
-            // Estrellas interactivas
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(5, (i) {
@@ -219,10 +226,9 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
 
             SizedBox(height: size.height * 0.03),
 
-            // ── Comentario ──────────────────────────────────────────────
-            Align(
+            const Align(
               alignment: Alignment.centerLeft,
-              child: const Text(
+              child: Text(
                 'TU COMENTARIO',
                 style: TextStyle(
                   fontSize: 11,
@@ -233,7 +239,7 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
               ),
             ),
             const SizedBox(height: 10),
-            // ✓ ConstrainedBox: área de texto con altura mínima garantizada
+            // ✓ ConstrainedBox: altura mínima del campo de texto.
             ConstrainedBox(
               constraints: const BoxConstraints(minHeight: 120),
               child: TextField(
@@ -268,15 +274,14 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
 
             SizedBox(height: size.height * 0.04),
 
-            // ── Botón publicar ──────────────────────────────────────────
-            // ✓ FractionallySizedBox: botón proporcional al ancho
+            // ✓ FractionallySizedBox: botón proporcional al ancho.
             FractionallySizedBox(
               widthFactor: 1.0,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(minHeight: 54),
                 child: ElevatedButton.icon(
-                  onPressed: _isLoading ? null : _publicarResena,
-                  icon: _isLoading
+                  onPressed: publicando ? null : _publicarResena,
+                  icon: publicando
                       ? const SizedBox(
                           width: 20,
                           height: 20,
@@ -287,7 +292,7 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
                         )
                       : const Icon(Icons.send_rounded, color: Colors.white),
                   label: Text(
-                    _isLoading ? 'Publicando...' : 'Publicar Reseña',
+                    publicando ? 'Publicando...' : 'Publicar Reseña',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,

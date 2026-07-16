@@ -14,6 +14,9 @@ import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/profile/presentation/providers/profile_provider.dart';
 import 'features/Chat/presentation/providers/chat_provider.dart';
 import 'features/destinos/presentation/providers/destinos_provider.dart';
+import 'features/eventos/presentation/providers/eventos_provider.dart';
+import 'features/promociones/presentation/providers/promociones_provider.dart';
+import 'features/resena/presentation/providers/ResenasProvider.dart';
 
 import 'features/home/presentation/pages/home_page.dart';
 import 'features/profile/presentation/pages/profile_page.dart';
@@ -29,8 +32,9 @@ import 'features/maps/data/repositories/map_repository_impl.dart';
 import 'features/maps/data/datasources/map_remote_datasource.dart';
 import 'features/destinos/presentation/pages/explorar_cerca_page.dart';
 import 'features/destinos/presentation/pages/recomendar_lugar_page.dart';
-import 'features/resenas/presentation/pages/home_resenas_page.dart';
+import 'features/resena/presentation/pages/home_resenas_page.dart';
 import 'features/negocio/presentation/pages/negocio_lista_page.dart';
+import 'features/promociones/presentation/pages/promociones_page.dart';
 
 class ExploraChiapasApp extends StatelessWidget {
   const ExploraChiapasApp({super.key});
@@ -52,13 +56,22 @@ class ExploraChiapasApp extends StatelessWidget {
         ChangeNotifierProvider<DestinoProvider>(
           create: (_) => getIt<DestinoProvider>(),
         ),
+        ChangeNotifierProvider<EventosProvider>(
+          create: (_) => getIt<EventosProvider>(),
+        ),
+        ChangeNotifierProvider<PromocionesProvider>(
+          create: (_) => getIt<PromocionesProvider>(),
+        ),
+        // ✅ NUEVO: ResenasProvider — necesario para DetalleResenaPage y
+        // EscribirResenaPage, que hacen context.read<ResenasProvider>().
+        ChangeNotifierProvider<ResenasProvider>(
+          create: (_) => getIt<ResenasProvider>(),
+        ),
       ],
       child: MaterialApp(
         title: 'ExploraChiapas',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          textTheme: GoogleFonts.poppinsTextTheme(),
-        ),
+        theme: ThemeData(textTheme: GoogleFonts.poppinsTextTheme()),
         initialRoute: '/',
         onGenerateRoute: (settings) {
           debugPrint('Navegando a: ${settings.name}');
@@ -140,14 +153,10 @@ class ExploraChiapasApp extends StatelessWidget {
                 builder: (_) => ChangeNotifierProvider<MapProvider>(
                   create: (_) => MapProvider(
                     GetDestinationsUseCase(
-                      MapRepositoryImpl(
-                        MapRemoteDatasourceImpl(),
-                      ),
+                      MapRepositoryImpl(MapRemoteDatasourceImpl()),
                     ),
                     GetRouteUseCase(
-                      MapRepositoryImpl(
-                        MapRemoteDatasourceImpl(),
-                      ),
+                      MapRepositoryImpl(MapRemoteDatasourceImpl()),
                     ),
                   ),
                   child: const MapPage(),
@@ -175,6 +184,15 @@ class ExploraChiapasApp extends StatelessWidget {
                   tipoNegocioId: args['tipoNegocioId'] as String,
                   tituloTipo: args['tituloTipo'] as String,
                 ),
+                settings: settings,
+              );
+
+            // ✅ NUEVA RUTA: /promociones — opcionalmente filtrada por negocio
+            case '/promociones':
+              final args = settings.arguments as Map<String, dynamic>?;
+              return MaterialPageRoute(
+                builder: (_) =>
+                    PromocionesPage(negocioId: args?['negocioId'] as String?),
                 settings: settings,
               );
 
