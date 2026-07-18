@@ -17,6 +17,7 @@ import 'features/destinos/presentation/providers/destinos_provider.dart';
 import 'features/eventos/presentation/providers/eventos_provider.dart';
 import 'features/promociones/presentation/providers/promociones_provider.dart';
 import 'features/resena/presentation/providers/ResenasProvider.dart';
+import 'features/favoritos/presentation/providers/favoritos_provider.dart';
 
 import 'features/home/presentation/pages/home_page.dart';
 import 'features/profile/presentation/pages/profile_page.dart';
@@ -62,10 +63,15 @@ class ExploraChiapasApp extends StatelessWidget {
         ChangeNotifierProvider<PromocionesProvider>(
           create: (_) => getIt<PromocionesProvider>(),
         ),
-        // ✅ NUEVO: ResenasProvider — necesario para DetalleResenaPage y
+        // ✅ ResenasProvider — necesario para DetalleResenaPage y
         // EscribirResenaPage, que hacen context.read<ResenasProvider>().
         ChangeNotifierProvider<ResenasProvider>(
           create: (_) => getIt<ResenasProvider>(),
+        ),
+        // ✅ NUEVO: FavoritosProvider — necesario para FavoritosPage,
+        // que usa Consumer<FavoritosProvider> / context.watch<FavoritosProvider>().
+        ChangeNotifierProvider<FavoritosProvider>(
+          create: (_) => getIt<FavoritosProvider>(),
         ),
       ],
       child: MaterialApp(

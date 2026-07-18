@@ -11,9 +11,7 @@ class GetPromocionesUseCase {
 
   const GetPromocionesUseCase(this._repository);
 
-  Future<Either<Failure, List<PromocionEntity>>> call({
-    String? negocioId,
-  }) {
+  Future<Either<Failure, List<PromocionEntity>>> call({String? negocioId}) {
     return _repository.getPromociones(negocioId: negocioId);
   }
 }

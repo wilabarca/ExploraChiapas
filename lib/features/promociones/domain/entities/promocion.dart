@@ -3,24 +3,26 @@ enum PromocionEstado { proxima, vigente, finalizada }
 class PromocionEntity {
   final String id;
   final String titulo;
-  final String descripcion;
-  final double precio;
+  final String? descripcion;
+  final String? imagenUrl;
+  final double? precio;
   final String negocioId;
-  final String negocioNombre;
+  final String? negocioNombre;
   final DateTime fechaInicio;
-  final DateTime fechaFin;
+  final DateTime? fechaFin;
   final bool activo;
   final DateTime fechaCreacion;
 
   const PromocionEntity({
     required this.id,
     required this.titulo,
-    required this.descripcion,
-    required this.precio,
+    this.descripcion,
+    this.imagenUrl,
+    this.precio,
     required this.negocioId,
-    required this.negocioNombre,
+    this.negocioNombre,
     required this.fechaInicio,
-    required this.fechaFin,
+    this.fechaFin,
     required this.activo,
     required this.fechaCreacion,
   });
@@ -31,15 +33,38 @@ class PromocionEntity {
 
     final ahora = DateTime.now();
     if (ahora.isBefore(fechaInicio)) return PromocionEstado.proxima;
-    if (ahora.isAfter(fechaFin)) return PromocionEstado.finalizada;
+    if (fechaFin != null && ahora.isAfter(fechaFin!)) {
+      return PromocionEstado.finalizada;
+    }
     return PromocionEstado.vigente;
   }
 
-  String get precioFormateado => '\$${precio.toStringAsFixed(0)}';
+  bool get tieneImagen => imagenUrl != null && imagenUrl!.isNotEmpty;
+
+  bool get tienePrecio => precio != null;
+
+  String get precioFormateado {
+    if (precio == null) return 'Gratis';
+    return '\$${precio!.toStringAsFixed(0)}';
+  }
+
+  String get descripcionMostrable => descripcion ?? '';
+
+  String get negocioMostrable => negocioNombre ?? 'Negocio en Chiapas';
 
   static const _meses = [
-    'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
-    'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
+    'Ene',
+    'Feb',
+    'Mar',
+    'Abr',
+    'May',
+    'Jun',
+    'Jul',
+    'Ago',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dic',
   ];
 
   String _formatearFecha(DateTime fecha) {
@@ -47,6 +72,8 @@ class PromocionEntity {
   }
 
   String get rangoFechasFormateado {
-    return '${_formatearFecha(fechaInicio)} - ${_formatearFecha(fechaFin)}';
+    final inicio = _formatearFecha(fechaInicio);
+    if (fechaFin == null) return 'Desde $inicio';
+    return '$inicio - ${_formatearFecha(fechaFin!)}';
   }
 }

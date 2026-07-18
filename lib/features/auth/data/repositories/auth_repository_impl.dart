@@ -4,7 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/utils/app_constants.dart';
-import '../../../../core/services/avatar/avatar_service.dart';
 import '../../domain/entities/usuario.dart';
 import '../../domain/entities/usuario_registro.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -14,9 +13,11 @@ import 'package:flutter/foundation.dart';
 @LazySingleton(as: AuthRepository)
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _dataSource;
-  final AvatarService _avatarService;
 
-  AuthRepositoryImpl(this._dataSource, this._avatarService);
+  // ✅ Ya no depende de AvatarService — el avatar por defecto se calcula
+  // al vuelo en la UI (ProfileAvatar / HomeAppBar), no se "asigna" ni
+  // persiste durante el registro.
+  AuthRepositoryImpl(this._dataSource);
 
   @override
   Future<Either<Failure, Map<String, dynamic>>> register(
@@ -33,12 +34,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
       final prefs = await SharedPreferences.getInstance();
 
-      // ← Guarda el tipo exacto que viene del enum
-      await prefs.setString(
-        AppConstants.tipoUsuarioKey,
-        usuario
-            .userTypeId, // 'turista_nacional', 'turista_extranjero' o 'habitante_local'
-      );
+      await prefs.setString(AppConstants.tipoUsuarioKey, usuario.userTypeId);
       await prefs.setString(
         AppConstants.userNameKey,
         result['name'] as String? ?? '',
@@ -47,9 +43,6 @@ class AuthRepositoryImpl implements AuthRepository {
         AppConstants.userEmailKey,
         result['email'] as String? ?? '',
       );
-
-      // Asigna avatar según género detectado por nombre
-      await _avatarService.asignarAvatarPorNombre(usuario.nombre);
 
       return Right(result);
     } on ServerException catch (e) {
@@ -72,9 +65,6 @@ class AuthRepositoryImpl implements AuthRepository {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(AppConstants.jwtTokenKey, token);
 
-      // ← Al hacer login también carga el perfil para obtener el tipo
-      // Si ya tiene tipo guardado de un registro previo, lo conserva
-      // Si no, se asignará cuando cargue el perfil
       debugPrint('✅ Login exitoso, token guardado');
       debugPrint(
         '👤 Tipo guardado: ${prefs.getString(AppConstants.tipoUsuarioKey)}',
@@ -98,12 +88,9 @@ class AuthRepositoryImpl implements AuthRepository {
       final usuario = await _dataSource.getProfile();
       debugPrint('🔍 userTypeId RAW del backend: "${usuario.userTypeId}"');
 
-      // ← Cuando carga el perfil guarda el tipo del servidor
-      // Esto sincroniza el tipo en caso de que haya cambiado
       final prefs = await SharedPreferences.getInstance();
       final tipoActual = prefs.getString(AppConstants.tipoUsuarioKey);
 
-      // Solo actualiza si no hay tipo guardado
       if (tipoActual == null || tipoActual.isEmpty) {
         await prefs.setString(AppConstants.tipoUsuarioKey, usuario.userTypeId);
         debugPrint('👤 Tipo sincronizado desde perfil: ${usuario.userTypeId}');

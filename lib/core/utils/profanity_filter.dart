@@ -1,11 +1,11 @@
 class ProfanityFilter {
   static const Set<String> _palabras = {
-    'puta', 'puto', 'putas', 'putos', 'putazo', 'putazos',
+    'puta','puto', 'putas', 'putos', 'putazo', 'putazos',
     'chinga', 'chingo', 'chingada', 'chingado', 'chingadas', 'chingados',
     'chingadera', 'chingaderas', 'chinguen', 'chingen',
     'cabron', 'cabrona', 'cabrones', 'cabronas',
     'pendejo', 'pendeja', 'pendejos', 'pendejas',
-    'mierda', 'mierdas',
+    'mierda', 'mierdas', 'mampo'
     'verga', 'vergas',
     'culero', 'culera', 'culeros', 'culeras',
     'joto', 'jota', 'jotos',

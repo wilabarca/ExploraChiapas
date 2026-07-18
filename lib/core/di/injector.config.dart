@@ -99,6 +99,8 @@ import '../../features/profile/domain/usecases/delete_perfil_usecase.dart'
 import '../../features/profile/domain/usecases/get_perfil_usecase.dart' as _i32;
 import '../../features/profile/domain/usecases/update_perfil_usecase.dart'
     as _i226;
+import '../../features/profile/domain/usecases/upload_foto_perfil_usecase.dart'
+    as _i453;
 import '../../features/profile/presentation/providers/profile_provider.dart'
     as _i919;
 import '../../features/promociones/data/datasource/remote/promociones_remote_datasource.dart'
@@ -181,14 +183,11 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i747.EventosRemoteDataSource>(
       () => _i747.EventosRemoteDataSourceImpl(gh<_i557.ApiClient>()),
     );
+    gh.lazySingleton<_i787.AuthRepository>(
+      () => _i153.AuthRepositoryImpl(gh<_i175.AuthRemoteDataSource>()),
+    );
     gh.factory<_i1031.IProfileRemoteDatasource>(
       () => _i1031.ProfileRemoteDatasourceImpl(gh<_i557.ApiClient>()),
-    );
-    gh.lazySingleton<_i787.AuthRepository>(
-      () => _i153.AuthRepositoryImpl(
-        gh<_i175.AuthRemoteDataSource>(),
-        gh<_i45.AvatarService>(),
-      ),
     );
     gh.lazySingleton<_i1.PromocionesRemoteDataSource>(
       () => _i1.PromocionesRemoteDataSourceImpl(gh<_i557.ApiClient>()),
@@ -208,6 +207,10 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i905.GetPromocionesUseCase>(
       () => _i905.GetPromocionesUseCase(gh<_i558.PromocionesRepository>()),
+    );
+    gh.lazySingleton<_i743.FavoritosRepository>(
+      () =>
+          _i857.FavoritosRepositoryImpl(gh<_i768.FavoritosRemoteDataSource>()),
     );
     gh.factory<_i429.GetDestinoByIdUseCase>(
       () => _i429.GetDestinoByIdUseCase(gh<_i991.DestinoRepository>()),
@@ -236,6 +239,15 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i879.IProfileRepository>(
       () => _i334.ProfileRepositoryImpl(gh<_i1031.IProfileRemoteDatasource>()),
     );
+    gh.factory<_i536.AddFavoritoUseCase>(
+      () => _i536.AddFavoritoUseCase(gh<_i743.FavoritosRepository>()),
+    );
+    gh.factory<_i629.GetFavoritosUseCase>(
+      () => _i629.GetFavoritosUseCase(gh<_i743.FavoritosRepository>()),
+    );
+    gh.factory<_i662.RemoveFavoritoUseCase>(
+      () => _i662.RemoveFavoritoUseCase(gh<_i743.FavoritosRepository>()),
+    );
     gh.lazySingleton<_i683.EventosRepository>(
       () => _i696.EventosRepositoryImpl(gh<_i747.EventosRemoteDataSource>()),
     );
@@ -244,10 +256,6 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i703.GetEventosUseCase>(
       () => _i703.GetEventosUseCase(gh<_i683.EventosRepository>()),
-    );
-    gh.lazySingleton<_i743.FavoritosRepository>(
-      () =>
-          _i857.FavoritosRepositoryImpl(gh<_i768.FavoritosRemoteDataSource>()),
     );
     gh.factory<_i331.DeletePerfilUseCase>(
       () => _i331.DeletePerfilUseCase(gh<_i879.IProfileRepository>()),
@@ -258,10 +266,20 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i226.UpdatePerfilUseCase>(
       () => _i226.UpdatePerfilUseCase(gh<_i879.IProfileRepository>()),
     );
+    gh.factory<_i453.UploadFotoPerfilUseCase>(
+      () => _i453.UploadFotoPerfilUseCase(gh<_i879.IProfileRepository>()),
+    );
     gh.factory<_i232.DestinoProvider>(
       () => _i232.DestinoProvider(
         gh<_i488.ListDestinosUseCase>(),
         gh<_i429.GetDestinoByIdUseCase>(),
+      ),
+    );
+    gh.factory<_i63.FavoritosProvider>(
+      () => _i63.FavoritosProvider(
+        gh<_i629.GetFavoritosUseCase>(),
+        gh<_i536.AddFavoritoUseCase>(),
+        gh<_i662.RemoveFavoritoUseCase>(),
       ),
     );
     gh.factory<_i392.CrearResenaUseCase>(
@@ -276,6 +294,14 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i247.GetEventoByIdUseCase>(),
       ),
     );
+    gh.lazySingleton<_i919.ProfileProvider>(
+      () => _i919.ProfileProvider(
+        gh<_i32.GetPerfilUseCase>(),
+        gh<_i226.UpdatePerfilUseCase>(),
+        gh<_i331.DeletePerfilUseCase>(),
+        gh<_i453.UploadFotoPerfilUseCase>(),
+      ),
+    );
     gh.factory<_i1054.AuthProvider>(
       () => _i1054.AuthProvider(
         gh<_i188.LoginUseCase>(),
@@ -283,33 +309,10 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i568.GetProfileUseCase>(),
       ),
     );
-    gh.factory<_i536.AddFavoritoUseCase>(
-      () => _i536.AddFavoritoUseCase(gh<_i743.FavoritosRepository>()),
-    );
-    gh.factory<_i629.GetFavoritosUseCase>(
-      () => _i629.GetFavoritosUseCase(gh<_i743.FavoritosRepository>()),
-    );
-    gh.factory<_i662.RemoveFavoritoUseCase>(
-      () => _i662.RemoveFavoritoUseCase(gh<_i743.FavoritosRepository>()),
-    );
-    gh.lazySingleton<_i919.ProfileProvider>(
-      () => _i919.ProfileProvider(
-        gh<_i32.GetPerfilUseCase>(),
-        gh<_i226.UpdatePerfilUseCase>(),
-        gh<_i331.DeletePerfilUseCase>(),
-      ),
-    );
     gh.factory<_i112.ResenasProvider>(
       () => _i112.ResenasProvider(
         gh<_i33.GetResenasUseCase>(),
         gh<_i392.CrearResenaUseCase>(),
-      ),
-    );
-    gh.factory<_i63.FavoritosProvider>(
-      () => _i63.FavoritosProvider(
-        gh<_i629.GetFavoritosUseCase>(),
-        gh<_i536.AddFavoritoUseCase>(),
-        gh<_i662.RemoveFavoritoUseCase>(),
       ),
     );
     return this;

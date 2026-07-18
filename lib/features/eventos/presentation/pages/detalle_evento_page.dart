@@ -172,11 +172,12 @@ class DetalleEventoPage extends StatelessWidget {
                         icon: Icons.location_on_outlined,
                         label: evento.ubicacion,
                       ),
-                      if (evento.fechaFin != null)
+                      // ✅ Usa el getter fechaFinFormateada — sin
+                      // instanciar un EventoEntity temporal.
+                      if (evento.fechaFinFormateada != null)
                         _InfoChip(
                           icon: Icons.event_available_outlined,
-                          label:
-                              'Hasta ${EventoEntity(id: '', titulo: '', descripcion: '', fechaInicio: evento.fechaFin!, ubicacion: '', categoria: '', imageUrl: '').fechaFormateada}',
+                          label: 'Hasta ${evento.fechaFinFormateada}',
                         ),
                     ],
                   ),
@@ -200,7 +201,9 @@ class DetalleEventoPage extends StatelessWidget {
                   const SizedBox(height: 12),
 
                   Text(
-                    evento.descripcion,
+                    evento.descripcion.isNotEmpty
+                        ? evento.descripcion
+                        : 'Este evento aún no tiene una descripción disponible.',
                     style: const TextStyle(
                       fontSize: 15,
                       color: Color(0xFF555555),
@@ -242,25 +245,28 @@ class DetalleEventoPage extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            evento.creadoPor,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF1B1B1B),
+                      // Expanded: evita overflow si creadoPor es largo.
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              evento.creadoPor,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF1B1B1B),
+                              ),
                             ),
-                          ),
-                          const Text(
-                            'Organizador verificado',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF2E7D32),
+                            const Text(
+                              'Organizador verificado',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF2E7D32),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),

@@ -19,6 +19,10 @@ class AppConstants {
   // Uso: GET {baseUrl}{promotionsEndpoint}?negocioId=UUID_NEGOCIO
   static const String promotionsEndpoint = '/promotions';
 
+// Endpoint de subida de foto de perfil (multipart/form-data, campo 'file')
+// Requiere Authorization: Bearer TOKEN
+static const String uploadPerfilFotoEndpoint = '/uploads/usuarios/perfil';
+
   // Endpoint de reseñas
   // Uso: GET {baseUrl}{reviewsEndpoint}?targetType=business&targetId=UUID
   // POST/PUT/DELETE requieren Authorization: Bearer TOKEN

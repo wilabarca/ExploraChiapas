@@ -62,10 +62,15 @@ class ApiClient {
 
   Dio get dio => _dio;
 
-  Future<Response> post(String path, {Map<String, dynamic>? data}) async {
+  // ✅ 'data' ahora acepta dynamic (Map o FormData), no solo
+  // Map<String, dynamic>?. Esto permite subir archivos con multipart
+  // sin romper las llamadas existentes que pasan un Map normal.
+  Future<Response> post(String path, {dynamic data}) async {
     try {
       debugPrint('📤 POST: $_baseUrl$path');
-      debugPrint('📦 Body: $data');
+      debugPrint(
+        '📦 Body: ${data is FormData ? "FormData (multipart)" : data}',
+      );
       final response = await _dio.post(path, data: data);
       debugPrint('📥 Response ${response.statusCode}: ${response.data}');
       return response;

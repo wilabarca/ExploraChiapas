@@ -3,6 +3,7 @@ class PerfilEntity {
   final String nombre;
   final String email;
   final String? telefono;
+  final String ImgUrl;
   final String userTypeId;
   final bool isPremium;
   final bool active;
@@ -11,6 +12,7 @@ class PerfilEntity {
   const PerfilEntity({
     required this.id,
     required this.nombre,
+    required this.ImgUrl,
     required this.email,
     this.telefono,
     required this.userTypeId,

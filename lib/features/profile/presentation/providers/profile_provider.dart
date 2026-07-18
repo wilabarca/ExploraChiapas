@@ -1,10 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:injectable/injectable.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/entities/perfil_entity.dart';
 import '../../domain/usecases/get_perfil_usecase.dart';
 import '../../domain/usecases/update_perfil_usecase.dart';
 import '../../domain/usecases/delete_perfil_usecase.dart';
+import '../../domain/usecases/upload_foto_perfil_usecase.dart';
 
 enum ProfileStatus { idle, loading, success, error }
 
@@ -13,11 +14,13 @@ class ProfileProvider extends ChangeNotifier {
   final GetPerfilUseCase _getPerfilUseCase;
   final UpdatePerfilUseCase _updatePerfilUseCase;
   final DeletePerfilUseCase _deletePerfilUseCase;
+  final UploadFotoPerfilUseCase _uploadFotoPerfilUseCase;
 
   ProfileProvider(
     this._getPerfilUseCase,
     this._updatePerfilUseCase,
     this._deletePerfilUseCase,
+    this._uploadFotoPerfilUseCase,
   );
 
   ProfileStatus _status = ProfileStatus.idle;
@@ -29,35 +32,33 @@ class ProfileProvider extends ChangeNotifier {
   PerfilEntity? _perfil;
   PerfilEntity? get perfil => _perfil;
 
+  // Estado separado para no bloquear el resto de la pantalla mientras
+  // se sube la imagen (independiente de 'status').
+  bool _subiendoFoto = false;
+  bool get subiendoFoto => _subiendoFoto;
+
   Future<void> loadPerfil() async {
     _setLoading();
-
-    // ── DEBUG: verificar token ────────────────────────────
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('jwt_token');
-    debugPrint('🔐 Token antes de loadPerfil: ${token ?? "NULL"}');
-    debugPrint('🔐 Todas las keys en prefs: ${prefs.getKeys()}');
-    // ─────────────────────────────────────────────────────
-
     final result = await _getPerfilUseCase();
     result.fold(
-      (failure) {
-        debugPrint('❌ Error loadPerfil: ${failure.message}');
-        _setError(failure.message);
-      },
+      (failure) => _setError(failure.message),
       (perfil) {
-        debugPrint('✅ Perfil cargado: ${perfil.nombre}');
         _perfil = perfil;
         _setSuccess();
       },
     );
   }
 
-  Future<bool> updatePerfil({String? nombre, String? telefono}) async {
+  Future<bool> updatePerfil({
+    String? nombre,
+    String? telefono,
+    String? fotoPerfilUrl,
+  }) async {
     _setLoading();
     final result = await _updatePerfilUseCase(
       nombre: nombre,
       telefono: telefono,
+      fotoPerfilUrl: fotoPerfilUrl,
     );
     return result.fold(
       (failure) {
@@ -68,6 +69,31 @@ class ProfileProvider extends ChangeNotifier {
         _perfil = perfil;
         _setSuccess();
         return true;
+      },
+    );
+  }
+
+  /// Sube la imagen y, si tiene éxito, actualiza el perfil con la nueva
+  /// URL en un solo flujo (subir → persistir → refrescar UI).
+  Future<bool> subirFotoPerfil(File file) async {
+    _subiendoFoto = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    final uploadResult = await _uploadFotoPerfilUseCase(file);
+
+    return uploadResult.fold(
+      (failure) {
+        _subiendoFoto = false;
+        _errorMessage = failure.message;
+        notifyListeners();
+        return false;
+      },
+      (url) async {
+        final actualizado = await updatePerfil(fotoPerfilUrl: url);
+        _subiendoFoto = false;
+        notifyListeners();
+        return actualizado;
       },
     );
   }

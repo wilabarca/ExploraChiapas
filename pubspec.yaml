@@ -46,6 +46,8 @@ dependencies:
   provider: ^6.1.5+1
   onesignal_flutter: ^5.2.6
   url_launcher: ^6.3.2
+  equatable: ^2.1.0
+  image_picker: ^1.2.3
 dev_dependencies:
   flutter_test:
     sdk: flutter

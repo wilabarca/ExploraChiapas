@@ -23,6 +23,8 @@ class _RegisterPageState extends State<RegisterPage> {
   final _telefonoCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
+  
+  ImageProvider<Object>? get image => null;
 
   @override
   void dispose() {

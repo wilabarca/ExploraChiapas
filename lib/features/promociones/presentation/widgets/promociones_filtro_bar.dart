@@ -19,6 +19,7 @@ class PromocionesFiltroBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Wrap: los chips fluyen a la siguiente línea si no caben.
     return Wrap(
       spacing: 8,
       runSpacing: 8,

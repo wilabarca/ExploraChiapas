@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import '../../../../core/error/exceptions.dart';
@@ -27,11 +28,13 @@ class ProfileRepositoryImpl implements IProfileRepository {
   Future<Either<Failure, PerfilEntity>> updateProfile({
     String? nombre,
     String? telefono,
+    String? fotoPerfilUrl,
   }) async {
     try {
       final model = await _datasource.updateProfile(
         nombre: nombre,
         telefono: telefono,
+        fotoPerfilUrl: fotoPerfilUrl,
       );
       return Right(model);
     } on ServerException catch (e) {
@@ -46,6 +49,18 @@ class ProfileRepositoryImpl implements IProfileRepository {
     try {
       await _datasource.deleteProfile();
       return const Right(null);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, String>> uploadFotoPerfil(File file) async {
+    try {
+      final url = await _datasource.uploadFotoPerfil(file);
+      return Right(url);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
     } catch (e) {
