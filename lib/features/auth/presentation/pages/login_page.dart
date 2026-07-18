@@ -6,6 +6,7 @@ import '../widgets/register_field.dart';
 import '../providers/auth_provider.dart';
 import '../../../../core/permissions/location_permission.dart';
 import '../../../../core/utils/app_constants.dart';
+import '../../../../core/services/google_auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -31,6 +32,33 @@ class _LoginPageState extends State<LoginPage> {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
+  }
+
+  Future<void> _handleGoogleLogin() async {
+    final account = await GoogleAuthService.signIn();
+    if (account == null) return;
+
+    final auth    = await account.authentication;
+    final idToken = auth.idToken;
+    if (idToken == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content:         Text('No se pudo obtener el token de Google'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+    // TODO: enviar idToken al backend vía AuthProvider.loginWithGoogle()
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content:         Text('Google OAuth: configura el backend con /users/google-auth'),
+        backgroundColor: Color(0xFF2E7D32),
+      ),
+    );
   }
 
   Future<void> _handleLogin() async {
@@ -197,6 +225,56 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ],
+                ),
+              ),
+
+              SizedBox(height: size.height * 0.02),
+
+              // ── Divider ──────────────────────────────────────────────────
+              Row(
+                children: [
+                  const Expanded(child: Divider(color: Color(0xFFCCCCCC))),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text(
+                      'o',
+                      style: TextStyle(
+                        color:    Colors.grey.shade600,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                  const Expanded(child: Divider(color: Color(0xFFCCCCCC))),
+                ],
+              ),
+
+              SizedBox(height: size.height * 0.02),
+
+              // ── Botón Continuar con Google ────────────────────────────────
+              OutlinedButton.icon(
+                onPressed: isLoading ? null : _handleGoogleLogin,
+                icon: Image.network(
+                  'https://www.google.com/favicon.ico',
+                  width:  20,
+                  height: 20,
+                  errorBuilder: (_, __, ___) =>
+                      const Icon(Icons.login, size: 20),
+                ),
+                label: const Text(
+                  'Continuar con Google',
+                  style: TextStyle(
+                    color:      Color(0xFF1B1B1B),
+                    fontSize:   15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  minimumSize:  const Size(double.infinity, 52),
+                  side:         const BorderSide(color: Color(0xFFDDDDDD)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  backgroundColor: Colors.white,
                 ),
               ),
 

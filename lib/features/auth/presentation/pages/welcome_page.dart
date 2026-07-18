@@ -1,8 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../core/utils/app_constants.dart';
 import '../widgets/auth_button.dart';
 
-class WelcomePage extends StatelessWidget {
+class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
+
+  @override
+  State<WelcomePage> createState() => _WelcomePageState();
+}
+
+class _WelcomePageState extends State<WelcomePage> {
+  @override
+  void initState() {
+    super.initState();
+    _verificarSesion();
+  }
+
+  Future<void> _verificarSesion() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString(AppConstants.jwtTokenKey);
+    final onboardingCompleto = prefs.getBool(AppConstants.onboardingKey) ?? false;
+
+    if (!mounted) return;
+
+    if (token != null && token.isNotEmpty) {
+      if (onboardingCompleto) {
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        Navigator.pushReplacementNamed(context, '/intereses');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,10 +56,8 @@ class WelcomePage extends StatelessWidget {
               children: [
                 SizedBox(height: size.height * 0.05),
 
-                // Dimensiones proporcionales directas, sin AspectRatio
-                // ni FractionallySizedBox anidados
                 SizedBox(
-                  width: size.width * 0.52,
+                  width:  size.width * 0.52,
                   height: size.height * 0.30,
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16),
@@ -47,10 +74,10 @@ class WelcomePage extends StatelessWidget {
                   'Explora la Magia\nde Chiapas',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Colors.white,
-                    fontSize: size.height * 0.045,
+                    color:      Colors.white,
+                    fontSize:   size.height * 0.045,
                     fontWeight: FontWeight.bold,
-                    height: 1.15,
+                    height:     1.15,
                   ),
                 ),
 
@@ -62,16 +89,16 @@ class WelcomePage extends StatelessWidget {
                   'comunidades locales.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Colors.white70,
+                    color:    Colors.white70,
                     fontSize: size.height * 0.017,
-                    height: 1.6,
+                    height:   1.6,
                   ),
                 ),
 
                 const Spacer(),
 
                 AuthButton(
-                  text: 'COMENZAR REGISTRO',
+                  text:      'COMENZAR REGISTRO',
                   isPrimary: true,
                   onPressed: () => Navigator.pushNamed(context, '/registro'),
                 ),
@@ -79,7 +106,7 @@ class WelcomePage extends StatelessWidget {
                 SizedBox(height: size.height * 0.016),
 
                 AuthButton(
-                  text: 'INICIAR SESIÓN',
+                  text:      'INICIAR SESIÓN',
                   isPrimary: false,
                   onPressed: () => Navigator.pushNamed(context, '/login'),
                 ),

@@ -18,6 +18,9 @@ class AppConstants {
   static const String mlServiceBaseUrl = 'https://nlp-service-6hvo.onrender.com';
   static const String planearEndpoint = '/planear';
 
+  // Endpoints de preferencias
+  static const String preferencesEndpoint = '/users/preferences';
+
   // SharedPreferences keys
   static const String jwtTokenKey = 'jwt_token';
   static const String tipoUsuarioKey = 'tipo_usuario';
@@ -25,8 +28,15 @@ class AppConstants {
   static const String interesesKey = 'intereses';
   static const String ubicacionKey = 'ubicacion_concedida';
   static const String fotoPerfil = 'foto_perfil';
-  static const String userNameKey = 'user_name';
-  static const String userEmailKey = 'user_email';
+  static const String userNameKey   = 'user_name';
+  static const String userEmailKey  = 'user_email';
+
+  // Preference keys (persistidas localmente)
+  static const String prefIdioma   = 'pref_idioma';
+  static const String prefUnidades = 'pref_unidades';
+  static const String prefTema     = 'pref_tema';
+  static const String prefMoneda   = 'pref_moneda';
+  static const String prefLocale   = 'pref_locale';
 
   // Tipos de usuario
   static const String tipoTuristaNacional = 'turista_nacional';
