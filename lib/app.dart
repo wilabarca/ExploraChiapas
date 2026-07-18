@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'core/di/injector.dart';
+import 'core/providers/preferences_provider.dart';
+import 'core/providers/locale_provider.dart';
 
 import 'features/auth/presentation/pages/welcome_page.dart';
 import 'features/auth/presentation/pages/register_page.dart';
@@ -37,8 +40,23 @@ import 'features/resena/presentation/pages/home_resenas_page.dart';
 import 'features/negocio/presentation/pages/negocio_lista_page.dart';
 import 'features/promociones/presentation/pages/promociones_page.dart';
 
-class ExploraChiapasApp extends StatelessWidget {
+class ExploraChiapasApp extends StatefulWidget {
   const ExploraChiapasApp({super.key});
+
+  @override
+  State<ExploraChiapasApp> createState() => _ExploraChiapasAppState();
+}
+
+class _ExploraChiapasAppState extends State<ExploraChiapasApp> {
+  final _prefsProvider  = PreferencesProvider();
+  final _localeProvider = LocaleProvider();
+
+  @override
+  void initState() {
+    super.initState();
+    _prefsProvider.cargar();
+    _localeProvider.cargar();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +65,6 @@ class ExploraChiapasApp extends StatelessWidget {
         ChangeNotifierProvider<AuthProvider>(
           create: (_) => getIt<AuthProvider>(),
         ),
-        // ✅ lazySingleton: siempre la misma instancia en toda la app
         ChangeNotifierProvider<ProfileProvider>(
           create: (_) => getIt<ProfileProvider>(),
         ),
@@ -63,153 +80,174 @@ class ExploraChiapasApp extends StatelessWidget {
         ChangeNotifierProvider<PromocionesProvider>(
           create: (_) => getIt<PromocionesProvider>(),
         ),
-        // ✅ ResenasProvider — necesario para DetalleResenaPage y
-        // EscribirResenaPage, que hacen context.read<ResenasProvider>().
         ChangeNotifierProvider<ResenasProvider>(
           create: (_) => getIt<ResenasProvider>(),
         ),
-        // ✅ NUEVO: FavoritosProvider — necesario para FavoritosPage,
-        // que usa Consumer<FavoritosProvider> / context.watch<FavoritosProvider>().
         ChangeNotifierProvider<FavoritosProvider>(
           create: (_) => getIt<FavoritosProvider>(),
         ),
+        ChangeNotifierProvider<PreferencesProvider>.value(
+          value: _prefsProvider,
+        ),
+        ChangeNotifierProvider<LocaleProvider>.value(
+          value: _localeProvider,
+        ),
       ],
-      child: MaterialApp(
-        title: 'ExploraChiapas',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(textTheme: GoogleFonts.poppinsTextTheme()),
-        initialRoute: '/',
-        onGenerateRoute: (settings) {
-          debugPrint('Navegando a: ${settings.name}');
+      child: Consumer2<PreferencesProvider, LocaleProvider>(
+        builder: (context, prefs, locale, _) {
+          return MaterialApp(
+            title: 'ExploraChiapas',
+            debugShowCheckedModeBanner: false,
+            locale: locale.locale,
+            supportedLocales: const [Locale('es'), Locale('en')],
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            themeMode: prefs.themeMode,
+            theme: ThemeData(
+              textTheme: GoogleFonts.poppinsTextTheme(),
+              brightness: Brightness.light,
+            ),
+            darkTheme: ThemeData(
+              textTheme: GoogleFonts.poppinsTextTheme(
+                ThemeData(brightness: Brightness.dark).textTheme,
+              ),
+              brightness: Brightness.dark,
+              scaffoldBackgroundColor: const Color(0xFF1A1A1A),
+              cardColor: const Color(0xFF2A2A2A),
+            ),
+            initialRoute: '/',
+            onGenerateRoute: (settings) {
+              debugPrint('Navegando a: ${settings.name}');
 
-          switch (settings.name) {
-            case '/':
-              return MaterialPageRoute(
-                builder: (_) => const WelcomePage(),
-                settings: settings,
-              );
+              switch (settings.name) {
+                case '/':
+                  return MaterialPageRoute(
+                    builder: (_) => const WelcomePage(),
+                    settings: settings,
+                  );
 
-            case '/registro':
-              return MaterialPageRoute(
-                builder: (_) => const RegisterPage(),
-                settings: settings,
-              );
+                case '/registro':
+                  return MaterialPageRoute(
+                    builder: (_) => const RegisterPage(),
+                    settings: settings,
+                  );
 
-            case '/login':
-              return MaterialPageRoute(
-                builder: (_) => const LoginPage(),
-                settings: settings,
-              );
+                case '/login':
+                  return MaterialPageRoute(
+                    builder: (_) => const LoginPage(),
+                    settings: settings,
+                  );
 
-            case '/intereses':
-              return MaterialPageRoute(
-                builder: (_) => const InterestsPage(),
-                settings: settings,
-              );
+                case '/intereses':
+                  return MaterialPageRoute(
+                    builder: (_) => const InterestsPage(),
+                    settings: settings,
+                  );
 
-            case '/permisos':
-              return MaterialPageRoute(
-                builder: (_) => const PermitirAccesoPage(),
-                settings: settings,
-              );
+                case '/permisos':
+                  return MaterialPageRoute(
+                    builder: (_) => const PermitirAccesoPage(),
+                    settings: settings,
+                  );
 
-            case '/home':
-              return MaterialPageRoute(
-                builder: (_) => const HomePage(),
-                settings: settings,
-              );
+                case '/home':
+                  return MaterialPageRoute(
+                    builder: (_) => const HomePage(),
+                    settings: settings,
+                  );
 
-            // ✅ /perfil usa la instancia singleton del MultiProvider root
-            case '/perfil':
-              return MaterialPageRoute(
-                builder: (ctx) => ChangeNotifierProvider<ProfileProvider>.value(
-                  value: getIt<ProfileProvider>(),
-                  child: const ProfilePage(),
-                ),
-                settings: settings,
-              );
-
-            case '/chat':
-              return MaterialPageRoute(
-                builder: (_) => const ChatRoutesPage(),
-                settings: settings,
-              );
-
-            case '/favoritos':
-              return MaterialPageRoute(
-                builder: (_) => const FavoritosPage(),
-                settings: settings,
-              );
-
-            case '/eventos':
-              return MaterialPageRoute(
-                builder: (_) => const EventosPage(),
-                settings: settings,
-              );
-
-            // ✅ NUEVA RUTA: /resenas para HomeResenasPage
-            case '/resenas':
-              return MaterialPageRoute(
-                builder: (_) => const HomeResenasPage(),
-                settings: settings,
-              );
-
-            case '/mapa':
-              return MaterialPageRoute(
-                builder: (_) => ChangeNotifierProvider<MapProvider>(
-                  create: (_) => MapProvider(
-                    GetDestinationsUseCase(
-                      MapRepositoryImpl(MapRemoteDatasourceImpl()),
+                case '/perfil':
+                  return MaterialPageRoute(
+                    builder: (ctx) => ChangeNotifierProvider<ProfileProvider>.value(
+                      value: getIt<ProfileProvider>(),
+                      child: const ProfilePage(),
                     ),
-                    GetRouteUseCase(
-                      MapRepositoryImpl(MapRemoteDatasourceImpl()),
+                    settings: settings,
+                  );
+
+                case '/chat':
+                  return MaterialPageRoute(
+                    builder: (_) => const ChatRoutesPage(),
+                    settings: settings,
+                  );
+
+                case '/favoritos':
+                  return MaterialPageRoute(
+                    builder: (_) => const FavoritosPage(),
+                    settings: settings,
+                  );
+
+                case '/eventos':
+                  return MaterialPageRoute(
+                    builder: (_) => const EventosPage(),
+                    settings: settings,
+                  );
+
+                case '/resenas':
+                  return MaterialPageRoute(
+                    builder: (_) => const HomeResenasPage(),
+                    settings: settings,
+                  );
+
+                case '/mapa':
+                  return MaterialPageRoute(
+                    builder: (_) => ChangeNotifierProvider<MapProvider>(
+                      create: (_) => MapProvider(
+                        GetDestinationsUseCase(
+                          MapRepositoryImpl(MapRemoteDatasourceImpl()),
+                        ),
+                        GetRouteUseCase(
+                          MapRepositoryImpl(MapRemoteDatasourceImpl()),
+                        ),
+                      ),
+                      child: const MapPage(),
                     ),
-                  ),
-                  child: const MapPage(),
-                ),
-                settings: settings,
-              );
+                    settings: settings,
+                  );
 
-            case '/cerca':
-              return MaterialPageRoute(
-                builder: (_) => const ExplorarCercaPage(),
-                settings: settings,
-              );
+                case '/cerca':
+                  return MaterialPageRoute(
+                    builder: (_) => const ExplorarCercaPage(),
+                    settings: settings,
+                  );
 
-            case '/recomendar':
-              return MaterialPageRoute(
-                builder: (_) => const RecomendarLugarPage(),
-                settings: settings,
-              );
+                case '/recomendar':
+                  return MaterialPageRoute(
+                    builder: (_) => const RecomendarLugarPage(),
+                    settings: settings,
+                  );
 
-            // ✅ NUEVA RUTA: /negocios — lista reutilizable por tipo
-            case '/negocios':
-              final args = settings.arguments as Map<String, dynamic>;
-              return MaterialPageRoute(
-                builder: (_) => NegocioListaPage(
-                  tipoNegocioId: args['tipoNegocioId'] as String,
-                  tituloTipo: args['tituloTipo'] as String,
-                ),
-                settings: settings,
-              );
+                case '/negocios':
+                  final args = settings.arguments as Map<String, dynamic>;
+                  return MaterialPageRoute(
+                    builder: (_) => NegocioListaPage(
+                      tipoNegocioId: args['tipoNegocioId'] as String,
+                      tituloTipo:    args['tituloTipo'] as String,
+                    ),
+                    settings: settings,
+                  );
 
-            // ✅ NUEVA RUTA: /promociones — opcionalmente filtrada por negocio
-            case '/promociones':
-              final args = settings.arguments as Map<String, dynamic>?;
-              return MaterialPageRoute(
-                builder: (_) =>
-                    PromocionesPage(negocioId: args?['negocioId'] as String?),
-                settings: settings,
-              );
+                case '/promociones':
+                  final args = settings.arguments as Map<String, dynamic>?;
+                  return MaterialPageRoute(
+                    builder: (_) => PromocionesPage(
+                      negocioId: args?['negocioId'] as String?,
+                    ),
+                    settings: settings,
+                  );
 
-            default:
-              debugPrint('Ruta no encontrada: ${settings.name}');
-
-              return MaterialPageRoute(
-                builder: (_) => const WelcomePage(),
-                settings: settings,
-              );
-          }
+                default:
+                  debugPrint('Ruta no encontrada: ${settings.name}');
+                  return MaterialPageRoute(
+                    builder: (_) => const WelcomePage(),
+                    settings: settings,
+                  );
+              }
+            },
+          );
         },
       ),
     );

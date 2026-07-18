@@ -15,6 +15,8 @@ abstract class AuthRemoteDataSource {
 
   Future<String> login({required String email, required String password});
 
+  Future<String> loginWithGoogle({required String idToken});
+
   Future<UsuarioModel> getProfile();
 
   Future<UsuarioModel> updateProfile({String? name, String? phone});
@@ -80,6 +82,28 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
     throw ServerException(
       message: response.data['message'] ?? 'Error al iniciar sesion',
+      statusCode: response.statusCode,
+    );
+  }
+
+  @override
+  Future<String> loginWithGoogle({required String idToken}) async {
+    final response = await _apiClient.post(
+      '/users/google-auth',
+      data: {'idToken': idToken},
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final body  = response.data as Map<String, dynamic>;
+      final token = (body['data']?['token'] ?? body['token']) as String?;
+      if (token == null) {
+        throw const ServerException(message: 'Token no recibido del servidor');
+      }
+      return token;
+    }
+
+    throw ServerException(
+      message:    response.data['message'] ?? 'Error al autenticar con Google',
       statusCode: response.statusCode,
     );
   }

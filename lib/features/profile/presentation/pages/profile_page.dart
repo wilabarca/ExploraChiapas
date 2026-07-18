@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/l10n/app_strings.dart';
+import '../../../../core/providers/preferences_provider.dart';
+import '../../../../core/providers/locale_provider.dart';
 import '../providers/profile_provider.dart';
 import '../widgets/profile_avatar.dart';
 import '../widgets/profile_interests.dart';
 import '../widgets/profile_stats.dart';
 import '../widgets/profile_menu_item.dart';
 import 'edit_profile_page.dart';
-// ajusta el import según tu path real:
 import '../../../home/presentation/widgets/custom_bottom_nav_bar.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -17,6 +19,11 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  // Estado de privacidad (no se persiste — sólo UI por ahora)
+  bool _compartirUbicacion   = false;
+  bool _compartirHistorial   = false;
+  bool _mostrarPerfilPublico = true;
+
   @override
   void initState() {
     super.initState();
@@ -40,8 +47,42 @@ class _ProfilePageState extends State<ProfilePage> {
         Navigator.pushReplacementNamed(context, '/resenas');
         break;
       case BottomNavTab.perfil:
-        break; // ya estamos aquí
+        break;
     }
+  }
+
+  void _seleccionarOpcion(
+    String titulo,
+    List<String> opciones,
+    String actual,
+    void Function(String) onSelected,
+  ) {
+    showDialog(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        children: opciones.map((op) {
+          return SimpleDialogOption(
+            onPressed: () {
+              Navigator.pop(ctx);
+              onSelected(op);
+            },
+            child: Row(
+              children: [
+                Icon(
+                  op == actual ? Icons.check_circle : Icons.radio_button_unchecked,
+                  color: op == actual ? const Color(0xFF2E7D32) : Colors.grey,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Text(op, style: const TextStyle(fontSize: 15)),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
   }
 
   @override
@@ -51,6 +92,10 @@ class _ProfilePageState extends State<ProfilePage> {
     final screenH      = mq.size.height;
     final isSmall      = screenW < 360;
     final avatarRadius = screenW * 0.135;
+    final lang         = context.watch<LocaleProvider>().langCode;
+    final prefs        = context.watch<PreferencesProvider>();
+
+    String s(String key) => AppStrings.tr(key, lang);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF2F7F2),
@@ -59,20 +104,19 @@ class _ProfilePageState extends State<ProfilePage> {
         elevation: 0,
         centerTitle: false,
         automaticallyImplyLeading: false,
-        title: const Text(
-          'ExploraChiapas',
-          style: TextStyle(
-            color: Color(0xFF1B5E20),
-            fontSize: 18,
+        title: Text(
+          s('app_name'),
+          style: const TextStyle(
+            color:      Color(0xFF1B5E20),
+            fontSize:   18,
             fontWeight: FontWeight.bold,
           ),
         ),
       ),
-      // ✅ Bottom nav de vuelta con perfil seleccionado
       bottomNavigationBar: AppBottomNav(
-        navItems: AppBottomNav.items, // cambia a itemsLocal si es usuario Local
+        navItems:   AppBottomNav.items,
         currentTab: BottomNavTab.perfil,
-        onTap: _onNavTap,
+        onTap:      _onNavTap,
       ),
       body: Consumer<ProfileProvider>(
         builder: (context, provider, _) {
@@ -88,16 +132,16 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('No se pudo cargar el perfil'),
+                  Text(s('no_cargo_perfil')),
                   const SizedBox(height: 12),
                   ElevatedButton(
                     onPressed: () => provider.loadPerfil(),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF2E7D32),
                     ),
-                    child: const Text(
-                      'Reintentar',
-                      style: TextStyle(color: Colors.white),
+                    child: Text(
+                      s('reintentar'),
+                      style: const TextStyle(color: Colors.white),
                     ),
                   ),
                 ],
@@ -158,75 +202,163 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   SizedBox(height: screenH * 0.016),
 
-                  // ── Mis Intereses ─────────────────────────
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
+                  // ── Mis Intereses (acordeón) ───────────────
+                  _Acordeon(
+                    titulo: s('mis_intereses'),
+                    icono:  Icons.favorite_outline,
+                    accion: GestureDetector(
+                      onTap: () => Navigator.pushNamed(context, '/intereses'),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.edit_outlined,
+                              size: 14, color: Color(0xFF2E7D32)),
+                          const SizedBox(width: 4),
+                          Text(
+                            s('editar'),
+                            style: const TextStyle(
+                              fontSize:   13,
+                              color:      Color(0xFF2E7D32),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Mis Intereses',
-                              style: TextStyle(
-                                fontSize:   15,
-                                fontWeight: FontWeight.bold,
-                                color:      Color(0xFF1B1B1B),
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () =>
-                                  Navigator.pushNamed(context, '/intereses'),
-                              child: const Row(
-                                children: [
-                                  Icon(Icons.edit_outlined,
-                                      size: 14, color: Color(0xFF2E7D32)),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'Editar',
-                                    style: TextStyle(
-                                      fontSize:   13,
-                                      color:      Color(0xFF2E7D32),
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                    children: const [ProfileInterests()],
+                  ),
+
+                  SizedBox(height: screenH * 0.01),
+
+                  // ── Menú principal (acordeón) ─────────────
+                  _Acordeon(
+                    titulo: s('menu'),
+                    icono:  Icons.menu_outlined,
+                    children: [
+                      ProfileMenuItem(
+                        icon:  Icons.manage_accounts_outlined,
+                        label: s('editar_perfil'),
+                        onTap: () => _irAEditarPerfil(context),
+                      ),
+                      const SizedBox(height: 8),
+                      ProfileMenuItem(
+                        icon:  Icons.logout_outlined,
+                        label: s('cerrar_sesion'),
+                        onTap: () => _confirmarCerrarSesion(context, lang),
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: screenH * 0.01),
+
+                  // ── Preferencias (acordeón) ───────────────
+                  _Acordeon(
+                    titulo: s('preferencias'),
+                    icono:  Icons.settings_outlined,
+                    children: [
+                      _PreferenciaTile(
+                        icon:  Icons.language_outlined,
+                        label: s('idioma'),
+                        valor: prefs.idioma,
+                        onTap: () => _seleccionarOpcion(
+                          s('idioma'),
+                          ['Español', 'English'],
+                          prefs.idioma,
+                          (v) {
+                            prefs.setIdioma(v);
+                            context.read<LocaleProvider>().setLocale(
+                              Locale(v == 'English' ? 'en' : 'es'),
+                            );
+                          },
                         ),
-                        const SizedBox(height: 12),
-                        const ProfileInterests(),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 8),
+                      _PreferenciaTile(
+                        icon:  Icons.straighten_outlined,
+                        label: s('unidades'),
+                        valor: prefs.unidades,
+                        onTap: () => _seleccionarOpcion(
+                          s('unidades'),
+                          ['km', 'millas'],
+                          prefs.unidades,
+                          prefs.setUnidades,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      _PreferenciaTile(
+                        icon:  Icons.brightness_6_outlined,
+                        label: s('tema'),
+                        valor: s(prefs.tema == 'Claro' ? 'claro' : 'oscuro'),
+                        onTap: () => _seleccionarOpcion(
+                          s('tema'),
+                          [s('claro'), s('oscuro')],
+                          s(prefs.tema == 'Claro' ? 'claro' : 'oscuro'),
+                          (v) => prefs.setTema(
+                            v == s('oscuro') ? 'Oscuro' : 'Claro',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      _PreferenciaTile(
+                        icon:  Icons.attach_money_outlined,
+                        label: s('moneda'),
+                        valor: prefs.moneda,
+                        onTap: () => _seleccionarOpcion(
+                          s('moneda'),
+                          ['MXN', 'USD', 'EUR'],
+                          prefs.moneda,
+                          prefs.setMoneda,
+                        ),
+                      ),
+                    ],
                   ),
 
-                  SizedBox(height: screenH * 0.016),
+                  SizedBox(height: screenH * 0.01),
 
-                  // ── Menú ──────────────────────────────────
-                  ProfileMenuItem(
-                    icon:  Icons.manage_accounts_outlined,
-                    label: 'Editar perfil',
-                    onTap: () => _irAEditarPerfil(context),
-                  ),
-                  SizedBox(height: screenH * 0.01),
-                  ProfileMenuItem(
-                    icon:  Icons.logout_outlined,
-                    label: 'Cerrar sesión',
-                    onTap: () => _confirmarCerrarSesion(context),
-                  ),
-                  SizedBox(height: screenH * 0.01),
-                  ProfileMenuItem(
-                    icon:        Icons.delete_outline,
-                    label:       'Eliminar cuenta',
-                    dangerColor: const Color(0xFFD32F2F),
-                    onTap:       () => _confirmarEliminarCuenta(context, provider),
+                  // ── Privacidad (acordeón) ─────────────────
+                  _Acordeon(
+                    titulo: s('privacidad'),
+                    icono:  Icons.shield_outlined,
+                    children: [
+                      _ToggleTile(
+                        icon:      Icons.location_on_outlined,
+                        label:     s('compartir_ubicacion'),
+                        valor:     _compartirUbicacion,
+                        onChanged: (v) => setState(() => _compartirUbicacion = v),
+                      ),
+                      const SizedBox(height: 8),
+                      _ToggleTile(
+                        icon:      Icons.history_outlined,
+                        label:     s('compartir_historial'),
+                        valor:     _compartirHistorial,
+                        onChanged: (v) => setState(() => _compartirHistorial = v),
+                      ),
+                      const SizedBox(height: 8),
+                      _ToggleTile(
+                        icon:      Icons.public_outlined,
+                        label:     s('mostrar_perfil_publico'),
+                        valor:     _mostrarPerfilPublico,
+                        onChanged: (v) => setState(() => _mostrarPerfilPublico = v),
+                      ),
+                      const SizedBox(height: 8),
+                      ProfileMenuItem(
+                        icon:  Icons.download_outlined,
+                        label: s('descargar_datos'),
+                        onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(s('proximamente')),
+                            backgroundColor: const Color(0xFF2E7D32),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ProfileMenuItem(
+                        icon:        Icons.delete_outline,
+                        label:       s('eliminar_cuenta'),
+                        dangerColor: const Color(0xFFD32F2F),
+                        onTap:       () =>
+                            _confirmarEliminarCuenta(context, provider, lang),
+                      ),
+                    ],
                   ),
 
                   const SizedBox(height: 100),
@@ -248,19 +380,19 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
-  void _confirmarCerrarSesion(BuildContext context) {
+  void _confirmarCerrarSesion(BuildContext context, String lang) {
+    String s(String key) => AppStrings.tr(key, lang);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20)),
-        title: const Text('Cerrar sesión'),
-        content: const Text('¿Estás seguro que deseas cerrar sesión?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title:   Text(s('cerrar_sesion_titulo')),
+        content: Text(s('cerrar_sesion_msg')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar',
-                style: TextStyle(color: Colors.grey)),
+            child: Text(s('cancelar'),
+                style: const TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -272,8 +404,8 @@ class _ProfilePageState extends State<ProfilePage> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
             ),
-            child: const Text('Cerrar sesión',
-                style: TextStyle(color: Colors.white)),
+            child: Text(s('cerrar_sesion'),
+                style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -283,21 +415,20 @@ class _ProfilePageState extends State<ProfilePage> {
   void _confirmarEliminarCuenta(
     BuildContext context,
     ProfileProvider provider,
+    String lang,
   ) {
+    String s(String key) => AppStrings.tr(key, lang);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20)),
-        title: const Text('Eliminar cuenta'),
-        content: const Text(
-          '¿Estás seguro? Esta acción es permanente y no se puede deshacer.',
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title:   Text(s('eliminar_cuenta_titulo')),
+        content: Text(s('eliminar_cuenta_msg')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar',
-                style: TextStyle(color: Colors.grey)),
+            child: Text(s('cancelar'),
+                style: const TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -311,8 +442,8 @@ class _ProfilePageState extends State<ProfilePage> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
             ),
-            child: const Text('Eliminar',
-                style: TextStyle(color: Colors.white)),
+            child: Text(s('eliminar'),
+                style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -320,42 +451,187 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 }
 
-// ── Widgets privados ──────────────────────────────────────────
+// ── Acordeón ─────────────────────────────────────────────────────────────────
 
-class _StatCard extends StatelessWidget {
-  final String valor;
-  final String label;
-  const _StatCard({required this.valor, required this.label});
+class _Acordeon extends StatefulWidget {
+  final String    titulo;
+  final IconData  icono;
+  final Widget?   accion;
+  final List<Widget> children;
+
+  const _Acordeon({
+    required this.titulo,
+    required this.icono,
+    required this.children,
+    this.accion,
+  });
+
+  @override
+  State<_Acordeon> createState() => _AcordeonState();
+}
+
+class _AcordeonState extends State<_Acordeon>
+    with SingleTickerProviderStateMixin {
+  bool _expandido = false;
+  late final AnimationController _ctrl;
+  late final Animation<double> _rotacion;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync:    this,
+      duration: const Duration(milliseconds: 250),
+    );
+    _rotacion = Tween<double>(begin: 0, end: 0.5).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  void _toggle() {
+    setState(() => _expandido = !_expandido);
+    if (_expandido) {
+      _ctrl.forward();
+    } else {
+      _ctrl.reverse();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        color:        Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color:   Colors.black.withOpacity(0.04),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // ── Header ──────────────────────────────────────
+          InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: _toggle,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color:        const Color(0xFFE8F5E9),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(widget.icono,
+                        color: const Color(0xFF2E7D32), size: 20),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(
+                      widget.titulo,
+                      style: const TextStyle(
+                        fontSize:   15,
+                        fontWeight: FontWeight.w600,
+                        color:      Color(0xFF1B1B1B),
+                      ),
+                    ),
+                  ),
+                  if (widget.accion != null) ...[
+                    widget.accion!,
+                    const SizedBox(width: 8),
+                  ],
+                  RotationTransition(
+                    turns: _rotacion,
+                    child: const Icon(
+                      Icons.expand_more,
+                      color: Color(0xFF777777),
+                      size: 22,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Contenido animado ────────────────────────────
+          AnimatedCrossFade(
+            duration:      const Duration(milliseconds: 250),
+            firstChild:    const SizedBox(width: double.infinity),
+            secondChild:   Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: widget.children,
+              ),
+            ),
+            crossFadeState: _expandido
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Tile de preferencia con valor actual ──────────────────────────────────────
+
+class _PreferenciaTile extends StatelessWidget {
+  final IconData     icon;
+  final String       label;
+  final String       valor;
+  final VoidCallback onTap;
+
+  const _PreferenciaTile({
+    required this.icon,
+    required this.label,
+    required this.valor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
+          color:        const Color(0xFFF7FBF7),
+          borderRadius: BorderRadius.circular(12),
+          border:       Border.all(color: const Color(0xFFE0E0E0)),
         ),
-        child: Column(
+        child: Row(
           children: [
+            Icon(icon, color: const Color(0xFF2E7D32), size: 20),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize:   14,
+                  fontWeight: FontWeight.w500,
+                  color:      Color(0xFF1B1B1B),
+                ),
+              ),
+            ),
             Text(
               valor,
-              style: const TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1B5E20),
-              ),
+              style: const TextStyle(fontSize: 13, color: Color(0xFF777777)),
             ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 11,
-                color: Color(0xFF777777),
-                height: 1.3,
-              ),
-            ),
+            const SizedBox(width: 6),
+            const Icon(Icons.chevron_right, color: Color(0xFFAAAAAA), size: 18),
           ],
         ),
       ),
@@ -363,56 +639,51 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-class _MenuItem extends StatelessWidget {
-  final IconData     icon;
-  final String       label;
-  final VoidCallback onTap;
-  final Color?       color;
+// ── Toggle tile ───────────────────────────────────────────────────────────────
 
-  const _MenuItem({
+class _ToggleTile extends StatelessWidget {
+  final IconData           icon;
+  final String             label;
+  final bool               valor;
+  final void Function(bool) onChanged;
+
+  const _ToggleTile({
     required this.icon,
     required this.label,
-    required this.onTap,
-    this.color,
+    required this.valor,
+    required this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
-    final c = color ?? const Color(0xFF1B1B1B);
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color != null
-                    ? const Color(0xFFFFEBEE)
-                    : const Color(0xFFE8F5E9),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: c, size: 20),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  color: c,
-                ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color:        const Color(0xFFF7FBF7),
+        borderRadius: BorderRadius.circular(12),
+        border:       Border.all(color: const Color(0xFFE0E0E0)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: const Color(0xFF2E7D32), size: 20),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize:   14,
+                fontWeight: FontWeight.w500,
+                color:      Color(0xFF1B1B1B),
               ),
             ),
-            Icon(Icons.chevron_right, color: c.withOpacity(0.5), size: 20),
-          ],
-        ),
+          ),
+          Switch(
+            value:     valor,
+            onChanged: onChanged,
+            activeColor:              const Color(0xFF2E7D32),
+            materialTapTargetSize:    MaterialTapTargetSize.shrinkWrap,
+          ),
+        ],
       ),
     );
   }
