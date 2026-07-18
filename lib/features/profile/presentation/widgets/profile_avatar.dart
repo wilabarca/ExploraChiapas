@@ -1,12 +1,15 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/di/injector.dart';
 import '../../../../core/services/avatar/avatar_service.dart';
+import '../providers/profile_provider.dart';
 
 class ProfileAvatar extends StatefulWidget {
-  final double        radius;
+  final double radius;
   final VoidCallback? onTap;
-  final bool          showEditButton;
+  final bool showEditButton;
 
   const ProfileAvatar({
     super.key,
@@ -20,30 +23,10 @@ class ProfileAvatar extends StatefulWidget {
 }
 
 class _ProfileAvatarState extends State<ProfileAvatar> {
-  String? _avatarUrl;
-  bool    _loading  = true;
-  bool    _uploading = false;
+  bool    _uploading  = false;
+  String? _uploadedUrl;
 
   final _picker = ImagePicker();
-
-  @override
-  void initState() {
-    super.initState();
-    _cargarUrl();
-  }
-
-  Future<void> _cargarUrl() async {
-    try {
-      final url = await getIt<AvatarService>().getAvatarUrl();
-      if (mounted) setState(() => _avatarUrl = url);
-    } catch (_) {
-      // muestra ícono por defecto
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  // ── Flujo de selección de imagen ────────────────────────────────────────────
 
   void _mostrarOpciones() {
     showModalBottomSheet(
@@ -110,7 +93,7 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
     setState(() => _uploading = true);
     try {
       final url = await getIt<AvatarService>().subirFotoReal(foto);
-      if (mounted) setState(() => _avatarUrl = url);
+      if (mounted) setState(() => _uploadedUrl = url);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -125,38 +108,51 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
     }
   }
 
-  // ── Build ────────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     final hasAction = widget.onTap != null || widget.showEditButton;
 
-    Widget avatar = AspectRatio(
-      aspectRatio: 1,
-      child: CircleAvatar(
-        radius:          widget.radius,
-        backgroundColor: const Color(0xFFE8F5E9),
-        backgroundImage: (_avatarUrl != null && !_loading && !_uploading)
-            ? NetworkImage(_avatarUrl!)
-            : null,
-        child: (_loading || _uploading)
-            ? SizedBox(
-                width:  widget.radius * 0.55,
-                height: widget.radius * 0.55,
-                child: CircularProgressIndicator(
-                  color:       const Color(0xFF2E7D32),
-                  strokeWidth: 2.5,
-                  value:       _uploading ? null : null,
+    final perfil = context.watch<ProfileProvider>().perfil;
+    final avatarUrl = _uploadedUrl ??
+        (perfil != null && perfil.ImgUrl.isNotEmpty
+            ? perfil.ImgUrl
+            : getIt<AvatarService>().avatarPorDefecto(
+                seed: perfil?.nombre ?? 'explorachiapas',
+              ));
+
+    Widget avatar = CircleAvatar(
+      radius: widget.radius,
+      backgroundColor: const Color(0xFFE8F5E9),
+      child: _uploading
+          ? SizedBox(
+              width:  widget.radius * 0.55,
+              height: widget.radius * 0.55,
+              child: const CircularProgressIndicator(
+                color:       const Color(0xFF2E7D32),
+                strokeWidth: 2.5,
+              ),
+            )
+          : ClipOval(
+              child: CachedNetworkImage(
+                imageUrl: avatarUrl,
+                width:    widget.radius * 2,
+                height:   widget.radius * 2,
+                fit:      BoxFit.cover,
+                placeholder: (_, __) => SizedBox(
+                  width:  widget.radius * 0.55,
+                  height: widget.radius * 0.55,
+                  child: const CircularProgressIndicator(
+                    color:       Color(0xFF2E7D32),
+                    strokeWidth: 2.5,
+                  ),
                 ),
-              )
-            : (_avatarUrl == null
-                ? Icon(
-                    Icons.person,
-                    size:  widget.radius * 0.85,
-                    color: const Color(0xFF2E7D32),
-                  )
-                : null),
-      ),
+                errorWidget: (_, __, ___) => Icon(
+                  Icons.person,
+                  size:  widget.radius * 0.85,
+                  color: const Color(0xFF2E7D32),
+                ),
+              ),
+            ),
     );
 
     if (!hasAction) return avatar;
@@ -173,10 +169,10 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
               color: Color(0xFF2E7D32),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.camera_alt_outlined,
+            child: Icon(
+              widget.showEditButton ? Icons.edit : Icons.camera_alt_outlined,
               color: Colors.white,
-              size:  18,
+              size:  widget.showEditButton ? 14 : 18,
             ),
           ),
         ],

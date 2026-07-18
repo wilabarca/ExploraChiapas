@@ -1,37 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/di/injector.dart';
 import '../../../../core/services/avatar/avatar_service.dart';
+import '../../../profile/presentation/providers/profile_provider.dart';
 
-class HomeAppBar extends StatefulWidget implements PreferredSizeWidget {
+class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   const HomeAppBar({super.key});
 
   @override
   Size get preferredSize => const Size.fromHeight(64);
-
-  @override
-  State<HomeAppBar> createState() => _HomeAppBarState();
-}
-
-class _HomeAppBarState extends State<HomeAppBar> {
-  String _avatarUrl = '';
-  bool _loaded = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _cargarAvatar();
-  }
-
-  Future<void> _cargarAvatar() async {
-    final url = await getIt<AvatarService>().getAvatarUrl();
-    if (mounted) {
-      setState(() {
-        _avatarUrl = url;
-        _loaded = true;
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,11 +19,22 @@ class _HomeAppBarState extends State<HomeAppBar> {
     final fontSize = isSmall ? 16.0 : 19.0;
     final avatarRadius = isSmall ? 17.0 : 20.0;
 
+    // ✅ Una sola fuente de verdad: ProfileProvider.perfil.
+    // PerfilEntity.ImgUrl es String (no nullable); si viene vacío,
+    // significa que el usuario no tiene foto propia y usamos el
+    // avatar determinístico por defecto.
+    final perfil = context.watch<ProfileProvider>().perfil;
+    final tieneFotoPropia = perfil != null && perfil.ImgUrl.isNotEmpty;
+    final avatarUrl = tieneFotoPropia
+        ? perfil.ImgUrl
+        : getIt<AvatarService>().avatarPorDefecto(
+            seed: perfil?.nombre ?? perfil?.id ?? 'explorachiapas',
+          );
+
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 0,
       titleSpacing: screenW * 0.04,
-      // ✅ Sin LayoutBuilder, sin AspectRatio — solo Row con SizedBox fijo
       title: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -74,32 +63,29 @@ class _HomeAppBarState extends State<HomeAppBar> {
       actions: [
         Padding(
           padding: EdgeInsets.only(right: screenW * 0.04),
-          child: CircleAvatar(
-            radius: avatarRadius,
-            backgroundColor: const Color(0xFFD8F5D8),
-            child: ClipOval(
-              child: _loaded && _avatarUrl.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: _avatarUrl,
-                      width: avatarRadius * 2,
-                      height: avatarRadius * 2,
-                      fit: BoxFit.cover,
-                      placeholder: (_, __) => Icon(
-                        Icons.person,
-                        color: const Color(0xFF2E7D32),
-                        size: avatarRadius,
-                      ),
-                      errorWidget: (_, __, ___) => Icon(
-                        Icons.person,
-                        color: const Color(0xFF2E7D32),
-                        size: avatarRadius,
-                      ),
-                    )
-                  : Icon(
-                      Icons.person,
-                      color: const Color(0xFF2E7D32),
-                      size: avatarRadius,
-                    ),
+          child: GestureDetector(
+            onTap: () => Navigator.pushNamed(context, '/perfil'),
+            child: CircleAvatar(
+              radius: avatarRadius,
+              backgroundColor: const Color(0xFFD8F5D8),
+              child: ClipOval(
+                child: CachedNetworkImage(
+                  imageUrl: avatarUrl,
+                  width: avatarRadius * 2,
+                  height: avatarRadius * 2,
+                  fit: BoxFit.cover,
+                  placeholder: (_, __) => Icon(
+                    Icons.person,
+                    color: const Color(0xFF2E7D32),
+                    size: avatarRadius,
+                  ),
+                  errorWidget: (_, __, ___) => Icon(
+                    Icons.person,
+                    color: const Color(0xFF2E7D32),
+                    size: avatarRadius,
+                  ),
+                ),
+              ),
             ),
           ),
         ),

@@ -4,7 +4,7 @@ import 'package:injectable/injectable.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
 import '../../domain/entities/destino.dart';
-import '../datasource/remote/destinos_remote_datasource.dart';
+import '../datasource/destinos_remote_datasource.dart';
 import '../../domain/repositories/destinos_repository.dart';
 
 @LazySingleton(as: DestinoRepository)

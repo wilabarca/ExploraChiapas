@@ -7,9 +7,8 @@ import '../widgets/section_header.dart';
 import '../widgets/destino_card.dart';
 import '../widgets/restaurante_item.dart';
 import '../widgets/hotel_card.dart';
-import '../widgets/accesos_rapidos.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
-import '../../../destinos/presentation/pages/explorar_cerca_page.dart';
+import '../../../destinos/presentation/pages/lugar_detail_page.dart';
 import '../../../destinos/presentation/providers/destinos_provider.dart';
 import '../../../eventos/domain/entities/evento.dart';
 import '../../../eventos/presentation/providers/eventos_provider.dart';
@@ -53,7 +52,9 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
       final promos = await _apiService.fetchPromociones();
       if (!mounted) return;
       setState(() => _promociones = promos);
-    } catch (_) {}
+    } catch (_) {
+      // Las promociones no bloquean la pantalla principal.
+    }
   }
 
   void _onNavTap(BottomNavTab tab) {
@@ -71,26 +72,40 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
         Navigator.pushNamed(context, '/perfil');
         break;
       case BottomNavTab.explorar:
-        break;
+        break; // ya estamos aquí
     }
   }
 
+  // ── Navegación al detalle de un destino turístico ───────────────────────
   void _openDestinoDetail({
     required String nombre,
     required double calificacion,
   }) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const ExplorarCercaPage()),
+      MaterialPageRoute(
+        builder: (_) => LugarDetailPage(
+          nombre: nombre,
+          categoria: 'Destino turístico',
+          calificacion: calificacion,
+          imageUrl: '',
+        ),
+      ),
     );
   }
 
+  // ── Navegación reutilizable hacia la lista de negocios por tipo ─────────
   void _irANegocios(String tipoNegocioId, String tituloTipo) {
     Navigator.pushNamed(
       context,
       '/negocios',
       arguments: {'tipoNegocioId': tipoNegocioId, 'tituloTipo': tituloTipo},
     );
+  }
+
+  // ── Navegación a la vista de promociones ─────────────────────────────────
+  void _irAPromociones() {
+    Navigator.pushNamed(context, '/promociones');
   }
 
   static const _restaurantes = [
@@ -129,6 +144,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ MediaQuery SOLO dentro de build()
     final mq = MediaQuery.of(context);
     final screenW = mq.size.width;
     final isTablet = screenW >= 600;
@@ -264,8 +280,14 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
                 },
               ),
 
-              const SizedBox(height: 8),
-              const AccesosRapidos(),
+              const SizedBox(height: 24),
+
+              // ── 🔥 Promociones ───────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: _PromocionesBanner(onTap: _irAPromociones),
+              ),
+
               const SizedBox(height: 24),
 
               if (_promociones.isNotEmpty) ...[
@@ -291,6 +313,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
                 const SizedBox(height: 24),
               ],
 
+              // ── Próximos eventos (dinámico vía EventosProvider) ──────
               Consumer<EventosProvider>(
                 builder: (context, eventosProvider, child) {
                   if (eventosProvider.status == EventosStatus.loading) {
@@ -641,14 +664,148 @@ class _PromocionCard extends StatelessWidget {
   }
 }
 
+// ── Card "🔥 Promociones" — reutilizable, responsiva ────────────────────────
+class _PromocionesBanner extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _PromocionesBanner({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    // LayoutBuilder: adapta proporción y tamaños según el ancho real
+    // disponible (no solo el ancho de pantalla).
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isTablet = constraints.maxWidth >= 560;
+
+        return GestureDetector(
+          onTap: onTap,
+          child: AspectRatio(
+            // AspectRatio: la card mantiene proporción consistente sin
+            // importar el ancho de pantalla.
+            aspectRatio: isTablet ? 4.6 / 1.6 : 2.9 / 1.6,
+            child: Container(
+              padding: EdgeInsets.all(isTablet ? 22 : 18),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFFFF7A45), Color(0xFFD84315)],
+                ),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Stack(
+                children: [
+                  Positioned(
+                    right: -12,
+                    bottom: -12,
+                    child: Icon(
+                      Icons.local_fire_department,
+                      size: isTablet ? 100 : 78,
+                      color: Colors.white.withOpacity(0.14),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      // Expanded: el texto ocupa el espacio disponible sin
+                      // empujar el ícono.
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text(
+                                  '🔥',
+                                  style: TextStyle(fontSize: 15),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'PROMOCIONES',
+                                  style: TextStyle(
+                                    fontSize: isTablet ? 12 : 10.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                    letterSpacing: 0.8,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: isTablet ? 10 : 8),
+                            // Flexible: la descripción se recorta si no cabe.
+                            Flexible(
+                              child: Text(
+                                'Descubre descuentos exclusivos de '
+                                'hoteles, restaurantes, tours y más.',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: isTablet ? 14 : 12.5,
+                                  color: Colors.white.withOpacity(0.92),
+                                  height: 1.35,
+                                ),
+                              ),
+                            ),
+                            // Spacer: empuja el enlace hacia el fondo cuando
+                            // hay espacio vertical disponible.
+                            const Spacer(),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Ver promociones',
+                                  style: TextStyle(
+                                    fontSize: isTablet ? 13.5 : 12.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                const Icon(
+                                  Icons.arrow_forward,
+                                  size: 15,
+                                  color: Colors.white,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ── Formatea una fecha como "14 jul" sin depender del paquete intl ─────────
 String _formatearFecha(DateTime fecha) {
   const meses = [
-    'ene', 'feb', 'mar', 'abr', 'may', 'jun',
-    'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+    'ene',
+    'feb',
+    'mar',
+    'abr',
+    'may',
+    'jun',
+    'jul',
+    'ago',
+    'sep',
+    'oct',
+    'nov',
+    'dic',
   ];
   return '${fecha.day} ${meses[fecha.month - 1]}';
 }
 
+// ── Card de evento — usa Evento del dominio ─────────────────────────────────
 class _EventoItem extends StatelessWidget {
   final Evento evento;
 

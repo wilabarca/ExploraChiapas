@@ -17,8 +17,10 @@ import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/profile/presentation/providers/profile_provider.dart';
 import 'features/Chat/presentation/providers/chat_provider.dart';
 import 'features/destinos/presentation/providers/destinos_provider.dart';
-import 'features/favoritos/presentation/providers/favoritos_provider.dart';
 import 'features/eventos/presentation/providers/eventos_provider.dart';
+import 'features/promociones/presentation/providers/promociones_provider.dart';
+import 'features/resena/presentation/providers/ResenasProvider.dart';
+import 'features/favoritos/presentation/providers/favoritos_provider.dart';
 
 import 'features/home/presentation/pages/home_page.dart';
 import 'features/profile/presentation/pages/profile_page.dart';
@@ -34,8 +36,9 @@ import 'features/maps/data/repositories/map_repository_impl.dart';
 import 'features/maps/data/datasources/map_remote_datasource.dart';
 import 'features/destinos/presentation/pages/explorar_cerca_page.dart';
 import 'features/destinos/presentation/pages/recomendar_lugar_page.dart';
-import 'features/resenas/presentation/pages/home_resenas_page.dart';
+import 'features/resena/presentation/pages/home_resenas_page.dart';
 import 'features/negocio/presentation/pages/negocio_lista_page.dart';
+import 'features/promociones/presentation/pages/promociones_page.dart';
 
 class ExploraChiapasApp extends StatefulWidget {
   const ExploraChiapasApp({super.key});
@@ -71,11 +74,17 @@ class _ExploraChiapasAppState extends State<ExploraChiapasApp> {
         ChangeNotifierProvider<DestinoProvider>(
           create: (_) => getIt<DestinoProvider>(),
         ),
-        ChangeNotifierProvider<FavoritosProvider>(
-          create: (_) => getIt<FavoritosProvider>(),
-        ),
         ChangeNotifierProvider<EventosProvider>(
           create: (_) => getIt<EventosProvider>(),
+        ),
+        ChangeNotifierProvider<PromocionesProvider>(
+          create: (_) => getIt<PromocionesProvider>(),
+        ),
+        ChangeNotifierProvider<ResenasProvider>(
+          create: (_) => getIt<ResenasProvider>(),
+        ),
+        ChangeNotifierProvider<FavoritosProvider>(
+          create: (_) => getIt<FavoritosProvider>(),
         ),
         ChangeNotifierProvider<PreferencesProvider>.value(
           value: _prefsProvider,
@@ -87,9 +96,9 @@ class _ExploraChiapasAppState extends State<ExploraChiapasApp> {
       child: Consumer2<PreferencesProvider, LocaleProvider>(
         builder: (context, prefs, locale, _) {
           return MaterialApp(
-            title:                  'ExploraChiapas',
+            title: 'ExploraChiapas',
             debugShowCheckedModeBanner: false,
-            locale:                 locale.locale,
+            locale: locale.locale,
             supportedLocales: const [Locale('es'), Locale('en')],
             localizationsDelegates: const [
               GlobalMaterialLocalizations.delegate,
@@ -217,6 +226,15 @@ class _ExploraChiapasAppState extends State<ExploraChiapasApp> {
                     builder: (_) => NegocioListaPage(
                       tipoNegocioId: args['tipoNegocioId'] as String,
                       tituloTipo:    args['tituloTipo'] as String,
+                    ),
+                    settings: settings,
+                  );
+
+                case '/promociones':
+                  final args = settings.arguments as Map<String, dynamic>?;
+                  return MaterialPageRoute(
+                    builder: (_) => PromocionesPage(
+                      negocioId: args?['negocioId'] as String?,
                     ),
                     settings: settings,
                   );

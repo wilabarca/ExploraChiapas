@@ -54,7 +54,11 @@ class _EventosPageState extends State<EventosPage> {
       fechaFin: e.fechaFin,
       ubicacion: e.municipio ?? 'Chiapas',
       categoria: e.categoriaNombre ?? 'General',
-      imageUrl: _imagenPorCategoria(e.categoriaNombre),
+      // ✅ Usa la imagen real del backend si existe; solo cae al
+      // fallback por categoría cuando el evento no trae imagenUrl.
+      imageUrl: (e.imagenUrl != null && e.imagenUrl!.isNotEmpty)
+          ? e.imagenUrl!
+          : _imagenPorCategoria(e.categoriaNombre),
       activo: e.activo,
     );
   }
@@ -75,10 +79,7 @@ class _EventosPageState extends State<EventosPage> {
   }
 
   List<EventoEntity> _filtrar(List<Evento> eventos) {
-    var lista = eventos
-        .where((e) => e.activo)
-        .map(_mapEvento)
-        .toList();
+    var lista = eventos.where((e) => e.activo).map(_mapEvento).toList();
 
     if (_filtroActivo != 'Todos') {
       lista = lista.where((e) => e.categoria == _filtroActivo).toList();
@@ -87,10 +88,12 @@ class _EventosPageState extends State<EventosPage> {
     if (_busqueda.isNotEmpty) {
       final q = _busqueda.toLowerCase();
       lista = lista
-          .where((e) =>
-              e.titulo.toLowerCase().contains(q) ||
-              e.ubicacion.toLowerCase().contains(q) ||
-              e.categoria.toLowerCase().contains(q))
+          .where(
+            (e) =>
+                e.titulo.toLowerCase().contains(q) ||
+                e.ubicacion.toLowerCase().contains(q) ||
+                e.categoria.toLowerCase().contains(q),
+          )
           .toList();
     }
 
@@ -134,7 +137,10 @@ class _EventosPageState extends State<EventosPage> {
                     color: Color(0xFFAAAAAA),
                     fontSize: 15,
                   ),
-                  prefixIcon: const Icon(Icons.search, color: Color(0xFF2E7D32)),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: Color(0xFF2E7D32),
+                  ),
                   filled: true,
                   fillColor: const Color(0xFFF5F5F5),
                   border: OutlineInputBorder(
@@ -179,13 +185,18 @@ class _EventosPageState extends State<EventosPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.cloud_off_outlined,
-                            size: 48, color: Color(0xFFCCCCCC)),
+                        const Icon(
+                          Icons.cloud_off_outlined,
+                          size: 48,
+                          color: Color(0xFFCCCCCC),
+                        ),
                         const SizedBox(height: 12),
                         Text(
                           provider.errorMessage ?? 'Error al cargar eventos',
                           style: const TextStyle(
-                              color: Color(0xFF888888), fontSize: 14),
+                            color: Color(0xFF888888),
+                            fontSize: 14,
+                          ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
@@ -209,13 +220,18 @@ class _EventosPageState extends State<EventosPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.event_busy,
-                            size: 48, color: Color(0xFFCCCCCC)),
+                        const Icon(
+                          Icons.event_busy,
+                          size: 48,
+                          color: Color(0xFFCCCCCC),
+                        ),
                         const SizedBox(height: 12),
                         const Text(
                           'No hay eventos disponibles',
                           style: TextStyle(
-                              color: Color(0xFF888888), fontSize: 15),
+                            color: Color(0xFF888888),
+                            fontSize: 15,
+                          ),
                         ),
                       ],
                     ),

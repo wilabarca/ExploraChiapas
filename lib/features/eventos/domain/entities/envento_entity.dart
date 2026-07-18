@@ -23,11 +23,31 @@ class EventoEntity {
     this.creadoPor = 'Admin',
   });
 
-  String get fechaFormateada {
-    final meses = [
-      'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
-      'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
-    ];
-    return '${fechaInicio.day} ${meses[fechaInicio.month - 1]} ${fechaInicio.year}';
+  static const _meses = [
+    'Ene',
+    'Feb',
+    'Mar',
+    'Abr',
+    'May',
+    'Jun',
+    'Jul',
+    'Ago',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dic',
+  ];
+
+  String _formatear(DateTime fecha) {
+    return '${fecha.day} ${_meses[fecha.month - 1]} ${fecha.year}';
+  }
+
+  String get fechaFormateada => _formatear(fechaInicio);
+
+  /// Evita tener que instanciar un EventoEntity temporal solo para
+  /// formatear la fecha de cierre.
+  String? get fechaFinFormateada {
+    if (fechaFin == null) return null;
+    return _formatear(fechaFin!);
   }
 }

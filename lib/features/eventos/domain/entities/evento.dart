@@ -2,6 +2,7 @@ class Evento {
   final String id;
   final String titulo;
   final String? descripcion;
+  final String? imagenUrl;
 
   final DateTime fechaInicio;
   final DateTime? fechaFin;
@@ -18,6 +19,7 @@ class Evento {
     required this.id,
     required this.titulo,
     this.descripcion,
+    this.imagenUrl,
     required this.fechaInicio,
     this.fechaFin,
     this.ubicacionId,

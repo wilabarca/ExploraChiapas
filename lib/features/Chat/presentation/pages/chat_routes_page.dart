@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/chat_provider.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/chat_input.dart';
 import '../widgets/chat_destino_card.dart';
 import '../widgets/chat_restaurante_item.dart';
+import '../../../home/presentation/widgets/home_app_bar.dart';
 
 class ChatRoutesPage extends StatefulWidget {
   const ChatRoutesPage({super.key});
@@ -53,25 +53,31 @@ class _ChatRoutesPageState extends State<ChatRoutesPage> {
     final items = <Widget>[];
 
     for (final mensaje in provider.mensajes) {
-      items.add(ChatBubble(
-        mensaje: mensaje.contenido,
-        hora: mensaje.hora,
-        tipo: mensaje.tipo,
-      ));
+      items.add(
+        ChatBubble(
+          mensaje: mensaje.contenido,
+          hora: mensaje.hora,
+          tipo: mensaje.tipo,
+        ),
+      );
 
       for (final actividad in mensaje.itinerario) {
         if (actividad.esDestino) {
-          items.add(ChatDestinoCard(
-            nombre: actividad.nombre,
-            duracion: '${actividad.tiempoHoras.toStringAsFixed(0)} h',
-            precio: '\$${actividad.costoTotalGrupo.toStringAsFixed(0)} MXN',
-          ));
+          items.add(
+            ChatDestinoCard(
+              nombre: actividad.nombre,
+              duracion: '${actividad.tiempoHoras.toStringAsFixed(0)} h',
+              precio: '\$${actividad.costoTotalGrupo.toStringAsFixed(0)} MXN',
+            ),
+          );
         } else if (actividad.esRestaurante) {
-          items.add(ChatRestauranteItem(
-            nombre: actividad.nombre,
-            tipo: actividad.tipoComida ?? 'Restaurante',
-            precio: '\$${actividad.costoEstimado.toStringAsFixed(0)} MXN pp',
-          ));
+          items.add(
+            ChatRestauranteItem(
+              nombre: actividad.nombre,
+              tipo: actividad.tipoComida ?? 'Restaurante',
+              precio: '\$${actividad.costoEstimado.toStringAsFixed(0)} MXN pp',
+            ),
+          );
         }
       }
     }
@@ -90,53 +96,7 @@ class _ChatRoutesPageState extends State<ChatRoutesPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8F8),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        titleSpacing: 20,
-        title: Row(
-          children: [
-            Image.asset(
-              'assets/images/ExploraChiapas Logo.png',
-              height: 26,
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'ExploraChiapas',
-              style: TextStyle(
-                color: Color(0xFF2E7D32),
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: CircleAvatar(
-              radius: 20,
-              backgroundColor: const Color(0xFFD8F5D8),
-              child: ClipOval(
-                child: CachedNetworkImage(
-                  imageUrl: 'https://i.pravatar.cc/150?img=12',
-                  width: 40,
-                  height: 40,
-                  fit: BoxFit.cover,
-                  placeholder: (_, __) => const Icon(
-                    Icons.person,
-                    color: Color(0xFF2E7D32),
-                  ),
-                  errorWidget: (_, __, ___) => const Icon(
-                    Icons.person,
-                    color: Color(0xFF2E7D32),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+      appBar: const HomeAppBar(),
       body: Column(
         children: [
           Expanded(
@@ -146,10 +106,7 @@ class _ChatRoutesPageState extends State<ChatRoutesPage> {
               children: items,
             ),
           ),
-          ChatInput(
-            controller: _inputCtrl,
-            onSend: _enviarMensaje,
-          ),
+          ChatInput(controller: _inputCtrl, onSend: _enviarMensaje),
         ],
       ),
     );
@@ -220,9 +177,10 @@ class _DotState extends State<_Dot> with SingleTickerProviderStateMixin {
     Future.delayed(Duration(milliseconds: widget.delay), () {
       if (mounted) _ctrl.repeat(reverse: true);
     });
-    _anim = Tween<double>(begin: 0.4, end: 1.0).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
+    _anim = Tween<double>(
+      begin: 0.4,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override

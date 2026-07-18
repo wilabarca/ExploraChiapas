@@ -6,10 +6,7 @@ abstract class Failure {
 class ServerFailure extends Failure {
   final int? statusCode;
 
-  const ServerFailure({
-    required super.message,
-    this.statusCode,
-  });
+  const ServerFailure({required super.message, this.statusCode});
 }
 
 class UnauthorizedFailure extends Failure {
@@ -25,7 +22,5 @@ class NetworkFailure extends Failure {
 }
 
 class CacheFailure extends Failure {
-  const CacheFailure({
-    super.message = 'Error al leer datos locales.',
-  });
+  const CacheFailure({super.message = 'Error al leer datos locales.'});
 }

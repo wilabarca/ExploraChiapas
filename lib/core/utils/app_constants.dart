@@ -15,6 +15,24 @@ class AppConstants {
   static const String eventsEndpoint = '/events';
   static const String favoritesEndpoint = '/favorites';
 
+  
+  // Uso: GET {baseUrl}{promotionsEndpoint}?negocioId=UUID_NEGOCIO
+  static const String promotionsEndpoint = '/promotions';
+
+// Endpoint de subida de foto de perfil (multipart/form-data, campo 'file')
+// Requiere Authorization: Bearer TOKEN
+static const String uploadPerfilFotoEndpoint = '/uploads/usuarios/perfil';
+
+  // Endpoint de reseñas
+  // Uso: GET {baseUrl}{reviewsEndpoint}?targetType=business&targetId=UUID
+  // POST/PUT/DELETE requieren Authorization: Bearer TOKEN
+  static const String reviewsEndpoint = '/reviews';
+
+  // Valores permitidos para el parámetro targetType de reviewsEndpoint
+  static const String reviewTargetDestination = 'destination';
+  static const String reviewTargetBusiness = 'business';
+  static const String reviewTargetLocation = 'location';
+
   static const String mlServiceBaseUrl = 'https://nlp-service-6hvo.onrender.com';
   static const String planearEndpoint = '/planear';
 

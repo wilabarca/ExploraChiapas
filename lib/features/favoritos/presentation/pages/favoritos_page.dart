@@ -1,8 +1,18 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../domain/entities/favorito.dart';
-import '../providers/favoritos_provider.dart';
 
+import '../providers/favoritos_provider.dart';
+import '../widgets/favorito_card.dart';
+import '../../domain/entities/favorito.dart';
+import '../../../home/presentation/widgets/home_app_bar.dart';
+import '../../../destinos/presentation/providers/destinos_provider.dart';
+
+/// ⚠️ La API de favoritos solo da targetType/targetId/addedAt. Para
+/// destinos, cruzamos contra `DestinoProvider.destinos` (si ya está
+/// cargado) para mostrar nombre/calificación reales. Para negocios no
+/// hay todavía un NegocioProvider conectado a la UI, así que se muestran
+/// con una tarjeta genérica — dime si quieres que construyamos ese
+/// provider para completar esto.
 class FavoritosPage extends StatefulWidget {
   const FavoritosPage({super.key});
 
@@ -11,263 +21,233 @@ class FavoritosPage extends StatefulWidget {
 }
 
 class _FavoritosPageState extends State<FavoritosPage> {
+  String _filtroActivo = 'General';
+  final _filtros = ['General', 'Destinos', 'Negocios'];
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) context.read<FavoritosProvider>().cargarFavoritos();
+      context.read<FavoritosProvider>().cargarFavoritos();
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF8F8F8),
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Color(0xFF1B1B1B)),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: const Text(
-            'Mis Favoritos',
-            style: TextStyle(
-              color: Color(0xFF1B1B1B),
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          bottom: const TabBar(
-            labelColor: Color(0xFF2E7D32),
-            unselectedLabelColor: Color(0xFF999999),
-            indicatorColor: Color(0xFF2E7D32),
-            tabs: [
-              Tab(text: 'Destinos'),
-              Tab(text: 'Rutas'),
-              Tab(text: 'Experiencias'),
-            ],
-          ),
-        ),
-        body: const TabBarView(
-          children: [
-            _TabFavoritos(
-              targetType: 'destination',
-              emptyLabel: 'Sin destinos guardados',
-              emptySubLabel: 'Explora el mapa y guarda tus lugares favoritos',
-              icono: Icons.location_on_outlined,
-            ),
-            _TabFavoritos(
-              targetType: 'route',
-              emptyLabel: 'Sin rutas guardadas',
-              emptySubLabel: 'Planifica una ruta y guÃ¡rdala aquÃ­',
-              icono: Icons.route_outlined,
-            ),
-            _TabFavoritos(
-              targetType: 'experience',
-              emptyLabel: 'Sin experiencias guardadas',
-              emptySubLabel: 'Explora y guarda las que mÃ¡s te interesen',
-              icono: Icons.explore_outlined,
-            ),
-          ],
-        ),
-      ),
-    );
+  List<Favorito> _filtrar(FavoritosProvider provider) {
+    switch (_filtroActivo) {
+      case 'Destinos':
+        return provider.destinosFavoritos;
+      case 'Negocios':
+        return provider.negociosFavoritos;
+      default:
+        return provider.favoritos;
+    }
   }
-}
 
-class _TabFavoritos extends StatelessWidget {
-  final String targetType;
-  final String emptyLabel;
-  final String emptySubLabel;
-  final IconData icono;
-
-  const _TabFavoritos({
-    required this.targetType,
-    required this.emptyLabel,
-    required this.emptySubLabel,
-    required this.icono,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<FavoritosProvider>(
-      builder: (context, provider, _) {
-        if (provider.status == FavoritosStatus.loading) {
-          return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF2E7D32)),
-          );
-        }
-
-        if (provider.status == FavoritosStatus.error) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.cloud_off_outlined,
-                    size: 48, color: Color(0xFFCCCCCC)),
-                const SizedBox(height: 12),
-                Text(
-                  provider.errorMessage ?? 'Error al cargar favoritos',
-                  style: const TextStyle(fontSize: 14, color: Color(0xFF888888)),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                OutlinedButton.icon(
-                  onPressed: () => provider.cargarFavoritos(),
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Reintentar'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF2E7D32),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
-        final items = provider.favoritos
-            .where((f) => f.targetType == targetType)
-            .toList();
-
-        if (items.isEmpty) {
-          return _EstadoVacio(
-            icono: icono,
-            label: emptyLabel,
-            subLabel: emptySubLabel,
-          );
-        }
-
-        return ListView.separated(
-          padding: const EdgeInsets.all(16),
-          itemCount: items.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (context, i) {
-            final f = items[i];
-            return _FavoritoTile(
-              favorito: f,
-              icono: icono,
-              onEliminar: () => provider.alternar(
-                targetType: f.targetType,
-                targetId: f.targetId,
-              ),
-            );
-          },
-        );
-      },
-    );
+  /// Busca el destino real en DestinoProvider por id, si existe.
+  dynamic _buscarDestino(BuildContext context, String targetId) {
+    final destinos = context.read<DestinoProvider>().destinos;
+    try {
+      return destinos.firstWhere((d) => d.id == targetId);
+    } catch (_) {
+      return null;
+    }
   }
-}
-
-class _FavoritoTile extends StatelessWidget {
-  final Favorito favorito;
-  final IconData icono;
-  final VoidCallback onEliminar;
-
-  const _FavoritoTile({
-    required this.favorito,
-    required this.icono,
-    required this.onEliminar,
-  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Row(
+    // ✓ MediaQuery.sizeOf: tamaños proporcionales sin rebuilds extra.
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F8F8),
+      appBar: const HomeAppBar(),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE8F5E9),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icono, color: const Color(0xFF2E7D32), size: 24),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
+            color: Colors.white,
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  favorito.targetId,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 14,
+                const Text(
+                  'Favoritos',
+                  style: TextStyle(
+                    fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF1B1B1B),
                   ),
                 ),
-                if (favorito.addedAt != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    'Guardado el ${_formatFecha(favorito.addedAt!)}',
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF888888)),
-                  ),
-                ],
+                const SizedBox(height: 4),
+                const Text(
+                  'Tus destinos y negocios guardados',
+                  style: TextStyle(fontSize: 13, color: Color(0xFF888888)),
+                ),
+                const SizedBox(height: 14),
+                // ✓ Wrap: los chips fluyen si no caben en el ancho.
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _filtros.map((f) {
+                    final activo = f == _filtroActivo;
+                    return GestureDetector(
+                      onTap: () => setState(() => _filtroActivo = f),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 9,
+                        ),
+                        decoration: BoxDecoration(
+                          color:
+                              activo ? const Color(0xFF2E7D32) : Colors.white,
+                          borderRadius: BorderRadius.circular(30),
+                          border: Border.all(
+                            color: activo
+                                ? const Color(0xFF2E7D32)
+                                : const Color(0xFFDDDDDD),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Text(
+                          f,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: activo
+                                ? Colors.white
+                                : const Color(0xFF555555),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
               ],
             ),
           ),
-          IconButton(
-            onPressed: onEliminar,
-            icon: const Icon(Icons.favorite, color: Colors.red, size: 22),
-          ),
-        ],
-      ),
-    );
-  }
 
-  String _formatFecha(DateTime fecha) {
-    const meses = [
-      'ene', 'feb', 'mar', 'abr', 'may', 'jun',
-      'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
-    ];
-    return '${fecha.day} ${meses[fecha.month - 1]} ${fecha.year}';
-  }
-}
+          // Expanded: la lista ocupa el resto del alto disponible.
+          Expanded(
+            child: Consumer<FavoritosProvider>(
+              builder: (context, provider, child) {
+                if (provider.status == FavoritosStatus.loading) {
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      color: Color(0xFF2E7D32),
+                    ),
+                  );
+                }
 
-class _EstadoVacio extends StatelessWidget {
-  final IconData icono;
-  final String label;
-  final String subLabel;
+                if (provider.status == FavoritosStatus.error) {
+                  return Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.cloud_off_outlined,
+                              size: 36, color: Color(0xFFD32F2F)),
+                          const SizedBox(height: 10),
+                          Text(
+                            provider.errorMessage ??
+                                'No fue posible obtener tus favoritos',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: Color(0xFF666666)),
+                          ),
+                          const SizedBox(height: 12),
+                          OutlinedButton.icon(
+                            onPressed: () => provider.cargarFavoritos(),
+                            icon: const Icon(Icons.refresh, size: 18),
+                            label: const Text('Reintentar'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF2E7D32),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
 
-  const _EstadoVacio({
-    required this.icono,
-    required this.label,
-    required this.subLabel,
-  });
+                final items = _filtrar(provider);
 
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icono, size: 64, color: Colors.grey.shade300),
-          const SizedBox(height: 16),
-          Text(label, style: const TextStyle(fontSize: 16, color: Color(0xFF999999))),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: Text(
-              subLabel,
-              style: const TextStyle(fontSize: 13, color: Color(0xFFBBBBBB)),
-              textAlign: TextAlign.center,
+                if (items.isEmpty) {
+                  return const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.favorite_border,
+                            size: 48, color: Color(0xFFCCCCCC)),
+                        SizedBox(height: 12),
+                        Text(
+                          'Aún no tienes favoritos aquí',
+                          style: TextStyle(color: Color(0xFF888888)),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                // ✓ GridView.builder: 2 columnas en móvil, 3 en tablet
+                // (LayoutBuilder + MediaQuery combinados).
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    final crossAxisCount = isTablet ? 3 : 2;
+                    return GridView.builder(
+                      padding: const EdgeInsets.all(16),
+                      gridDelegate:
+                          SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 0.78,
+                      ),
+                      itemCount: items.length,
+                      itemBuilder: (context, i) {
+                        final favorito = items[i];
+                        final esDestino = favorito.targetType ==
+                            FavoritoTargetType.destination;
+
+                        final destinoReal = esDestino
+                            ? _buscarDestino(context, favorito.targetId)
+                            : null;
+
+                        return FavoritoCard(
+                          targetType: favorito.targetType,
+                          targetId: favorito.targetId,
+                          nombre: destinoReal?.name as String?,
+                          calificacion:
+                              (destinoReal?.averageRating as num?)
+                                  ?.toDouble(),
+                          procesando: provider.estaProcesando(
+                            favorito.targetType,
+                            favorito.targetId,
+                          ),
+                          onQuitar: () async {
+                            final ok = await provider.quitarFavorito(
+                              targetType: favorito.targetType,
+                              targetId: favorito.targetId,
+                            );
+                            if (!ok && context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    provider.errorMessage ??
+                                        'No se pudo quitar de favoritos',
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          },
+                        );
+                      },
+                    );
+                  },
+                );
+              },
             ),
           ),
         ],
@@ -275,5 +255,3 @@ class _EstadoVacio extends StatelessWidget {
     );
   }
 }
-
-// end of file

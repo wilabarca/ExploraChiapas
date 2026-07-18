@@ -12,6 +12,10 @@ class UpdatePerfilUseCase {
   Future<Either<Failure, PerfilEntity>> call({
     String? nombre,
     String? telefono,
-  }) =>
-      _repository.updateProfile(nombre: nombre, telefono: telefono);
+    String? fotoPerfilUrl,
+  }) => _repository.updateProfile(
+    nombre: nombre,
+    telefono: telefono,
+    fotoPerfilUrl: fotoPerfilUrl,
+  );
 }

@@ -1,9 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/profile_provider.dart';
 import '../widgets/profile_avatar.dart';
-import '../../../../core/di/injector.dart'; // ajusta al path real de getIt
-import '../../../../core/services/avatar/avatar_service.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -13,18 +13,16 @@ class EditProfilePage extends StatefulWidget {
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
-  final _nombreCtrl   = TextEditingController();
+  final _nombreCtrl = TextEditingController();
   final _telefonoCtrl = TextEditingController();
-
-  // Clave para forzar rebuild de ProfileAvatar al regenerar avatar
-  Key _avatarKey = UniqueKey();
+  final _imagePicker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
     final perfil = context.read<ProfileProvider>().perfil;
     if (perfil != null) {
-      _nombreCtrl.text   = perfil.nombre;
+      _nombreCtrl.text = perfil.nombre;
       _telefonoCtrl.text = perfil.telefono ?? '';
     }
   }
@@ -36,44 +34,81 @@ class _EditProfilePageState extends State<EditProfilePage> {
     super.dispose();
   }
 
-  /// Regenera el avatar usando el nombre ingresado y fuerza rebuild del widget
-  Future<void> _cambiarAvatar() async {
-    final nombre = _nombreCtrl.text.trim();
-    if (nombre.isEmpty) {
+  Future<void> _subirFoto() async {
+    // ── Hoja de opciones: cámara o galería ──────────────────────────
+    final origen = await showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(
+                Icons.camera_alt_outlined,
+                color: Color(0xFF2E7D32),
+              ),
+              title: const Text('Tomar foto'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.photo_library_outlined,
+                color: Color(0xFF2E7D32),
+              ),
+              title: const Text('Elegir de la galería'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (origen == null) return;
+
+    final picked = await _imagePicker.pickImage(
+      source: origen,
+      imageQuality: 80,
+      maxWidth: 1024,
+    );
+
+    if (picked == null || !mounted) return;
+
+    final provider = context.read<ProfileProvider>();
+    final success = await provider.subirFotoPerfil(File(picked.path));
+
+    if (!mounted) return;
+
+    if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Escribe tu nombre primero para generar el avatar'),
-          backgroundColor: Colors.orange,
+          content: const Text('Foto de perfil actualizada'),
+          backgroundColor: const Color(0xFF2E7D32),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
-      return;
-    }
-
-    try {
-      final service = getIt<AvatarService>();
-      await service.asignarAvatarPorNombre(nombre);
-      // Cambiar la key fuerza a ProfileAvatar a reconstruirse y recargar la URL
-      if (mounted) setState(() => _avatarKey = UniqueKey());
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('No se pudo actualizar el avatar'),
-            backgroundColor: Colors.orange,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(provider.errorMessage ?? 'No se pudo subir la foto'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
-        );
-      }
+        ),
+      );
     }
   }
 
   Future<void> _guardar() async {
     final provider = context.read<ProfileProvider>();
-    final success  = await provider.updatePerfil(
-      nombre:   _nombreCtrl.text.trim(),
+    final success = await provider.updatePerfil(
+      nombre: _nombreCtrl.text.trim(),
       telefono: _telefonoCtrl.text.trim(),
     );
 
@@ -85,7 +120,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
           content: const Text('Perfil actualizado correctamente'),
           backgroundColor: const Color(0xFF2E7D32),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
       Navigator.pop(context);
@@ -95,7 +132,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
           content: Text(provider.errorMessage ?? 'Error al actualizar'),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
     }
@@ -103,16 +142,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    final mq       = MediaQuery.of(context);
-    final screenW  = mq.size.width;
-    final screenH  = mq.size.height;
-    final isSmall  = screenW < 360;
-
-    // Radio proporcional al ancho de pantalla
+    final mq = MediaQuery.of(context);
+    final screenW = mq.size.width;
+    final screenH = mq.size.height;
+    final isSmall = screenW < 360;
     final avatarRadius = screenW * 0.145;
 
-    final isLoading = context.watch<ProfileProvider>().status ==
-        ProfileStatus.loading;
+    final isLoading =
+        context.watch<ProfileProvider>().status == ProfileStatus.loading;
+    final subiendoFoto = context.watch<ProfileProvider>().subiendoFoto;
     final perfil = context.watch<ProfileProvider>().perfil;
 
     return Scaffold(
@@ -139,30 +177,33 @@ class _EditProfilePageState extends State<EditProfilePage> {
           return SingleChildScrollView(
             padding: EdgeInsets.symmetric(
               horizontal: constraints.maxWidth * 0.06,
-              vertical:   screenH * 0.030,
+              vertical: screenH * 0.030,
             ),
             child: Column(
               children: [
-
-                // ── ProfileAvatar reutilizable con botón cámara ──
-                // _avatarKey fuerza recarga cuando se regenera el avatar
-                SizedBox(
-                  width:  avatarRadius * 2,
-                  height: avatarRadius * 2,
-                  child: ProfileAvatar(
-                    key:            _avatarKey,
-                    radius:         avatarRadius,
-                    showEditButton: false, // muestra ícono cámara
-                    onTap:          _cambiarAvatar,
-                  ),
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: avatarRadius * 2,
+                      height: avatarRadius * 2,
+                      child: ProfileAvatar(
+                        radius: avatarRadius,
+                        showEditButton: false,
+                        onTap: subiendoFoto ? null : _subirFoto,
+                      ),
+                    ),
+                    if (subiendoFoto)
+                      const CircularProgressIndicator(color: Color(0xFF2E7D32)),
+                  ],
                 ),
 
                 SizedBox(height: screenH * 0.008),
                 GestureDetector(
-                  onTap: _cambiarAvatar,
-                  child: const Text(
-                    'CAMBIAR FOTO DE PERFIL',
-                    style: TextStyle(
+                  onTap: subiendoFoto ? null : _subirFoto,
+                  child: Text(
+                    subiendoFoto ? 'SUBIENDO...' : 'CAMBIAR FOTO DE PERFIL',
+                    style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF2E7D32),
@@ -173,7 +214,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
                 SizedBox(height: screenH * 0.028),
 
-                // ── Tipo de usuario (solo lectura) ────────────
                 ConstrainedBox(
                   constraints: const BoxConstraints(minHeight: 50),
                   child: Container(
@@ -199,17 +239,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
                 SizedBox(height: screenH * 0.020),
 
-                // ── Nombre ────────────────────────────────────
                 _buildLabel('Nombre completo', Icons.person_outline),
                 const SizedBox(height: 8),
                 _buildField(
                   controller: _nombreCtrl,
-                  hint:       'Tu nombre completo',
+                  hint: 'Tu nombre completo',
                 ),
 
                 SizedBox(height: screenH * 0.020),
 
-                // ── Email (solo lectura) ──────────────────────
                 _buildLabel('Correo electrónico', Icons.email_outlined),
                 const SizedBox(height: 8),
                 ConstrainedBox(
@@ -237,7 +275,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
                 SizedBox(height: screenH * 0.020),
 
-                // ── Contraseña ────────────────────────────────
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -287,7 +324,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         ),
                       ),
                       TextButton(
-                        onPressed: () {}, // TODO: cambiar contraseña
+                        onPressed: () {},
                         child: const Text(
                           'CAMBIAR',
                           style: TextStyle(
@@ -303,7 +340,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
                 SizedBox(height: screenH * 0.020),
 
-                // ── Nota informativa ──────────────────────────
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
@@ -335,7 +371,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
                 SizedBox(height: screenH * 0.032),
 
-                // ── Botón guardar ─────────────────────────────
                 FractionallySizedBox(
                   widthFactor: 1.0,
                   child: SizedBox(
