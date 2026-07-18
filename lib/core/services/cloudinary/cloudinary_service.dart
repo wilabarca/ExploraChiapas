@@ -13,8 +13,7 @@ class CloudinaryService {
   /// Sube [foto] a Cloudinary y devuelve la URL segura (CDN).
   /// [folder] define la carpeta en Cloudinary (usar AppConstants.cloudFolder*).
   static Future<String> subirImagen(XFile foto, {String folder = ''}) async {
-    final url = 'https://api.cloudinary.com/v1_1'
-        '/${AppConstants.cloudinaryCloudName}/image/upload';
+    final url = AppConstants.cloudinaryBaseUrl;
 
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(
