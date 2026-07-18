@@ -317,6 +317,67 @@ LoginPage (botón Google) → GoogleAuthService.signIn()
 
 ---
 
+## Cloudinary — Subida de imágenes
+
+### Configuración inicial (obligatoria)
+
+1. Crea una cuenta gratuita en [cloudinary.com](https://cloudinary.com).
+2. En el dashboard copia tu **Cloud name**.
+3. Ve a **Settings → Upload → Upload presets** y crea un preset:
+   - Mode: **Unsigned**
+   - Folder: `explorachiapas`
+   - Nombre del preset: `explorachiapas_unsigned`
+4. Abre `lib/core/utils/app_constants.dart` y reemplaza:
+
+```dart
+static const String cloudinaryCloudName    = 'TU_CLOUD_NAME';
+static const String cloudinaryUploadPreset = 'explorachiapas_unsigned';
+static const String cloudinaryBaseUrl      =
+    'https://api.cloudinary.com/v1_1/TU_CLOUD_NAME/image/upload';
+```
+
+### Carpetas en Cloudinary
+
+| Constante | Carpeta | Uso |
+|-----------|---------|-----|
+| `cloudFolderAvatares` | `explorachiapas/avatares` | Fotos de perfil de usuario |
+| `cloudFolderNegocios` | `explorachiapas/negocios` | Imágenes de negocios |
+| `cloudFolderDestinos` | `explorachiapas/destinos` | Fotos de destinos turísticos |
+
+### Cómo usar `CloudinaryService` en cualquier parte de la app
+
+```dart
+import 'package:image_picker/image_picker.dart';
+import 'core/services/cloudinary/cloudinary_service.dart';
+import 'core/utils/app_constants.dart';
+
+// 1. Elegir imagen
+final foto = await ImagePicker().pickImage(source: ImageSource.gallery);
+if (foto == null) return;
+
+// 2. Subir a Cloudinary
+final url = await CloudinaryService.subirImagen(
+  foto,
+  folder: AppConstants.cloudFolderNegocios, // o cualquier carpeta
+);
+
+// 3. Usar la URL (guardar en BD, mostrar con CachedNetworkImage, etc.)
+print(url); // https://res.cloudinary.com/TU_CLOUD_NAME/image/upload/...
+
+// 4. Obtener miniatura optimizada
+final miniatura = CloudinaryService.thumbnail(url, width: 150, height: 150);
+```
+
+### Flujo de foto de perfil
+
+Al tocar el avatar en la pantalla de Perfil aparece un bottom sheet con:
+- **Tomar foto** → abre cámara
+- **Elegir de galería** → abre selector de fotos
+
+La imagen se comprime a 80% de calidad y máximo 800px de ancho antes de subirse. Una vez subida, la URL de Cloudinary se guarda en `SharedPreferences` y se muestra en el avatar.
+
+---
+
 ## Dependencias principales
 
 | Paquete | Versión | Uso |
@@ -331,6 +392,7 @@ LoginPage (botón Google) → GoogleAuthService.signIn()
 | `google_fonts` | ^8.1.0 | Fuente Poppins |
 | `onesignal_flutter` | ^5.2.6 | Notificaciones push |
 | `geolocator` | ^14.0.3 | Ubicación del usuario |
+| `image_picker` | ^1.1.2 | Cámara y galería para subir fotos |
 | `url_launcher` | ^6.3.2 | Abrir URLs externas |
 | `cached_network_image` | ^3.4.1 | Caché de imágenes |
 | `dartz` | ^0.10.1 | Either para manejo de errores |

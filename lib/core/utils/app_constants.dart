@@ -21,6 +21,17 @@ class AppConstants {
   // Endpoints de preferencias
   static const String preferencesEndpoint = '/users/preferences';
 
+  // Cloudinary — reemplaza estos valores con los de tu cuenta
+  static const String cloudinaryCloudName    = 'TU_CLOUD_NAME';
+  static const String cloudinaryUploadPreset = 'explorachiapas_unsigned';
+  static const String cloudinaryBaseUrl      =
+      'https://api.cloudinary.com/v1_1/TU_CLOUD_NAME/image/upload';
+
+  // Carpetas en Cloudinary
+  static const String cloudFolderAvatares  = 'explorachiapas/avatares';
+  static const String cloudFolderNegocios  = 'explorachiapas/negocios';
+  static const String cloudFolderDestinos  = 'explorachiapas/destinos';
+
   // SharedPreferences keys
   static const String jwtTokenKey = 'jwt_token';
   static const String tipoUsuarioKey = 'tipo_usuario';

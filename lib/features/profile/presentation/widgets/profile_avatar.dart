@@ -1,18 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../../../core/di/injector.dart'; // ajusta al path real de getIt
+import 'package:image_picker/image_picker.dart';
+import '../../../../core/di/injector.dart';
 import '../../../../core/services/avatar/avatar_service.dart';
 
-/// Widget reutilizable que muestra el avatar del usuario.
-/// Carga la URL desde [AvatarService] (SharedPreferences).
-/// Se usa en ProfilePage y EditProfilePage.
 class ProfileAvatar extends StatefulWidget {
-  final double radius;
-
-  /// Si [onTap] no es null, muestra el botón de cámara y llama al callback.
+  final double        radius;
   final VoidCallback? onTap;
-
-  /// Si true, muestra el botón de editar (ícono de lápiz verde) en lugar de cámara.
-  final bool showEditButton;
+  final bool          showEditButton;
 
   const ProfileAvatar({
     super.key,
@@ -27,50 +21,138 @@ class ProfileAvatar extends StatefulWidget {
 
 class _ProfileAvatarState extends State<ProfileAvatar> {
   String? _avatarUrl;
-  bool    _loading = true;
+  bool    _loading  = true;
+  bool    _uploading = false;
+
+  final _picker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _cargarUrl();
   }
 
-  Future<void> _load() async {
+  Future<void> _cargarUrl() async {
     try {
-      final service = getIt<AvatarService>();
-      final url     = await service.getAvatarUrl();
+      final url = await getIt<AvatarService>().getAvatarUrl();
       if (mounted) setState(() => _avatarUrl = url);
     } catch (_) {
-      // _avatarUrl queda null → muestra ícono
+      // muestra ícono por defecto
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
+  // ── Flujo de selección de imagen ────────────────────────────────────────────
+
+  void _mostrarOpciones() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Cambiar foto de perfil',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            ListTile(
+              leading: const CircleAvatar(
+                backgroundColor: Color(0xFFE8F5E9),
+                child: Icon(Icons.camera_alt_outlined, color: Color(0xFF2E7D32)),
+              ),
+              title: const Text('Tomar foto'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _seleccionarImagen(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const CircleAvatar(
+                backgroundColor: Color(0xFFE8F5E9),
+                child: Icon(Icons.photo_library_outlined, color: Color(0xFF2E7D32)),
+              ),
+              title: const Text('Elegir de galería'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _seleccionarImagen(ImageSource.gallery);
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _seleccionarImagen(ImageSource source) async {
+    final foto = await _picker.pickImage(
+      source:       source,
+      imageQuality: 80,
+      maxWidth:     800,
+    );
+    if (foto == null) return;
+
+    setState(() => _uploading = true);
+    try {
+      final url = await getIt<AvatarService>().subirFotoReal(foto);
+      if (mounted) setState(() => _avatarUrl = url);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:         Text('Error al subir la foto: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
+
+  // ── Build ────────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
-    final hasAction = widget.onTap != null;
+    final hasAction = widget.onTap != null || widget.showEditButton;
 
-    final avatar = AspectRatio(
+    Widget avatar = AspectRatio(
       aspectRatio: 1,
       child: CircleAvatar(
-        radius: widget.radius,
+        radius:          widget.radius,
         backgroundColor: const Color(0xFFE8F5E9),
-        backgroundImage:
-            (_avatarUrl != null && !_loading) ? NetworkImage(_avatarUrl!) : null,
-        child: _loading
+        backgroundImage: (_avatarUrl != null && !_loading && !_uploading)
+            ? NetworkImage(_avatarUrl!)
+            : null,
+        child: (_loading || _uploading)
             ? SizedBox(
-                width: widget.radius * 0.55,
+                width:  widget.radius * 0.55,
                 height: widget.radius * 0.55,
-                child: const CircularProgressIndicator(
-                  color: Color(0xFF2E7D32),
+                child: CircularProgressIndicator(
+                  color:       const Color(0xFF2E7D32),
                   strokeWidth: 2.5,
+                  value:       _uploading ? null : null,
                 ),
               )
             : (_avatarUrl == null
                 ? Icon(
                     Icons.person,
-                    size: widget.radius * 0.85,
+                    size:  widget.radius * 0.85,
                     color: const Color(0xFF2E7D32),
                   )
                 : null),
@@ -80,7 +162,7 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
     if (!hasAction) return avatar;
 
     return GestureDetector(
-      onTap: widget.onTap,
+      onTap: widget.showEditButton ? _mostrarOpciones : widget.onTap,
       child: Stack(
         alignment: Alignment.bottomRight,
         children: [
@@ -91,12 +173,10 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
               color: Color(0xFF2E7D32),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              widget.showEditButton
-                  ? Icons.edit
-                  : Icons.camera_alt_outlined,
+            child: const Icon(
+              Icons.camera_alt_outlined,
               color: Colors.white,
-              size: widget.showEditButton ? 14 : 18,
+              size:  18,
             ),
           ),
         ],

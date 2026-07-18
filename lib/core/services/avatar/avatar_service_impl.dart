@@ -1,7 +1,9 @@
 import 'package:dio/dio.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../utils/app_constants.dart';
+import '../cloudinary/cloudinary_service.dart';
 import 'avatar_service.dart';
 
 @LazySingleton(as: AvatarService)
@@ -41,22 +43,15 @@ class AvatarServiceImpl implements AvatarService {
         generoParam = '';
       }
 
-      final avatarUrl = _buildAvatarUrl(
-        seed:   primerNombre,
-        gender: generoParam,
-      );
-
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(AppConstants.fotoPerfil, avatarUrl);
-
+      final avatarUrl = _buildAvatarUrl(seed: primerNombre, gender: generoParam);
+      await _guardarUrl(avatarUrl);
       return avatarUrl;
     } catch (_) {
       final urlDefault = _buildAvatarUrl(
         seed:   nombre.toLowerCase(),
         gender: '',
       );
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(AppConstants.fotoPerfil, urlDefault);
+      await _guardarUrl(urlDefault);
       return urlDefault;
     }
   }
@@ -68,10 +63,22 @@ class AvatarServiceImpl implements AvatarService {
         '$_dicebearUrl?seed=default';
   }
 
-  String _buildAvatarUrl({
-    required String seed,
-    required String gender,
-  }) {
+  @override
+  Future<String> subirFotoReal(XFile foto) async {
+    final url = await CloudinaryService.subirImagen(
+      foto,
+      folder: AppConstants.cloudFolderAvatares,
+    );
+    await _guardarUrl(url);
+    return url;
+  }
+
+  Future<void> _guardarUrl(String url) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(AppConstants.fotoPerfil, url);
+  }
+
+  String _buildAvatarUrl({required String seed, required String gender}) {
     final buffer = StringBuffer('$_dicebearUrl?seed=$seed');
     if (gender.isNotEmpty) {
       buffer.write('&gender[]=$gender');
