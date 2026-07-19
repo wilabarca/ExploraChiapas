@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -17,6 +18,7 @@ class MapPage extends StatefulWidget {
 
 class _MapPageState extends State<MapPage> {
   final MapController _mapController = MapController();
+  MapProvider? _mapProvider;
 
   static const _chiapasCenter = LatLng(16.7521, -93.1152);
 
@@ -28,8 +30,34 @@ class _MapPageState extends State<MapPage> {
     });
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final provider = context.read<MapProvider>();
+    if (_mapProvider != provider) {
+      _mapProvider?.removeListener(_seguirUsuario);
+      _mapProvider = provider;
+      _mapProvider!.addListener(_seguirUsuario);
+    }
+  }
+
+  // Se llama cada vez que el provider notifica — mueve la cámara al usuario
+  void _seguirUsuario() {
+    final provider = _mapProvider;
+    if (provider == null || !provider.enNavegacion) return;
+    final pos = provider.userPosition;
+    if (pos == null) return;
+    _mapController.move(LatLng(pos.latitude, pos.longitude), 17);
+  }
+
+  @override
+  void dispose() {
+    _mapProvider?.removeListener(_seguirUsuario);
+    super.dispose();
+  }
+
   void _moverCamaraA(double lat, double lng) {
-    _mapController.move(LatLng(lat, lng), 13);
+    _mapController.move(LatLng(lat, lng), 15);
   }
 
   Color _colorPorTipo(String tipo) {
@@ -79,24 +107,61 @@ class _MapPageState extends State<MapPage> {
                     ],
                   ),
                 MarkerLayer(
-                  markers: provider.destinations.map((d) {
-                    return Marker(
-                      point: LatLng(d.lat, d.lng),
-                      width: 36,
-                      height: 36,
-                      child: GestureDetector(
-                        onTap: () => provider.selectDestination(d),
-                        child: Icon(
-                          Icons.location_on,
-                          color: _colorPorTipo(d.tipo),
-                          size: 36,
-                          shadows: const [
-                            Shadow(color: Colors.black26, blurRadius: 4),
-                          ],
+                  markers: [
+                    // Marcadores de destinos
+                    ...provider.destinations.map((d) {
+                      return Marker(
+                        point: LatLng(d.lat, d.lng),
+                        width: 36,
+                        height: 36,
+                        child: GestureDetector(
+                          onTap: () => provider.selectDestination(d),
+                          child: Icon(
+                            Icons.location_on,
+                            color: _colorPorTipo(d.tipo),
+                            size: 36,
+                            shadows: const [
+                              Shadow(color: Colors.black26, blurRadius: 4),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+
+                    // Flecha de navegación del usuario
+                    if (provider.enNavegacion &&
+                        provider.userPosition != null)
+                      Marker(
+                        point: LatLng(
+                          provider.userPosition!.latitude,
+                          provider.userPosition!.longitude,
+                        ),
+                        width: 56,
+                        height: 56,
+                        child: Transform.rotate(
+                          angle: provider.userHeading * math.pi / 180,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1565C0),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF1565C0)
+                                      .withValues(alpha: 0.4),
+                                  blurRadius: 10,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.navigation,
+                              color: Colors.white,
+                              size: 32,
+                            ),
+                          ),
                         ),
                       ),
-                    );
-                  }).toList(),
+                  ],
                 ),
               ],
             ),
@@ -213,15 +278,53 @@ class _MapPageState extends State<MapPage> {
             },
           ),
 
+          // Botón para recentrar en el usuario (durante navegación) o en Chiapas
           Positioned(
             right: 16,
             bottom: 200,
-            child: FloatingActionButton.small(
-              onPressed: () => _mapController.move(_chiapasCenter, 7.5),
-              backgroundColor: Colors.white,
-              elevation: 4,
-              child: const Icon(Icons.my_location, color: Color(0xFF2E7D32)),
+            child: Consumer<MapProvider>(
+              builder: (_, provider, __) => FloatingActionButton.small(
+                onPressed: () {
+                  if (provider.enNavegacion &&
+                      provider.userPosition != null) {
+                    _mapController.move(
+                      LatLng(
+                        provider.userPosition!.latitude,
+                        provider.userPosition!.longitude,
+                      ),
+                      17,
+                    );
+                  } else {
+                    _mapController.move(_chiapasCenter, 7.5);
+                  }
+                },
+                backgroundColor: Colors.white,
+                elevation: 4,
+                child: Icon(
+                  provider.enNavegacion
+                      ? Icons.my_location
+                      : Icons.my_location,
+                  color: const Color(0xFF2E7D32),
+                ),
+              ),
             ),
+          ),
+
+          // Botón para detener navegación
+          Consumer<MapProvider>(
+            builder: (_, provider, __) {
+              if (!provider.enNavegacion) return const SizedBox.shrink();
+              return Positioned(
+                left: 16,
+                bottom: 200,
+                child: FloatingActionButton.small(
+                  onPressed: provider.clearSelection,
+                  backgroundColor: Colors.red,
+                  elevation: 4,
+                  child: const Icon(Icons.close, color: Colors.white),
+                ),
+              );
+            },
           ),
         ],
       ),
