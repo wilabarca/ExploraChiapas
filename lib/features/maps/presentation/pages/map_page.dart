@@ -104,17 +104,23 @@ class _MapPageState extends State<MapPage> {
                       'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.explorachiapas.app',
                 ),
-                if (provider.routePoints.isNotEmpty)
+                if (provider.allRoutes.isNotEmpty)
                   PolylineLayer(
-                    polylines: [
-                      Polyline(
-                        points: provider.routePoints
+                    polylines: List.generate(
+                      provider.allRoutes.length,
+                      (i) => Polyline(
+                        points: provider.allRoutes[i]
                             .map((p) => LatLng(p[0], p[1]))
                             .toList(),
-                        color: const Color(0xFF2E7D32),
-                        strokeWidth: 4,
+                        color: i == provider.selectedRouteIndex
+                            ? const Color(0xFF2E7D32)
+                            : const Color(0xFF2E7D32).withValues(alpha: 0.35),
+                        strokeWidth: i == provider.selectedRouteIndex ? 5 : 3,
+                        pattern: i == provider.selectedRouteIndex
+                            ? const StrokePattern.solid()
+                            : const StrokePattern.dotted(),
                       ),
-                    ],
+                    ),
                   ),
                 MarkerLayer(
                   markers: [
@@ -185,7 +191,7 @@ class _MapPageState extends State<MapPage> {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
@@ -197,25 +203,28 @@ class _MapPageState extends State<MapPage> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.explore_outlined,
-                          color: Color(0xFF2E7D32)),
+                      Icon(
+                        Icons.explore_outlined,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                       const SizedBox(width: 10),
-                      const Expanded(
+                      Expanded(
                         child: Text(
                           'Explorar Chiapas',
                           style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1B1B1B),
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),
                       Consumer<MapProvider>(
                         builder: (_, p, __) => Text(
                           '${p.destinations.length} lugares',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF777777),
+                            color: Theme.of(context).colorScheme.onSurface
+                                .withValues(alpha: 0.55),
                           ),
                         ),
                       ),
@@ -238,6 +247,69 @@ class _MapPageState extends State<MapPage> {
               return const Center(
                 child: CircularProgressIndicator(
                   color: Color(0xFF2E7D32),
+                ),
+              );
+            },
+          ),
+
+          // Selector de ruta alternativa — visible solo cuando hay >1 ruta
+          Consumer<MapProvider>(
+            builder: (_, provider, __) {
+              if (!provider.hayAlternativas) return const SizedBox.shrink();
+              return Positioned(
+                bottom: 260,
+                left: 16,
+                right: 16,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 8,
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: List.generate(provider.allRoutes.length, (i) {
+                        final isActive = provider.selectedRouteIndex == i;
+                        return GestureDetector(
+                          onTap: () => provider.selectRoute(i),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isActive
+                                  ? const Color(0xFF2E7D32)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              i == 0 ? 'Ruta principal' : 'Alternativa ${i}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: isActive
+                                    ? Colors.white
+                                    : Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
                 ),
               );
             },

@@ -58,7 +58,7 @@ class _HomeLocalPageState extends State<HomeLocalPage> {
       backgroundColor: AppColors.background(context),
       appBar: const HomeAppBar(),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.pushNamed(context, '/chat'),
+        onPressed: () => Navigator.pushNamed(context, '/planificar'),
         backgroundColor: AppColors.primary(context),
         child: const Icon(Icons.smart_toy_outlined, color: Colors.white),
       ),
@@ -241,6 +241,73 @@ class _HomeLocalPageState extends State<HomeLocalPage> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: EventosBanner(
               onExplorar: () => Navigator.pushNamed(context, '/eventos'),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // ── Crear ruta corta local ─────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: GestureDetector(
+              onTap: () => Navigator.pushNamed(context, '/planificar'),
+              child: Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryContainer(context),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: AppColors.primary(context).withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary(context),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.alt_route,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Crea tu ruta local',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary(context),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Genera rutas cortas dentro de tu ciudad o municipio.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textSecondary(context),
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: AppColors.primary(context),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
 

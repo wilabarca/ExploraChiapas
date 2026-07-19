@@ -8,6 +8,7 @@ class DestinoCard extends StatelessWidget {
   final double calificacion;
   final String? imageUrl;
   final bool esFavorito;
+  final bool esSostenible;
   final VoidCallback? onTap;
 
   const DestinoCard({
@@ -17,6 +18,7 @@ class DestinoCard extends StatelessWidget {
     required this.calificacion,
     this.imageUrl,
     this.esFavorito = false,
+    this.esSostenible = false,
     this.onTap,
   });
 
@@ -64,6 +66,36 @@ class DestinoCard extends StatelessWidget {
                         Icons.favorite,
                         color: Colors.red,
                         size: 16,
+                      ),
+                    ),
+                  ),
+                if (esSostenible)
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2E7D32),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.eco, color: Colors.white, size: 12),
+                          SizedBox(width: 4),
+                          Text(
+                            'Eco',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
