@@ -81,7 +81,7 @@ class ProfileRemoteDatasourceImpl implements IProfileRemoteDatasource {
     // campo 'file'. Si el backend usa otro nombre de campo (ej. 'image',
     // 'photo'), ajusta aquí.
     final formData = FormData.fromMap({
-      'file': await MultipartFile.fromFile(
+      'imagen': await MultipartFile.fromFile(
         file.path,
         filename: file.path.split('/').last,
       ),
@@ -94,9 +94,8 @@ class ProfileRemoteDatasourceImpl implements IProfileRemoteDatasource {
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       final body = response.data as Map<String, dynamic>;
-      // ⚠️ Suposición: la respuesta trae { success, data: { url } }.
       final data = body['data'] as Map<String, dynamic>?;
-      final url = data?['url'] as String?;
+      final url = data?['imageProfileUrl'] as String?;
 
       if (url == null || url.isEmpty) {
         throw ServerException(
