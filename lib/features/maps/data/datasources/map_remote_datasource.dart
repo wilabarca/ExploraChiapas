@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../../core/utils/app_constants.dart';
 import 'remote/models/destination_model.dart';
 
 abstract class IMapRemoteDatasource {
@@ -17,7 +19,10 @@ abstract class IMapRemoteDatasource {
 }
 
 class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
-  // Datos ficticios — reemplazar con llamada real al backend
+  final ApiClient _apiClient;
+
+  MapRemoteDatasourceImpl(this._apiClient);
+
   static const List<Map<String, dynamic>> _mockDestinations = [
     {
       'id': 'a1b2c3d4-e5f6-4a7b-8c9d-000000000001',
@@ -96,15 +101,49 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
       'afluencia': 40,
       'es_sostenible': true,
     },
+    {
+      'id': 'a1b2c3d4-e5f6-4a7b-8c9d-000000000008',
+      'nombre': 'Hotel Parador San Juan de Dios',
+      'tipo': 'descanso',
+      'descripcion': 'Hotel boutique en el corazón de San Cristóbal.',
+      'lat': 16.7368,
+      'lng': -92.6385,
+      'calificacion': 4.5,
+      'afluencia': 25,
+      'es_sostenible': true,
+    },
+    {
+      'id': 'a1b2c3d4-e5f6-4a7b-8c9d-000000000009',
+      'nombre': 'Spa Cañón del Sumidero',
+      'tipo': 'descanso',
+      'descripcion': 'Spa con vista al cañón, masajes y terapias naturales.',
+      'lat': 16.8540,
+      'lng': -93.0720,
+      'calificacion': 4.3,
+      'afluencia': 20,
+      'es_sostenible': true,
+    },
   ];
 
   @override
   Future<List<DestinationModel>> getDestinations({String? tipo}) async {
-    await Future.delayed(const Duration(milliseconds: 600));
-    final data = tipo == null
-        ? _mockDestinations
-        : _mockDestinations.where((d) => d['tipo'] == tipo).toList();
-    return data.map(DestinationModel.fromJson).toList();
+    try {
+      final response = await _apiClient.get(AppConstants.destinationsEndpoint);
+      final raw = response.data['data'] as List<dynamic>;
+      final all = raw
+          .map((e) => DestinationModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+      if (tipo != null) {
+        return all.where((d) => d.tipo == tipo).toList();
+      }
+      return all;
+    } catch (_) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      final data = tipo == null
+          ? _mockDestinations
+          : _mockDestinations.where((d) => d['tipo'] == tipo).toList();
+      return data.map(DestinationModel.fromJson).toList();
+    }
   }
 
   @override
