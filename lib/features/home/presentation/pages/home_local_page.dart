@@ -7,6 +7,7 @@ import '../widgets/restaurante_item.dart';
 import '../widgets/hotel_card.dart';
 import '../widgets/eventos_banner.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class HomeLocalPage extends StatefulWidget {
   const HomeLocalPage({super.key});
@@ -54,11 +55,11 @@ class _HomeLocalPageState extends State<HomeLocalPage> {
     final size = MediaQuery.sizeOf(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F8F8),
+      backgroundColor: AppColors.background(context),
       appBar: const HomeAppBar(),
       floatingActionButton: FloatingActionButton(
         onPressed: () => Navigator.pushNamed(context, '/chat'),
-        backgroundColor: const Color(0xFF2E7D32),
+        backgroundColor: AppColors.primary(context),
         child: const Icon(Icons.smart_toy_outlined, color: Colors.white),
       ),
       body: ListView(
@@ -116,7 +117,7 @@ class _HomeLocalPageState extends State<HomeLocalPage> {
               child: Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2E7D32),
+                  color: AppColors.primary(context),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -246,14 +247,14 @@ class _HomeLocalPageState extends State<HomeLocalPage> {
           const SizedBox(height: 16),
 
           // Actividades de fin de semana — label
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Text(
               'ACTIVIDADES DE FIN DE SEMANA',
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF888888),
+                color: AppColors.textSecondary(context),
                 letterSpacing: 1.1,
               ),
             ),
@@ -539,10 +540,10 @@ class _ActividadCard extends StatelessWidget {
               // ✓ Expanded implícito con maxLines para evitar overflow
               Text(
                 nombre,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF1B1B1B),
+                  color: AppColors.textPrimary(context),
                   height: 1.3,
                 ),
                 maxLines: 2,

@@ -48,9 +48,7 @@ class ProfileRemoteDatasourceImpl implements IProfileRemoteDatasource {
     final data = <String, dynamic>{};
     if (nombre != null) data['name'] = nombre;
     if (telefono != null) data['phone'] = telefono;
-    // ⚠️ Nombre de campo asumido — confirmar contra la respuesta real de
-    // GET /users/profile.
-    if (fotoPerfilUrl != null) data['profileImageUrl'] = fotoPerfilUrl;
+    if (fotoPerfilUrl != null) data['imgUrl'] = fotoPerfilUrl;
 
     final response = await _apiClient.patch(
       AppConstants.profileEndpoint,

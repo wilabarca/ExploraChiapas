@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/interest_card.dart';
 import '../providers/auth_provider.dart';
 import '../../../../core/permissions/location_permission.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class InterestsPage extends StatefulWidget {
   const InterestsPage({super.key});
@@ -70,7 +71,7 @@ class _InterestsPageState extends State<InterestsPage> {
 
       if (!mounted) return;
 
-      // 2. 🔐 Auto-login tras registro usando credenciales guardadas
+      // 2. Auto-login tras registro usando credenciales guardadas
       final authProvider = context.read<AuthProvider>();
       final registroData = authProvider.registroData;
 
@@ -79,15 +80,15 @@ class _InterestsPageState extends State<InterestsPage> {
         final password = registroData['password'] as String?;
 
         if (email != null && password != null) {
-          debugPrint('🔐 Auto-login tras registro: $email');
+          debugPrint('Auto-login tras registro: $email');
           final success = await authProvider.login(
             email: email,
             password: password,
           );
           if (success) {
-            debugPrint('✅ Auto-login exitoso');
+            debugPrint('Auto-login exitoso');
           } else {
-            debugPrint('⚠️ Auto-login falló: ${authProvider.errorMessage}');
+            debugPrint('Auto-login falló: ${authProvider.errorMessage}');
           }
         }
       }
@@ -112,7 +113,7 @@ class _InterestsPageState extends State<InterestsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface(context),
       body: SafeArea(
         child: Column(
           children: [
@@ -124,23 +125,23 @@ class _InterestsPageState extends State<InterestsPage> {
                   children: [
                     const SizedBox(height: 32),
 
-                    const Text(
+                    Text(
                       '¿Qué tipo de turismo\nte interesa?',
                       style: TextStyle(
                         fontSize: 30,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1B1B1B),
+                        color: AppColors.textPrimary(context),
                         height: 1.2,
                       ),
                     ),
 
                     const SizedBox(height: 12),
 
-                    const Text(
+                    Text(
                       'Personalizaremos tu aventura en Chiapas\nbasándonos en tus preferencias.',
                       style: TextStyle(
                         fontSize: 15,
-                        color: Color(0xFF777777),
+                        color: AppColors.textSecondary(context),
                         height: 1.5,
                       ),
                     ),
@@ -278,7 +279,7 @@ class _InterestsPageState extends State<InterestsPage> {
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2E7D32),
+                          backgroundColor: AppColors.primary(context),
                           disabledBackgroundColor: const Color(0xFFB0BEC5),
                           elevation: 0,
                           shape: RoundedRectangleBorder(
@@ -291,9 +292,9 @@ class _InterestsPageState extends State<InterestsPage> {
 
                   const SizedBox(height: 10),
 
-                  const Text(
+                  Text(
                     'Puedes cambiar esto más tarde en tu perfil.',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF999999)),
+                    style: TextStyle(fontSize: 13, color: AppColors.textSecondary(context)),
                   ),
 
                   const SizedBox(height: 12),

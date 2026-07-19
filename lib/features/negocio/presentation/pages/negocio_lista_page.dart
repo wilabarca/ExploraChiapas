@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/negocio.dart';
 import '../../domain/usecases/obtener_negocio.dart';
 import '../../../../core/di/injector.dart';
@@ -59,19 +60,19 @@ class _NegocioListaPageState extends State<NegocioListaPage> {
     final isTablet = screenW >= 600;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F8F8),
+      backgroundColor: AppColors.background(context),
       // ── Header consistente con el resto de la app ─────────────────────
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface(context),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF1B1B1B)),
+          icon: Icon(Icons.arrow_back, color: AppColors.textPrimary(context)),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           widget.tituloTipo,
-          style: const TextStyle(
-            color: Color(0xFF1B1B1B),
+          style: TextStyle(
+            color: AppColors.textPrimary(context),
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -80,17 +81,17 @@ class _NegocioListaPageState extends State<NegocioListaPage> {
       body: Column(
         children: [
           Container(
-            color: Colors.white,
+            color: AppColors.surface(context),
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: TextField(
               controller: _busquedaCtrl,
               onSubmitted: (value) => _cargar(busqueda: value),
               decoration: InputDecoration(
                 hintText: 'Buscar ${widget.tituloTipo.toLowerCase()}...',
-                hintStyle: const TextStyle(color: Color(0xFFAAAAAA)),
-                prefixIcon: const Icon(Icons.search, color: Color(0xFF2E7D32)),
+                hintStyle: TextStyle(color: AppColors.textHint(context)),
+                prefixIcon: Icon(Icons.search, color: AppColors.primary(context)),
                 filled: true,
-                fillColor: const Color(0xFFF5F5F5),
+                fillColor: AppColors.background(context),
                 contentPadding: const EdgeInsets.symmetric(vertical: 0),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -104,8 +105,8 @@ class _NegocioListaPageState extends State<NegocioListaPage> {
               future: _future,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF2E7D32)),
+                  return Center(
+                    child: CircularProgressIndicator(color: AppColors.primary(context)),
                   );
                 }
 
@@ -116,7 +117,7 @@ class _NegocioListaPageState extends State<NegocioListaPage> {
                       child: Text(
                         'No se pudo cargar la información.\n${snapshot.error}',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Color(0xFF999999)),
+                        style: TextStyle(color: AppColors.textSecondary(context)),
                       ),
                     ),
                   );
@@ -135,9 +136,9 @@ class _NegocioListaPageState extends State<NegocioListaPage> {
                           color: Colors.grey.shade300,
                         ),
                         const SizedBox(height: 16),
-                        const Text(
+                        Text(
                           'Sin resultados por ahora',
-                          style: TextStyle(color: Color(0xFF999999)),
+                          style: TextStyle(color: AppColors.textSecondary(context)),
                         ),
                       ],
                     ),

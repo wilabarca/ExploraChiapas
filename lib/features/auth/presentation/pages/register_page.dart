@@ -6,6 +6,7 @@ import '../widgets/register_user_type.dart';
 import '../providers/auth_provider.dart';
 import '../../domain/entities/usuario_registro.dart';
 import '../../../../core/utils/app_constants.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -23,7 +24,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final _telefonoCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
-  
+
   ImageProvider<Object>? get image => null;
 
   @override
@@ -236,7 +237,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       children: [
                         Checkbox(
                           value: _aceptoTerminos,
-                          activeColor: const Color(0xFF2E7D32),
+                          activeColor: AppColors.primary(context),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(4),
                           ),
@@ -256,14 +257,14 @@ class _RegisterPageState extends State<RegisterPage> {
                               GestureDetector(
                                 onTap: () =>
                                     _abrirUrl(AppConstants.terminosUrl),
-                                child: const Text(
+                                child: Text(
                                   'Términos y Condiciones',
                                   style: TextStyle(
                                     fontSize: 13,
-                                    color: Color(0xFF2E7D32),
+                                    color: AppColors.primary(context),
                                     fontWeight: FontWeight.bold,
                                     decoration: TextDecoration.underline,
-                                    decorationColor: Color(0xFF2E7D32),
+                                    decorationColor: AppColors.primary(context),
                                   ),
                                 ),
                               ),
@@ -277,14 +278,14 @@ class _RegisterPageState extends State<RegisterPage> {
                               GestureDetector(
                                 onTap: () =>
                                     _abrirUrl(AppConstants.privacidadUrl),
-                                child: const Text(
+                                child: Text(
                                   'Política de Privacidad',
                                   style: TextStyle(
                                     fontSize: 13,
-                                    color: Color(0xFF2E7D32),
+                                    color: AppColors.primary(context),
                                     fontWeight: FontWeight.bold,
                                     decoration: TextDecoration.underline,
-                                    decorationColor: Color(0xFF2E7D32),
+                                    decorationColor: AppColors.primary(context),
                                   ),
                                 ),
                               ),
@@ -304,7 +305,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       child: ElevatedButton(
                         onPressed: isLoading ? null : _handleRegister,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2E7D32),
+                          backgroundColor: AppColors.primary(context),
                           disabledBackgroundColor: const Color(0xFFB0BEC5),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),

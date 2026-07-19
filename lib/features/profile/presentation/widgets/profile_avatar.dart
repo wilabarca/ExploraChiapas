@@ -24,9 +24,22 @@ class ProfileAvatar extends StatefulWidget {
 
 class _ProfileAvatarState extends State<ProfileAvatar> {
   bool    _uploading  = false;
-  String? _uploadedUrl;
+  String? _localUrl;   // URL guardada en SharedPreferences (fallback offline)
 
   final _picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarUrlLocal();
+  }
+
+  Future<void> _cargarUrlLocal() async {
+    final url = await getIt<AvatarService>().getAvatarUrl();
+    if (mounted && url.isNotEmpty && !url.contains('seed=default')) {
+      setState(() => _localUrl = url);
+    }
+  }
 
   void _mostrarOpciones() {
     showModalBottomSheet(
@@ -92,8 +105,14 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
 
     setState(() => _uploading = true);
     try {
+      // 1. Subir a Cloudinary y guardar URL en SharedPreferences
       final url = await getIt<AvatarService>().subirFotoReal(foto);
-      if (mounted) setState(() => _uploadedUrl = url);
+
+      // 2. Sincronizar la URL al backend para que persista entre sesiones
+      if (mounted) {
+        await context.read<ProfileProvider>().updatePerfil(fotoPerfilUrl: url);
+        setState(() => _localUrl = url);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -113,12 +132,12 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
     final hasAction = widget.onTap != null || widget.showEditButton;
 
     final perfil = context.watch<ProfileProvider>().perfil;
-    final avatarUrl = _uploadedUrl ??
-        (perfil != null && perfil.ImgUrl.isNotEmpty
-            ? perfil.ImgUrl
-            : getIt<AvatarService>().avatarPorDefecto(
-                seed: perfil?.nombre ?? 'explorachiapas',
-              ));
+    final backendUrl = perfil != null && perfil.ImgUrl.isNotEmpty ? perfil.ImgUrl : null;
+    final avatarUrl = backendUrl ??
+        _localUrl ??
+        getIt<AvatarService>().avatarPorDefecto(
+          seed: perfil?.nombre ?? 'explorachiapas',
+        );
 
     Widget avatar = CircleAvatar(
       radius: widget.radius,

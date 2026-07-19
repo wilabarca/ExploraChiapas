@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class RecomendarLugarPage extends StatefulWidget {
   const RecomendarLugarPage({super.key});
@@ -51,7 +52,7 @@ class _RecomendarLugarPageState extends State<RecomendarLugarPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Text('¡Sugerencia enviada! Gracias por contribuir.'),
-        backgroundColor: const Color(0xFF2E7D32),
+        backgroundColor: AppColors.primary(context),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -67,9 +68,9 @@ class _RecomendarLugarPageState extends State<RecomendarLugarPage> {
     final isSmall = screenW < 360;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface(context),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface(context),
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
@@ -158,13 +159,13 @@ class _RecomendarLugarPageState extends State<RecomendarLugarPage> {
                         ),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? const Color(0xFF2E7D32)
-                              : Colors.white,
+                              ? AppColors.primary(context)
+                              : AppColors.surface(context),
                           borderRadius: BorderRadius.circular(30),
                           border: Border.all(
                             color: isSelected
-                                ? const Color(0xFF2E7D32)
-                                : const Color(0xFFCCCCCC),
+                                ? AppColors.primary(context)
+                                : AppColors.textHint(context),
                           ),
                         ),
                         child: Text(
@@ -174,7 +175,7 @@ class _RecomendarLugarPageState extends State<RecomendarLugarPage> {
                             fontWeight: FontWeight.w500,
                             color: isSelected
                                 ? Colors.white
-                                : const Color(0xFF444444),
+                                : AppColors.textPrimary(context),
                           ),
                         ),
                       ),
@@ -189,25 +190,25 @@ class _RecomendarLugarPageState extends State<RecomendarLugarPage> {
                 SizedBox(height: screenH * 0.010),
                 Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF5F5F5),
+                    color: AppColors.background(context),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: TextField(
                     controller: _ubicacionCtrl,
                     style: TextStyle(
                       fontSize: isSmall ? 13 : 15,
-                      color: const Color(0xFF1B1B1B),
+                      color: AppColors.textPrimary(context),
                     ),
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Calle, ciudad o coordenadas',
-                      hintStyle: TextStyle(color: Color(0xFFAAAAAA)),
+                      hintStyle: TextStyle(color: AppColors.textHint(context)),
                       prefixIcon: Icon(
                         Icons.location_on_outlined,
-                        color: Color(0xFF2E7D32),
+                        color: AppColors.primary(context),
                         size: 20,
                       ),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
+                      contentPadding: const EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 14,
                       ),
@@ -227,35 +228,35 @@ class _RecomendarLugarPageState extends State<RecomendarLugarPage> {
                     child: Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF5F5F5),
+                        color: AppColors.background(context),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: const Color(0xFFCCCCCC),
+                          color: AppColors.textHint(context),
                           width: 1.5,
                         ),
                       ),
-                      child: const Column(
+                      child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
                             Icons.add_a_photo_outlined,
-                            color: Color(0xFF2E7D32),
+                            color: AppColors.primary(context),
                             size: 32,
                           ),
-                          SizedBox(height: 10),
+                          const SizedBox(height: 10),
                           Text(
                             'Presiona para subir fotos',
                             style: TextStyle(
-                              color: Color(0xFF2E7D32),
+                              color: AppColors.primary(context),
                               fontWeight: FontWeight.w600,
                               fontSize: 14,
                             ),
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
                             'MÁXIMO 5 IMÁGENES (JPG, PNG)',
                             style: TextStyle(
-                              color: Color(0xFFAAAAAA),
+                              color: AppColors.textHint(context),
                               fontSize: 11,
                               letterSpacing: 0.8,
                             ),
@@ -298,7 +299,7 @@ class _RecomendarLugarPageState extends State<RecomendarLugarPage> {
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2E7D32),
+                        backgroundColor: AppColors.primary(context),
                         disabledBackgroundColor: const Color(0xFFB0BEC5),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
@@ -380,12 +381,14 @@ class _RecomendarLugarPageState extends State<RecomendarLugarPage> {
   }
 
   Widget _buildLabel(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: Color(0xFF1B1B1B),
+    return Builder(
+      builder: (context) => Text(
+        text,
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textPrimary(context),
+        ),
       ),
     );
   }
@@ -396,25 +399,27 @@ class _RecomendarLugarPageState extends State<RecomendarLugarPage> {
     required bool isSmall,
     int maxLines = 1,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F5),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: TextField(
-        controller: controller,
-        maxLines: maxLines,
-        style: TextStyle(
-          fontSize: isSmall ? 13 : 15,
-          color: const Color(0xFF1B1B1B),
+    return Builder(
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: AppColors.background(context),
+          borderRadius: BorderRadius.circular(12),
         ),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: const TextStyle(color: Color(0xFFAAAAAA)),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
+        child: TextField(
+          controller: controller,
+          maxLines: maxLines,
+          style: TextStyle(
+            fontSize: isSmall ? 13 : 15,
+            color: AppColors.textPrimary(context),
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(color: AppColors.textHint(context)),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
           ),
         ),
       ),

@@ -6,6 +6,9 @@ import '../widgets/favorito_card.dart';
 import '../../domain/entities/favorito.dart';
 import '../../../home/presentation/widgets/home_app_bar.dart';
 import '../../../destinos/presentation/providers/destinos_provider.dart';
+import '../../../../core/l10n/app_strings.dart';
+import '../../../../core/providers/locale_provider.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// ⚠️ La API de favoritos solo da targetType/targetId/addedAt. Para
 /// destinos, cruzamos contra `DestinoProvider.destinos` (si ya está
@@ -53,39 +56,47 @@ class _FavoritosPageState extends State<FavoritosPage> {
     }
   }
 
+  String _labelFiltro(String filtro, String lang) {
+    switch (filtro) {
+      case 'Destinos': return AppStrings.tr('filtro_destinos', lang);
+      case 'Negocios': return AppStrings.tr('filtro_negocios', lang);
+      default:         return AppStrings.tr('filtro_general', lang);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // ✓ MediaQuery.sizeOf: tamaños proporcionales sin rebuilds extra.
     final size = MediaQuery.sizeOf(context);
     final isTablet = size.width >= 600;
+    final lang = context.watch<LocaleProvider>().langCode;
+    String s(String k) => AppStrings.tr(k, lang);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F8F8),
+      backgroundColor: AppColors.background(context),
       appBar: const HomeAppBar(),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            color: Colors.white,
+            color: AppColors.surface(context),
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Favoritos',
+                Text(
+                  s('favoritos_titulo'),
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1B1B1B),
+                    color: AppColors.textPrimary(context),
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'Tus destinos y negocios guardados',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF888888)),
+                Text(
+                  s('favoritos_subtitulo'),
+                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary(context)),
                 ),
                 const SizedBox(height: 14),
-                // ✓ Wrap: los chips fluyen si no caben en el ancho.
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -101,23 +112,23 @@ class _FavoritosPageState extends State<FavoritosPage> {
                         ),
                         decoration: BoxDecoration(
                           color:
-                              activo ? const Color(0xFF2E7D32) : Colors.white,
+                              activo ? AppColors.primary(context) : AppColors.surface(context),
                           borderRadius: BorderRadius.circular(30),
                           border: Border.all(
                             color: activo
-                                ? const Color(0xFF2E7D32)
-                                : const Color(0xFFDDDDDD),
+                                ? AppColors.primary(context)
+                                : AppColors.border(context),
                             width: 1.5,
                           ),
                         ),
                         child: Text(
-                          f,
+                          _labelFiltro(f, lang),
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: activo
                                 ? Colors.white
-                                : const Color(0xFF555555),
+                                : AppColors.textSecondary(context),
                           ),
                         ),
                       ),
@@ -133,9 +144,9 @@ class _FavoritosPageState extends State<FavoritosPage> {
             child: Consumer<FavoritosProvider>(
               builder: (context, provider, child) {
                 if (provider.status == FavoritosStatus.loading) {
-                  return const Center(
+                  return Center(
                     child: CircularProgressIndicator(
-                      color: Color(0xFF2E7D32),
+                      color: AppColors.primary(context),
                     ),
                   );
                 }
@@ -147,22 +158,21 @@ class _FavoritosPageState extends State<FavoritosPage> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.cloud_off_outlined,
-                              size: 36, color: Color(0xFFD32F2F)),
+                          Icon(Icons.cloud_off_outlined,
+                              size: 36, color: AppColors.error(context)),
                           const SizedBox(height: 10),
                           Text(
-                            provider.errorMessage ??
-                                'No fue posible obtener tus favoritos',
+                            provider.errorMessage ?? s('error_favoritos'),
                             textAlign: TextAlign.center,
-                            style: const TextStyle(color: Color(0xFF666666)),
+                            style: TextStyle(color: AppColors.textSecondary(context)),
                           ),
                           const SizedBox(height: 12),
                           OutlinedButton.icon(
                             onPressed: () => provider.cargarFavoritos(),
                             icon: const Icon(Icons.refresh, size: 18),
-                            label: const Text('Reintentar'),
+                            label: Text(s('reintentar')),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFF2E7D32),
+                              foregroundColor: AppColors.primary(context),
                             ),
                           ),
                         ],
@@ -174,16 +184,16 @@ class _FavoritosPageState extends State<FavoritosPage> {
                 final items = _filtrar(provider);
 
                 if (items.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.favorite_border,
-                            size: 48, color: Color(0xFFCCCCCC)),
-                        SizedBox(height: 12),
+                            size: 48, color: AppColors.textHint(context)),
+                        const SizedBox(height: 12),
                         Text(
-                          'Aún no tienes favoritos aquí',
-                          style: TextStyle(color: Color(0xFF888888)),
+                          s('sin_favoritos'),
+                          style: TextStyle(color: AppColors.textSecondary(context)),
                         ),
                       ],
                     ),
@@ -235,7 +245,7 @@ class _FavoritosPageState extends State<FavoritosPage> {
                                 SnackBar(
                                   content: Text(
                                     provider.errorMessage ??
-                                        'No se pudo quitar de favoritos',
+                                        s('error_quitar_favorito'),
                                   ),
                                   backgroundColor: Colors.red,
                                 ),

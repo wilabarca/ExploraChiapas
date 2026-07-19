@@ -10,6 +10,7 @@ import '../widgets/profile_stats.dart';
 import '../widgets/profile_menu_item.dart';
 import 'edit_profile_page.dart';
 import '../../../home/presentation/widgets/custom_bottom_nav_bar.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -19,11 +20,6 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  // Estado de privacidad (no se persiste — sólo UI por ahora)
-  bool _compartirUbicacion   = false;
-  bool _compartirHistorial   = false;
-  bool _mostrarPerfilPublico = true;
-
   @override
   void initState() {
     super.initState();
@@ -72,7 +68,7 @@ class _ProfilePageState extends State<ProfilePage> {
               children: [
                 Icon(
                   op == actual ? Icons.check_circle : Icons.radio_button_unchecked,
-                  color: op == actual ? const Color(0xFF2E7D32) : Colors.grey,
+                  color: op == actual ? AppColors.primary(context) : Colors.grey,
                   size: 20,
                 ),
                 const SizedBox(width: 12),
@@ -98,9 +94,9 @@ class _ProfilePageState extends State<ProfilePage> {
     String s(String key) => AppStrings.tr(key, lang);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F7F2),
+      backgroundColor: AppColors.background(context),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface(context),
         elevation: 0,
         centerTitle: false,
         automaticallyImplyLeading: false,
@@ -121,8 +117,8 @@ class _ProfilePageState extends State<ProfilePage> {
       body: Consumer<ProfileProvider>(
         builder: (context, provider, _) {
           if (provider.status == ProfileStatus.loading) {
-            return const Center(
-              child: CircularProgressIndicator(color: Color(0xFF2E7D32)),
+            return Center(
+              child: CircularProgressIndicator(color: AppColors.primary(context)),
             );
           }
 
@@ -137,7 +133,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ElevatedButton(
                     onPressed: () => provider.loadPerfil(),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2E7D32),
+                      backgroundColor: AppColors.primary(context),
                     ),
                     child: Text(
                       s('reintentar'),
@@ -176,15 +172,15 @@ class _ProfilePageState extends State<ProfilePage> {
                           style: TextStyle(
                             fontSize:   isSmall ? 18 : 22,
                             fontWeight: FontWeight.bold,
-                            color:      const Color(0xFF1B1B1B),
+                            color:      AppColors.textPrimary(context),
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           perfil.email,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
-                            color:    Color(0xFF777777),
+                            color:    AppColors.textSecondary(context),
                           ),
                         ),
                       ],
@@ -210,14 +206,14 @@ class _ProfilePageState extends State<ProfilePage> {
                       onTap: () => Navigator.pushNamed(context, '/intereses'),
                       child: Row(
                         children: [
-                          const Icon(Icons.edit_outlined,
-                              size: 14, color: Color(0xFF2E7D32)),
+                          Icon(Icons.edit_outlined,
+                              size: 14, color: AppColors.primary(context)),
                           const SizedBox(width: 4),
                           Text(
                             s('editar'),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize:   13,
-                              color:      Color(0xFF2E7D32),
+                              color:      AppColors.primary(context),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -322,22 +318,22 @@ class _ProfilePageState extends State<ProfilePage> {
                       _ToggleTile(
                         icon:      Icons.location_on_outlined,
                         label:     s('compartir_ubicacion'),
-                        valor:     _compartirUbicacion,
-                        onChanged: (v) => setState(() => _compartirUbicacion = v),
+                        valor:     prefs.compartirUbicacion,
+                        onChanged: (v) => prefs.setCompartirUbicacion(v),
                       ),
                       const SizedBox(height: 8),
                       _ToggleTile(
                         icon:      Icons.history_outlined,
                         label:     s('compartir_historial'),
-                        valor:     _compartirHistorial,
-                        onChanged: (v) => setState(() => _compartirHistorial = v),
+                        valor:     prefs.compartirHistorial,
+                        onChanged: (v) => prefs.setCompartirHistorial(v),
                       ),
                       const SizedBox(height: 8),
                       _ToggleTile(
                         icon:      Icons.public_outlined,
                         label:     s('mostrar_perfil_publico'),
-                        valor:     _mostrarPerfilPublico,
-                        onChanged: (v) => setState(() => _mostrarPerfilPublico = v),
+                        valor:     prefs.mostrarPerfilPublico,
+                        onChanged: (v) => prefs.setMostrarPerfilPublico(v),
                       ),
                       const SizedBox(height: 8),
                       ProfileMenuItem(
@@ -346,7 +342,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         onTap: () => ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(s('proximamente')),
-                            backgroundColor: const Color(0xFF2E7D32),
+                            backgroundColor: AppColors.primary(context),
                           ),
                         ),
                       ),
@@ -354,7 +350,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       ProfileMenuItem(
                         icon:        Icons.delete_outline,
                         label:       s('eliminar_cuenta'),
-                        dangerColor: const Color(0xFFD32F2F),
+                        dangerColor: AppColors.error(context),
                         onTap:       () =>
                             _confirmarEliminarCuenta(context, provider, lang),
                       ),
@@ -400,7 +396,7 @@ class _ProfilePageState extends State<ProfilePage> {
               Navigator.pushReplacementNamed(context, '/');
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2E7D32),
+              backgroundColor: AppColors.primary(context),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
             ),
@@ -508,7 +504,7 @@ class _AcordeonState extends State<_Acordeon>
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       decoration: BoxDecoration(
-        color:        Colors.white,
+        color:        AppColors.surface(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -531,20 +527,20 @@ class _AcordeonState extends State<_Acordeon>
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color:        const Color(0xFFE8F5E9),
+                      color:        AppColors.primaryContainer(context),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(widget.icono,
-                        color: const Color(0xFF2E7D32), size: 20),
+                        color: AppColors.primary(context), size: 20),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Text(
                       widget.titulo,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize:   15,
                         fontWeight: FontWeight.w600,
-                        color:      Color(0xFF1B1B1B),
+                        color:      AppColors.textPrimary(context),
                       ),
                     ),
                   ),
@@ -554,9 +550,9 @@ class _AcordeonState extends State<_Acordeon>
                   ],
                   RotationTransition(
                     turns: _rotacion,
-                    child: const Icon(
+                    child: Icon(
                       Icons.expand_more,
-                      color: Color(0xFF777777),
+                      color: AppColors.textSecondary(context),
                       size: 22,
                     ),
                   ),
@@ -608,30 +604,30 @@ class _PreferenciaTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color:        const Color(0xFFF7FBF7),
+          color:        AppColors.background(context),
           borderRadius: BorderRadius.circular(12),
-          border:       Border.all(color: const Color(0xFFE0E0E0)),
+          border:       Border.all(color: AppColors.border(context)),
         ),
         child: Row(
           children: [
-            Icon(icon, color: const Color(0xFF2E7D32), size: 20),
+            Icon(icon, color: AppColors.primary(context), size: 20),
             const SizedBox(width: 14),
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize:   14,
                   fontWeight: FontWeight.w500,
-                  color:      Color(0xFF1B1B1B),
+                  color:      AppColors.textPrimary(context),
                 ),
               ),
             ),
             Text(
               valor,
-              style: const TextStyle(fontSize: 13, color: Color(0xFF777777)),
+              style: TextStyle(fontSize: 13, color: AppColors.textSecondary(context)),
             ),
             const SizedBox(width: 6),
-            const Icon(Icons.chevron_right, color: Color(0xFFAAAAAA), size: 18),
+            Icon(Icons.chevron_right, color: AppColors.textHint(context), size: 18),
           ],
         ),
       ),
@@ -659,28 +655,28 @@ class _ToggleTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color:        const Color(0xFFF7FBF7),
+        color:        AppColors.background(context),
         borderRadius: BorderRadius.circular(12),
-        border:       Border.all(color: const Color(0xFFE0E0E0)),
+        border:       Border.all(color: AppColors.border(context)),
       ),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFF2E7D32), size: 20),
+          Icon(icon, color: AppColors.primary(context), size: 20),
           const SizedBox(width: 14),
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize:   14,
                 fontWeight: FontWeight.w500,
-                color:      Color(0xFF1B1B1B),
+                color:      AppColors.textPrimary(context),
               ),
             ),
           ),
           Switch(
             value:     valor,
             onChanged: onChanged,
-            activeColor:              const Color(0xFF2E7D32),
+            activeColor:              AppColors.primary(context),
             materialTapTargetSize:    MaterialTapTargetSize.shrinkWrap,
           ),
         ],

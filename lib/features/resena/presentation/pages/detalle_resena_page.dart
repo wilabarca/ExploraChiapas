@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../domain/entities/DestinoResenaEntity.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../providers/ResenasProvider.dart';
 import '../widgets/resena_card.dart';
 import '../widgets/star_rating.dart';
@@ -39,7 +40,7 @@ class _DetalleResenaPageState extends State<DetalleResenaPage> {
     final destino = widget.destino;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F8F8),
+      backgroundColor: AppColors.background(context),
       appBar: const HomeAppBar(),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
@@ -51,7 +52,7 @@ class _DetalleResenaPageState extends State<DetalleResenaPage> {
           );
           if (publicado == true && mounted) _cargar();
         },
-        backgroundColor: const Color(0xFF2E7D32),
+        backgroundColor: AppColors.primary(context),
         icon: const Icon(Icons.edit, color: Colors.white),
         label: const Text(
           'Escribir Reseña',
@@ -102,7 +103,7 @@ class _DetalleResenaPageState extends State<DetalleResenaPage> {
                         vertical: 5,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2E7D32),
+                        color: AppColors.primary(context),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Text(
@@ -163,10 +164,10 @@ class _DetalleResenaPageState extends State<DetalleResenaPage> {
           Consumer<ResenasProvider>(
             builder: (context, provider, child) {
               if (provider.status == ResenasStatus.loading) {
-                return const Padding(
-                  padding: EdgeInsets.all(32),
+                return Padding(
+                  padding: const EdgeInsets.all(32),
                   child: Center(
-                    child: CircularProgressIndicator(color: Color(0xFF2E7D32)),
+                    child: CircularProgressIndicator(color: AppColors.primary(context)),
                   ),
                 );
               }
@@ -186,7 +187,7 @@ class _DetalleResenaPageState extends State<DetalleResenaPage> {
               final desglose = provider.desgloseEstrellas;
 
               return Container(
-                color: Colors.white,
+                color: AppColors.surface(context),
                 padding: const EdgeInsets.all(20),
                 child: FractionallySizedBox(
                   // ✓ FractionallySizedBox: ocupa el 100% del ancho.
@@ -197,10 +198,10 @@ class _DetalleResenaPageState extends State<DetalleResenaPage> {
                         children: [
                           Text(
                             provider.promedioCalificacion.toStringAsFixed(1),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 56,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF1B1B1B),
+                              color: AppColors.textPrimary(context),
                               height: 1,
                             ),
                           ),
@@ -211,9 +212,9 @@ class _DetalleResenaPageState extends State<DetalleResenaPage> {
                           const SizedBox(height: 4),
                           Text(
                             '${provider.resenas.length} RESEÑAS',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
-                              color: Color(0xFF888888),
+                              color: AppColors.textSecondary(context),
                               fontWeight: FontWeight.w600,
                               letterSpacing: 0.5,
                             ),
@@ -232,9 +233,9 @@ class _DetalleResenaPageState extends State<DetalleResenaPage> {
                                 children: [
                                   Text(
                                     '$estrellas',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 12,
-                                      color: Color(0xFF888888),
+                                      color: AppColors.textSecondary(context),
                                     ),
                                   ),
                                   const SizedBox(width: 6),
@@ -247,8 +248,8 @@ class _DetalleResenaPageState extends State<DetalleResenaPage> {
                                           0xFFEEEEEE,
                                         ),
                                         valueColor:
-                                            const AlwaysStoppedAnimation(
-                                              Color(0xFF2E7D32),
+                                            AlwaysStoppedAnimation(
+                                              AppColors.primary(context),
                                             ),
                                         minHeight: 8,
                                       ),
@@ -257,9 +258,9 @@ class _DetalleResenaPageState extends State<DetalleResenaPage> {
                                   const SizedBox(width: 6),
                                   Text(
                                     '${(valor * 100).toInt()}%',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 11,
-                                      color: Color(0xFF888888),
+                                      color: AppColors.textSecondary(context),
                                     ),
                                   ),
                                 ],
@@ -282,12 +283,12 @@ class _DetalleResenaPageState extends State<DetalleResenaPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Comentarios',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1B1B1B),
+                    color: AppColors.textPrimary(context),
                   ),
                 ),
               ],
@@ -300,13 +301,13 @@ class _DetalleResenaPageState extends State<DetalleResenaPage> {
                 return const SizedBox.shrink();
               }
               if (provider.resenas.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.all(32),
+                return Padding(
+                  padding: const EdgeInsets.all(32),
                   child: Center(
                     child: Text(
                       'Aún no hay reseñas. ¡Sé el primero en escribir una!',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Color(0xFF888888)),
+                      style: TextStyle(color: AppColors.textSecondary(context)),
                     ),
                   ),
                 );
@@ -346,23 +347,23 @@ class _ErrorResenas extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFFFCDD2)),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
+          Icon(
             Icons.cloud_off_outlined,
             size: 36,
-            color: Color(0xFFD32F2F),
+            color: AppColors.error(context),
           ),
           const SizedBox(height: 10),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 13, color: Color(0xFF666666)),
+            style: TextStyle(fontSize: 13, color: AppColors.textSecondary(context)),
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
@@ -370,7 +371,7 @@ class _ErrorResenas extends StatelessWidget {
             icon: const Icon(Icons.refresh, size: 18),
             label: const Text('Reintentar'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF2E7D32),
+              foregroundColor: AppColors.primary(context),
             ),
           ),
         ],

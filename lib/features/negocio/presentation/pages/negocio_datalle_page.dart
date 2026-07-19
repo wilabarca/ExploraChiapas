@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/negocio.dart';
 import '../../domain/usecases/obtener_negocio_por_id.dart';
 import '../../../../core/di/injector.dart';
@@ -37,19 +38,19 @@ class _NegocioDetallePageState extends State<NegocioDetallePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F8F8),
+      backgroundColor: AppColors.background(context),
       // ── Header consistente ──────────────────────────────────────────
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface(context),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF1B1B1B)),
+          icon: Icon(Icons.arrow_back, color: AppColors.textPrimary(context)),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Detalle del negocio',
           style: TextStyle(
-            color: Color(0xFF1B1B1B),
+            color: AppColors.textPrimary(context),
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -59,8 +60,8 @@ class _NegocioDetallePageState extends State<NegocioDetallePage> {
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: Color(0xFF2E7D32)),
+            return Center(
+              child: CircularProgressIndicator(color: AppColors.primary(context)),
             );
           }
 
@@ -69,7 +70,7 @@ class _NegocioDetallePageState extends State<NegocioDetallePage> {
               child: Text(
                 'No se pudo cargar el negocio.\n${snapshot.error ?? ''}',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Color(0xFF999999)),
+                style: TextStyle(color: AppColors.textSecondary(context)),
               ),
             );
           }
@@ -107,20 +108,20 @@ class _NegocioDetallePageState extends State<NegocioDetallePage> {
                         // negocioId, o reutilizar '/resenas' con argumento.
                         Navigator.pushNamed(context, '/resenas');
                       },
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.rate_review_outlined,
-                        color: Color(0xFF2E7D32),
+                        color: AppColors.primary(context),
                       ),
-                      label: const Text(
+                      label: Text(
                         'Escribir reseña',
                         style: TextStyle(
-                          color: Color(0xFF2E7D32),
+                          color: AppColors.primary(context),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: const BorderSide(color: Color(0xFF2E7D32)),
+                        side: BorderSide(color: AppColors.primary(context)),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),

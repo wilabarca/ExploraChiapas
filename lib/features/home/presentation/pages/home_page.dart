@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/utils/app_constants.dart';
+import '../../../../core/theme/app_colors.dart';
 import 'home_turista_page.dart';
 import 'home_local_page.dart';
 
@@ -35,9 +36,9 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     if (!_loaded) {
-      return const Scaffold(
+      return Scaffold(
         body: Center(
-          child: CircularProgressIndicator(color: Color(0xFF2E7D32)),
+          child: CircularProgressIndicator(color: AppColors.primary(context)),
         ),
       );
     }
