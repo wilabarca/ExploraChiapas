@@ -130,11 +130,16 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
     try {
       final response = await _apiClient.get(AppConstants.destinationsEndpoint);
       final raw = response.data['data'] as List<dynamic>;
+      if (raw.isEmpty) throw Exception('backend_empty');
       final all = raw
           .map((e) => DestinationModel.fromJson(e as Map<String, dynamic>))
           .toList();
       if (tipo != null) {
-        return all.where((d) => d.tipo == tipo).toList();
+        final filtered = all
+            .where((d) => d.tipo.toLowerCase() == tipo.toLowerCase())
+            .toList();
+        if (filtered.isEmpty) throw Exception('no_match');
+        return filtered;
       }
       return all;
     } catch (_) {

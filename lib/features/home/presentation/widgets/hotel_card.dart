@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class HotelCard extends StatelessWidget {
   final String nombre;
@@ -19,11 +20,12 @@ class HotelCard extends StatelessWidget {
       width: 170,
       margin: const EdgeInsets.only(right: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface(context),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderSubtle(context)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.07),
+            color: Colors.black.withValues(alpha: 0.07),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -55,10 +57,10 @@ class HotelCard extends StatelessWidget {
               children: [
                 Text(
                   nombre,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1B1B1B),
+                    color: AppColors.textPrimary(context),
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -66,9 +68,9 @@ class HotelCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   'Desde \$${precioPorNoche.toStringAsFixed(0)}/noche',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF2E7D32),
+                    color: AppColors.primary(context),
                     fontWeight: FontWeight.w600,
                   ),
                 ),

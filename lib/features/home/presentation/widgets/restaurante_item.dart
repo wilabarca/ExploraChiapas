@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class RestauranteItem extends StatelessWidget {
   final String nombre;
@@ -23,11 +24,12 @@ class RestauranteItem extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface(context),
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.borderSubtle(context)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -61,10 +63,10 @@ class RestauranteItem extends StatelessWidget {
               children: [
                 Text(
                   nombre,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1B1B1B),
+                    color: AppColors.textPrimary(context),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -75,17 +77,18 @@ class RestauranteItem extends StatelessWidget {
                     const SizedBox(width: 3),
                     Text(
                       '$calificacion  •  $distanciaKm km de ti',
-                      style: const TextStyle(
-                          fontSize: 12, color: Color(0xFF888888)),
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary(context)),
                     ),
                   ],
                 ),
                 const SizedBox(height: 4),
                 Text(
                   descripcion,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF666666),
+                    color: AppColors.textSecondary(context),
                     height: 1.4,
                   ),
                   maxLines: 2,

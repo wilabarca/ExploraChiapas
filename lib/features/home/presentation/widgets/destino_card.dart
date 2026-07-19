@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class DestinoCard extends StatelessWidget {
   final String nombre;
@@ -27,8 +28,9 @@ class DestinoCard extends StatelessWidget {
         width: 200,
         margin: const EdgeInsets.only(right: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface(context),
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.borderSubtle(context)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.07),
@@ -75,10 +77,10 @@ class DestinoCard extends StatelessWidget {
                   children: [
                     Text(
                       nombre,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1B1B1B),
+                        color: AppColors.textPrimary(context),
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -89,9 +91,9 @@ class DestinoCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             categoria,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF888888),
+                              color: AppColors.textSecondary(context),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -100,9 +102,9 @@ class DestinoCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           calificacion.toStringAsFixed(1),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF888888),
+                            color: AppColors.textSecondary(context),
                           ),
                         ),
                         const SizedBox(width: 3),
