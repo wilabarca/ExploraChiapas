@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/providers/preferences_provider.dart';
 import '../../../../core/providers/locale_provider.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../providers/profile_provider.dart';
 import '../widgets/profile_avatar.dart';
 import '../widgets/profile_interests.dart';
@@ -10,7 +11,6 @@ import '../widgets/profile_stats.dart';
 import '../widgets/profile_menu_item.dart';
 import 'edit_profile_page.dart';
 import '../../../home/presentation/widgets/custom_bottom_nav_bar.dart';
-import '../../../../core/theme/app_colors.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
