@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../domain/entities/envento_entity.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class DetalleEventoPage extends StatelessWidget {
   final EventoEntity evento;
@@ -28,20 +29,20 @@ class DetalleEventoPage extends StatelessWidget {
     final size = MediaQuery.sizeOf(context);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface(context),
       body: CustomScrollView(
         slivers: [
           // ── App Bar con imagen ───────────────────────────────────
           SliverAppBar(
             expandedHeight: size.height * 0.38,
             pinned: true,
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.surface(context),
             leading: GestureDetector(
               onTap: () => Navigator.pop(context),
               child: Container(
                 margin: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surface(context),
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
@@ -50,9 +51,9 @@ class DetalleEventoPage extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.arrow_back,
-                  color: Color(0xFF1B1B1B),
+                  color: AppColors.textPrimary(context),
                   size: 20,
                 ),
               ),
@@ -61,7 +62,7 @@ class DetalleEventoPage extends StatelessWidget {
               Container(
                 margin: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surface(context),
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
@@ -71,9 +72,9 @@ class DetalleEventoPage extends StatelessWidget {
                   ],
                 ),
                 child: IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.favorite_outline,
-                    color: Color(0xFF1B1B1B),
+                    color: AppColors.textPrimary(context),
                     size: 20,
                   ),
                   onPressed: () {},
@@ -148,10 +149,10 @@ class DetalleEventoPage extends StatelessWidget {
                   // Título
                   Text(
                     evento.titulo,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1B1B1B),
+                      color: AppColors.textPrimary(context),
                       height: 1.2,
                     ),
                   ),
@@ -189,12 +190,12 @@ class DetalleEventoPage extends StatelessWidget {
                   const SizedBox(height: 20),
 
                   // Descripción
-                  const Text(
+                  Text(
                     'Acerca del evento',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1B1B1B),
+                      color: AppColors.textPrimary(context),
                     ),
                   ),
 
@@ -204,9 +205,9 @@ class DetalleEventoPage extends StatelessWidget {
                     evento.descripcion.isNotEmpty
                         ? evento.descripcion
                         : 'Este evento aún no tiene una descripción disponible.',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
-                      color: Color(0xFF555555),
+                      color: AppColors.textSecondary(context),
                       height: 1.7,
                     ),
                   ),
@@ -218,12 +219,12 @@ class DetalleEventoPage extends StatelessWidget {
                   const SizedBox(height: 20),
 
                   // Organizado por
-                  const Text(
+                  Text(
                     'Organizado por',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1B1B1B),
+                      color: AppColors.textPrimary(context),
                     ),
                   ),
 
@@ -235,12 +236,12 @@ class DetalleEventoPage extends StatelessWidget {
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE8F5E9),
+                          color: AppColors.primaryContainer(context),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.business_outlined,
-                          color: Color(0xFF2E7D32),
+                          color: AppColors.primary(context),
                           size: 22,
                         ),
                       ),
@@ -252,17 +253,17 @@ class DetalleEventoPage extends StatelessWidget {
                           children: [
                             Text(
                               evento.creadoPor,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF1B1B1B),
+                                color: AppColors.textPrimary(context),
                               ),
                             ),
-                            const Text(
+                            Text(
                               'Organizador verificado',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Color(0xFF2E7D32),
+                                color: AppColors.primary(context),
                               ),
                             ),
                           ],
@@ -283,7 +284,7 @@ class DetalleEventoPage extends StatelessWidget {
       bottomNavigationBar: Container(
         padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface(context),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.06),
@@ -316,7 +317,7 @@ class DetalleEventoPage extends StatelessWidget {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2E7D32),
+                  backgroundColor: AppColors.primary(context),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -340,25 +341,26 @@ class _InfoChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Builder(
+      builder: (context) => Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F5),
+        color: AppColors.background(context),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 15, color: const Color(0xFF2E7D32)),
+          Icon(icon, size: 15, color: AppColors.primary(context)),
           const SizedBox(width: 6),
           // ✓ ConstrainedBox limita el ancho del label
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 160),
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
-                color: Color(0xFF555555),
+                color: AppColors.textSecondary(context),
                 fontWeight: FontWeight.w500,
               ),
               overflow: TextOverflow.ellipsis,
@@ -366,6 +368,7 @@ class _InfoChip extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }

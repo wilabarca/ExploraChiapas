@@ -7,6 +7,7 @@ import '../providers/auth_provider.dart';
 import '../../../../core/permissions/location_permission.dart';
 import '../../../../core/utils/app_constants.dart';
 import '../../../../core/services/google_auth_service.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -52,13 +53,34 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     if (!mounted) return;
-    // TODO: enviar idToken al backend vía AuthProvider.loginWithGoogle()
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content:         Text('Google OAuth: configura el backend con /users/google-auth'),
-        backgroundColor: Color(0xFF2E7D32),
-      ),
-    );
+    final provider = context.read<AuthProvider>();
+    final success = await provider.loginWithGoogle(idToken: idToken);
+
+    if (!mounted) return;
+
+    if (success) {
+      final prefs = await SharedPreferences.getInstance();
+      final onboardingCompleto =
+          prefs.getBool(AppConstants.onboardingKey) ?? false;
+
+      if (onboardingCompleto) {
+        await LocationPermissionHelper().checkAndRequestOnLogin(context);
+        if (!mounted) return;
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        Navigator.pushReplacementNamed(context, '/intereses');
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(provider.errorMessage ?? 'Error al iniciar sesión con Google'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+      provider.resetStatus();
+    }
   }
 
   Future<void> _handleLogin() async {
@@ -177,10 +199,10 @@ class _LoginPageState extends State<LoginPage> {
                         onTap: () {
                           // TODO: recuperar contraseña
                         },
-                        child: const Text(
+                        child: Text(
                           '¿Olvidaste tu contraseña?',
                           style: TextStyle(
-                            color: Color(0xFF2E7D32),
+                            color: AppColors.primary(context),
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                           ),
@@ -198,7 +220,7 @@ class _LoginPageState extends State<LoginPage> {
                       child: ElevatedButton(
                         onPressed: isLoading ? null : _handleLogin,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2E7D32),
+                          backgroundColor: AppColors.primary(context),
                           disabledBackgroundColor: const Color(0xFFB0BEC5),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
@@ -233,18 +255,18 @@ class _LoginPageState extends State<LoginPage> {
               // ── Divider ──────────────────────────────────────────────────
               Row(
                 children: [
-                  const Expanded(child: Divider(color: Color(0xFFCCCCCC))),
+                  Expanded(child: Divider(color: AppColors.textHint(context))),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Text(
                       'o',
                       style: TextStyle(
-                        color:    Colors.grey.shade600,
+                        color:    AppColors.textSecondary(context),
                         fontSize: 13,
                       ),
                     ),
                   ),
-                  const Expanded(child: Divider(color: Color(0xFFCCCCCC))),
+                  Expanded(child: Divider(color: AppColors.textHint(context))),
                 ],
               ),
 
@@ -260,21 +282,21 @@ class _LoginPageState extends State<LoginPage> {
                   errorBuilder: (_, __, ___) =>
                       const Icon(Icons.login, size: 20),
                 ),
-                label: const Text(
+                label: Text(
                   'Continuar con Google',
                   style: TextStyle(
-                    color:      Color(0xFF1B1B1B),
+                    color:      AppColors.textPrimary(context),
                     fontSize:   15,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 style: OutlinedButton.styleFrom(
                   minimumSize:  const Size(double.infinity, 52),
-                  side:         const BorderSide(color: Color(0xFFDDDDDD)),
+                  side:         BorderSide(color: AppColors.border(context)),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
-                  backgroundColor: Colors.white,
+                  backgroundColor: AppColors.surface(context),
                 ),
               ),
 
@@ -308,37 +330,37 @@ class _LoginPageState extends State<LoginPage> {
                 spacing: 4,
                 runSpacing: 4,
                 children: [
-                  const Text(
+                  Text(
                     'Al continuar aceptas los',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF888888)),
+                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary(context)),
                   ),
                   GestureDetector(
                     onTap: () => _abrirUrl(AppConstants.terminosUrl),
-                    child: const Text(
+                    child: Text(
                       'Términos y Condiciones',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF2E7D32),
+                        color: AppColors.primary(context),
                         fontWeight: FontWeight.w600,
                         decoration: TextDecoration.underline,
-                        decorationColor: Color(0xFF2E7D32),
+                        decorationColor: AppColors.primary(context),
                       ),
                     ),
                   ),
-                  const Text(
+                  Text(
                     'y la',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF888888)),
+                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary(context)),
                   ),
                   GestureDetector(
                     onTap: () => _abrirUrl(AppConstants.privacidadUrl),
-                    child: const Text(
+                    child: Text(
                       'Política de Privacidad',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF2E7D32),
+                        color: AppColors.primary(context),
                         fontWeight: FontWeight.w600,
                         decoration: TextDecoration.underline,
-                        decorationColor: Color(0xFF2E7D32),
+                        decorationColor: AppColors.primary(context),
                       ),
                     ),
                   ),

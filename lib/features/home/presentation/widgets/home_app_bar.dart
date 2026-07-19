@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/di/injector.dart';
 import '../../../../core/services/avatar/avatar_service.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../profile/presentation/providers/profile_provider.dart';
 
 class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -39,7 +40,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           );
 
     return AppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface(context),
       elevation: 0,
       // ✓ Sin esto, Flutter mostraría la flecha automáticamente cada vez
       // que la ruta puede hacer pop. Con esto, queda apagada salvo que

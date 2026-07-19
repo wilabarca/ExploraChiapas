@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../home/presentation/widgets/home_app_bar.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../home/presentation/widgets/custom_bottom_nav_bar.dart';
 import '../../domain/entities/promocion.dart';
 import '../providers/promociones_provider.dart';
@@ -60,7 +61,7 @@ class _PromocionesPageState extends State<PromocionesPage> {
     final isLarge = screenW >= 900;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F8F8),
+      backgroundColor: AppColors.background(context),
       appBar: const HomeAppBar(),
       body: Center(
         // ConstrainedBox: evita que el contenido se estire de más en
@@ -79,18 +80,18 @@ class _PromocionesPageState extends State<PromocionesPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Promociones',
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1B1B1B),
+                        color: AppColors.textPrimary(context),
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
+                    Text(
                       'Descuentos y ofertas activas en Chiapas',
-                      style: TextStyle(fontSize: 13, color: Color(0xFF888888)),
+                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary(context)),
                     ),
                     const SizedBox(height: 14),
                     Consumer<PromocionesProvider>(
@@ -110,9 +111,9 @@ class _PromocionesPageState extends State<PromocionesPage> {
                     return Consumer<PromocionesProvider>(
                       builder: (context, provider, _) {
                         if (provider.status == PromocionesStatus.loading) {
-                          return const Center(
+                          return Center(
                             child: CircularProgressIndicator(
-                              color: Color(0xFF2E7D32),
+                              color: AppColors.primary(context),
                             ),
                           );
                         }
@@ -146,9 +147,9 @@ class _PromocionesPageState extends State<PromocionesPage> {
                                   color: Colors.grey.shade300,
                                 ),
                                 const SizedBox(height: 16),
-                                const Text(
+                                Text(
                                   'Sin promociones en esta categoría',
-                                  style: TextStyle(color: Color(0xFF999999)),
+                                  style: TextStyle(color: AppColors.textSecondary(context)),
                                 ),
                               ],
                             ),
@@ -208,16 +209,16 @@ class _ErrorPromociones extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(
+        Icon(
           Icons.cloud_off_outlined,
           size: 48,
-          color: Color(0xFFD32F2F),
+          color: AppColors.error(context),
         ),
         const SizedBox(height: 12),
         Text(
           message,
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 13, color: Color(0xFF666666)),
+          style: TextStyle(fontSize: 13, color: AppColors.textSecondary(context)),
         ),
         const SizedBox(height: 14),
         OutlinedButton.icon(
@@ -225,7 +226,7 @@ class _ErrorPromociones extends StatelessWidget {
           icon: const Icon(Icons.refresh, size: 18),
           label: const Text('Reintentar'),
           style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFF2E7D32),
+            foregroundColor: AppColors.primary(context),
           ),
         ),
       ],

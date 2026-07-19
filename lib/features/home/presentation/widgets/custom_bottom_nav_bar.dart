@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 
 enum BottomNavTab {
   explorar,
@@ -98,7 +99,7 @@ class AppBottomNav extends StatelessWidget {
               maxWidth: isTablet ? 800 : double.infinity,
             ),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface(context),
               borderRadius: BorderRadius.circular(barHeight),
               boxShadow: [
                 BoxShadow(
@@ -127,7 +128,7 @@ class AppBottomNav extends StatelessWidget {
                         vertical: isCompact ? 6 : 10,
                       ),
                       decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFF2E7D32) : Colors.transparent,
+                        color: isSelected ? AppColors.primary(context) : Colors.transparent,
                         borderRadius: BorderRadius.circular(30),
                       ),
                       child: Row(
@@ -137,7 +138,7 @@ class AppBottomNav extends StatelessWidget {
                           Icon(
                             isSelected ? item.activeIcon : item.icon,
                             size: isSelected ? iconSize * 1.1 : iconSize,
-                            color: isSelected ? Colors.white : const Color(0xFF999999),
+                            color: isSelected ? Colors.white : AppColors.textSecondary(context),
                           ),
                           if (isSelected) ...[
                             const SizedBox(width: 6),

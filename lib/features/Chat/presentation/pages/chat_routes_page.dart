@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../providers/chat_provider.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/chat_input.dart';
@@ -95,7 +96,7 @@ class _ChatRoutesPageState extends State<ChatRoutesPage> {
     final items = _construirItems(provider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F8F8),
+      backgroundColor: AppColors.background(context),
       appBar: const HomeAppBar(),
       body: Column(
         children: [
@@ -124,7 +125,7 @@ class _TypingIndicator extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface(context),
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(18),
               topRight: Radius.circular(18),
@@ -196,8 +197,8 @@ class _DotState extends State<_Dot> with SingleTickerProviderStateMixin {
       child: Container(
         width: 8,
         height: 8,
-        decoration: const BoxDecoration(
-          color: Color(0xFF2E7D32),
+        decoration: BoxDecoration(
+          color: AppColors.primary(context),
           shape: BoxShape.circle,
         ),
       ),

@@ -1,6 +1,8 @@
 class AppConstants {
   AppConstants._();
 
+  static const String serverBaseUrl = 'https://explora-chiapas.onrender.com';
+
   static const String baseUrl =
       'https://explora-chiapas.onrender.com/v1/api';
 
