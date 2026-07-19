@@ -116,13 +116,15 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
       body: Consumer<ProfileProvider>(
         builder: (context, provider, _) {
-          if (provider.status == ProfileStatus.loading) {
+          final perfil = provider.perfil;
+
+          // Solo spinner en la primera carga (sin datos en caché)
+          if (provider.status == ProfileStatus.loading && perfil == null) {
             return Center(
               child: CircularProgressIndicator(color: AppColors.primary(context)),
             );
           }
 
-          final perfil = provider.perfil;
           if (perfil == null) {
             return Center(
               child: Column(
