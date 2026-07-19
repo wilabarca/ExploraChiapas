@@ -7,23 +7,30 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../profile/presentation/providers/profile_provider.dart';
 
 class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const HomeAppBar({super.key});
+  /// Controla si se muestra la flecha de "volver".
+  /// Por defecto es `false`: ninguna pantalla que use
+  /// `const HomeAppBar()` sin parámetros mostrará la flecha. Si en algún
+  /// punto necesitas la flecha de regreso en una pantalla específica,
+  /// pásala explícitamente como `HomeAppBar(mostrarFlecha: true)`.
+  final bool mostrarFlecha;
+
+  const HomeAppBar({super.key, this.mostrarFlecha = false});
 
   @override
-  Size get preferredSize => const Size.fromHeight(64);
+  Size get preferredSize => const Size.fromHeight(76);
 
   @override
   Widget build(BuildContext context) {
+    // ✓ MediaQuery: en vez de solo 2 tamaños fijos (chico/normal), aquí
+    // el tamaño escala proporcional al ancho real de pantalla y se
+    // limita con .clamp() para que nunca se vea ni diminuto en un
+    // teléfono angosto ni gigante en una tablet.
     final screenW = MediaQuery.of(context).size.width;
-    final isSmall = screenW < 360;
-    final logoHeight = isSmall ? 28.0 : 34.0;
-    final fontSize = isSmall ? 16.0 : 19.0;
-    final avatarRadius = isSmall ? 17.0 : 20.0;
 
-    // ✅ Una sola fuente de verdad: ProfileProvider.perfil.
-    // PerfilEntity.ImgUrl es String (no nullable); si viene vacío,
-    // significa que el usuario no tiene foto propia y usamos el
-    // avatar determinístico por defecto.
+    final logoHeight = (screenW * 0.13).clamp(44.0, 60.0);
+    final fontSize = (screenW * 0.055).clamp(20.0, 24.0);
+    final avatarRadius = (screenW * 0.065).clamp(22.0, 28.0);
+
     final perfil = context.watch<ProfileProvider>().perfil;
     final tieneFotoPropia = perfil != null && perfil.ImgUrl.isNotEmpty;
     final avatarUrl = tieneFotoPropia
@@ -35,31 +42,50 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: AppColors.surface(context),
       elevation: 0,
+      // ✓ Sin esto, Flutter mostraría la flecha automáticamente cada vez
+      // que la ruta puede hacer pop. Con esto, queda apagada salvo que
+      // se pida explícitamente con mostrarFlecha: true.
+      automaticallyImplyLeading: mostrarFlecha,
       titleSpacing: screenW * 0.04,
-      title: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: logoHeight,
-            height: logoHeight,
-            child: Image.asset(
-              'assets/images/ExploraChiapas Logo.png',
-              fit: BoxFit.contain,
-            ),
-          ),
-          SizedBox(width: screenW * 0.02),
-          Flexible(
-            child: Text(
-              'ExploraChiapas',
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: AppColors.primary(context),
-                fontWeight: FontWeight.bold,
-                fontSize: fontSize,
+      // ✓ LayoutBuilder: da el ancho real disponible del título para
+      // que el logo/texto puedan ajustarse si el espacio es angosto
+      // (por ejemplo, cuando sí hay flecha de regreso).
+      title: LayoutBuilder(
+        builder: (context, constraints) {
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ✓ ConstrainedBox + AspectRatio: el logo mantiene una
+              // relación 1:1 y nunca crece más allá de logoHeight.
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: logoHeight,
+                  maxHeight: logoHeight,
+                ),
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: Image.asset(
+                    'assets/images/ExploraChiapas Logo.png',
+                    fit: BoxFit.contain,
+                  ),
+                ),
               ),
-            ),
-          ),
-        ],
+              SizedBox(width: screenW * 0.02),
+              // Flexible: el texto se trunca con "…" si el ancho es chico.
+              Flexible(
+                child: Text(
+                  'ExploraChiapas',
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: const Color(0xFF2E7D32),
+                    fontWeight: FontWeight.bold,
+                    fontSize: fontSize,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
       actions: [
         Padding(
