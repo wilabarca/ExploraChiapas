@@ -19,6 +19,7 @@ class MapPage extends StatefulWidget {
 class _MapPageState extends State<MapPage> {
   final MapController _mapController = MapController();
   MapProvider? _mapProvider;
+  bool _estabaSiguiendo = false;
 
   static const _chiapasCenter = LatLng(16.7521, -93.1152);
 
@@ -41,10 +42,19 @@ class _MapPageState extends State<MapPage> {
     }
   }
 
-  // Se llama cada vez que el provider notifica — mueve la cámara al usuario
   void _seguirUsuario() {
     final provider = _mapProvider;
-    if (provider == null || !provider.enNavegacion) return;
+    if (provider == null) return;
+
+    if (!provider.enNavegacion) {
+      if (_estabaSiguiendo) {
+        _estabaSiguiendo = false;
+        _mapController.move(_chiapasCenter, 7.5);
+      }
+      return;
+    }
+
+    _estabaSiguiendo = true;
     final pos = provider.userPosition;
     if (pos == null) return;
     _mapController.move(LatLng(pos.latitude, pos.longitude), 17);

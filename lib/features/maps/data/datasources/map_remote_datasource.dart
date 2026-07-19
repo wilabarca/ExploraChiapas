@@ -20,7 +20,7 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
   // Datos ficticios — reemplazar con llamada real al backend
   static const List<Map<String, dynamic>> _mockDestinations = [
     {
-      'id': '1',
+      'id': 'a1b2c3d4-e5f6-4a7b-8c9d-000000000001',
       'nombre': 'Cañón del Sumidero',
       'tipo': 'naturaleza',
       'descripcion': 'Impresionante cañón con paredes de hasta 1,000 m.',
@@ -31,7 +31,7 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
       'es_sostenible': false,
     },
     {
-      'id': '2',
+      'id': 'a1b2c3d4-e5f6-4a7b-8c9d-000000000002',
       'nombre': 'San Cristóbal de las Casas',
       'tipo': 'cultura',
       'descripcion': 'Ciudad colonial con mercados y arquitectura colonial.',
@@ -42,7 +42,7 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
       'es_sostenible': false,
     },
     {
-      'id': '3',
+      'id': 'a1b2c3d4-e5f6-4a7b-8c9d-000000000003',
       'nombre': 'Lagunas de Montebello',
       'tipo': 'naturaleza',
       'descripcion': 'Sistema de lagunas de colores únicos en la frontera.',
@@ -53,7 +53,7 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
       'es_sostenible': true,
     },
     {
-      'id': '4',
+      'id': 'a1b2c3d4-e5f6-4a7b-8c9d-000000000004',
       'nombre': 'Palenque',
       'tipo': 'cultura',
       'descripcion': 'Zona arqueológica maya rodeada de selva tropical.',
@@ -64,7 +64,7 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
       'es_sostenible': false,
     },
     {
-      'id': '5',
+      'id': 'a1b2c3d4-e5f6-4a7b-8c9d-000000000005',
       'nombre': 'Cascadas de Agua Azul',
       'tipo': 'naturaleza',
       'descripcion': 'Cascadas turquesas en medio de la selva chiapaneca.',
@@ -75,7 +75,7 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
       'es_sostenible': true,
     },
     {
-      'id': '6',
+      'id': 'a1b2c3d4-e5f6-4a7b-8c9d-000000000006',
       'nombre': 'Restaurante La Galería',
       'tipo': 'gastronomia',
       'descripcion': 'Cocina chiapaneca tradicional en el centro histórico.',
@@ -86,7 +86,7 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
       'es_sostenible': true,
     },
     {
-      'id': '7',
+      'id': 'a1b2c3d4-e5f6-4a7b-8c9d-000000000007',
       'nombre': 'Cascada El Chiflón',
       'tipo': 'aventura',
       'descripcion': 'Cascada de 120 m ideal para tirolesa y senderismo.',
