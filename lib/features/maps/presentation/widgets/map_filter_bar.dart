@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class MapFilterBar extends StatefulWidget {
   final void Function(String? tipo) onFilterChanged;
@@ -49,11 +50,18 @@ class _MapFilterBarState extends State<MapFilterBar> {
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: isActive ? const Color(0xFF2E7D32) : Colors.white,
+                color: isActive
+                    ? AppColors.primary(context)
+                    : AppColors.surface(context),
                 borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isActive
+                      ? AppColors.primary(context)
+                      : AppColors.borderSubtle(context),
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
+                    color: Colors.black.withValues(alpha: 0.08),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -64,7 +72,9 @@ class _MapFilterBarState extends State<MapFilterBar> {
                   Icon(
                     f['icon'] as IconData,
                     size: 16,
-                    color: isActive ? Colors.white : const Color(0xFF2E7D32),
+                    color: isActive
+                        ? (AppColors.isDark(context) ? Colors.black : Colors.white)
+                        : AppColors.primary(context),
                   ),
                   const SizedBox(width: 6),
                   Text(
@@ -72,7 +82,9 @@ class _MapFilterBarState extends State<MapFilterBar> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: isActive ? Colors.white : const Color(0xFF1B1B1B),
+                      color: isActive
+                          ? (AppColors.isDark(context) ? Colors.black : Colors.white)
+                          : AppColors.textPrimary(context),
                     ),
                   ),
                 ],

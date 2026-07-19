@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class EventosBanner extends StatelessWidget {
   final VoidCallback? onExplorar;
@@ -15,8 +16,11 @@ class EventosBanner extends StatelessWidget {
           child: Container(
             padding: EdgeInsets.all(isTablet ? 24 : 18),
             decoration: BoxDecoration(
-              color: const Color(0xFFDDEFDD),
+              color: AppColors.primaryContainer(context),
               borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: AppColors.primary(context).withValues(alpha: 0.2),
+              ),
             ),
             child: Stack(
               children: [
@@ -26,7 +30,7 @@ class EventosBanner extends StatelessWidget {
                   child: Icon(
                     Icons.fact_check_outlined,
                     size: isTablet ? 90 : 70,
-                    color: Colors.black.withOpacity(0.06),
+                    color: AppColors.primary(context).withValues(alpha: 0.12),
                   ),
                 ),
                 Column(
@@ -39,7 +43,7 @@ class EventosBanner extends StatelessWidget {
                       style: TextStyle(
                         fontSize: isTablet ? 20 : 16.5,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: AppColors.textPrimary(context),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -51,31 +55,30 @@ class EventosBanner extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: isTablet ? 14 : 12.5,
-                          color: Colors.black54,
+                          color: AppColors.textSecondary(context),
                           height: 1.3,
                         ),
                       ),
                     ),
                     const SizedBox(height: 10),
-                    // 🟢 Aquí el cambio: InkWell → GestureDetector
                     GestureDetector(
                       onTap: onExplorar,
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
                             'Explorar',
                             style: TextStyle(
-                              fontSize: 14, // tal como pediste
-                              color: Color(0xFF2E7D32),
+                              fontSize: 14,
+                              color: AppColors.primary(context),
                               fontWeight: FontWeight.w700,
                             ),
                           ),
-                          SizedBox(width: 4),
+                          const SizedBox(width: 4),
                           Icon(
                             Icons.arrow_forward,
-                            size: 16, // tal como pediste
-                            color: Color(0xFF2E7D32),
+                            size: 16,
+                            color: AppColors.primary(context),
                           ),
                         ],
                       ),
