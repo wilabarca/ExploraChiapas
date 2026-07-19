@@ -94,8 +94,21 @@ class _ProfilePageState extends State<ProfilePage> {
     String s(String key) => AppStrings.tr(key, lang);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F7F2),
-      appBar: const HomeAppBar(),
+      backgroundColor: AppColors.background(context),
+      appBar: AppBar(
+        backgroundColor: AppColors.surface(context),
+        elevation: 0,
+        centerTitle: false,
+        automaticallyImplyLeading: false,
+        title: Text(
+          s('app_name'),
+          style: const TextStyle(
+            color:      Color(0xFF1B5E20),
+            fontSize:   18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
       bottomNavigationBar: AppBottomNav(
         navItems:   AppBottomNav.items,
         currentTab: BottomNavTab.perfil,
@@ -103,13 +116,15 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
       body: Consumer<ProfileProvider>(
         builder: (context, provider, _) {
-          if (provider.status == ProfileStatus.loading) {
+          final perfil = provider.perfil;
+
+          // Solo spinner en la primera carga (sin datos en caché)
+          if (provider.status == ProfileStatus.loading && perfil == null) {
             return Center(
               child: CircularProgressIndicator(color: AppColors.primary(context)),
             );
           }
 
-          final perfil = provider.perfil;
           if (perfil == null) {
             return Center(
               child: Column(
@@ -495,7 +510,7 @@ class _AcordeonState extends State<_Acordeon>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color:   Colors.black.withOpacity(0.04),
+            color:   Colors.black.withValues(alpha: 0.04),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -663,8 +678,8 @@ class _ToggleTile extends StatelessWidget {
           Switch(
             value:     valor,
             onChanged: onChanged,
-            activeColor:              AppColors.primary(context),
-            materialTapTargetSize:    MaterialTapTargetSize.shrinkWrap,
+            activeThumbColor:      AppColors.primary(context),
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
         ],
       ),
