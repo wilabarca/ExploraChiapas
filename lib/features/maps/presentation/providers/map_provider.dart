@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../domain/entities/destination_entity.dart';
 import '../../domain/usecases/get_destinations_usecase.dart';
 import '../../domain/usecases/get_routes_usecase.dart';
@@ -50,8 +51,28 @@ class MapProvider extends ChangeNotifier {
   }
 
   Future<void> loadRouteTo(DestinationEntity destino) async {
-    const originLat = 16.7521;
-    const originLng = -93.1152;
+    // Coordenadas de Chiapas como fallback si no hay GPS
+    double originLat = 16.7521;
+    double originLng = -93.1152;
+
+    try {
+      final permission = await Geolocator.checkPermission();
+      final tienePermiso = permission == LocationPermission.always ||
+          permission == LocationPermission.whileInUse;
+
+      if (tienePermiso) {
+        final pos = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            timeLimit: Duration(seconds: 6),
+          ),
+        );
+        originLat = pos.latitude;
+        originLng = pos.longitude;
+      }
+    } catch (_) {
+      // Sin GPS: se usa el centro de Chiapas como origen
+    }
 
     try {
       final puntos = await _getRoute(

@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import '../providers/map_provider.dart';
 import '../widgets/destination_bottom_sheet.dart';
 import '../widgets/map_filter_bar.dart';
+import '../../../favoritos/presentation/providers/favoritos_provider.dart';
+import '../../../favoritos/domain/entities/favorito.dart';
 
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
@@ -177,17 +179,30 @@ class _MapPageState extends State<MapPage> {
                   destino: selected,
                   onCerrar: provider.clearSelection,
                   onGuardar: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content:
-                            Text('${selected.nombre} guardado en favoritos'),
-                        backgroundColor: const Color(0xFF2E7D32),
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                    context
+                        .read<FavoritosProvider>()
+                        .agregarFavorito(
+                          targetType: FavoritoTargetType.destination,
+                          targetId: selected.id,
+                        )
+                        .then((ok) {
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            ok
+                                ? '${selected.nombre} guardado en favoritos'
+                                : 'No se pudo guardar en favoritos',
+                          ),
+                          backgroundColor:
+                              ok ? const Color(0xFF2E7D32) : Colors.red,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                      ),
-                    );
+                      );
+                    });
                   },
                   onVerRuta: () async {
                     await provider.loadRouteTo(selected);
