@@ -13,6 +13,9 @@ import '../../../destinos/presentation/providers/destinos_provider.dart';
 import '../../../eventos/domain/entities/evento.dart';
 import '../../../eventos/presentation/providers/eventos_provider.dart';
 import '../../data/home_api_service.dart';
+import '../../../../core/l10n/app_strings.dart';
+import '../../../../core/providers/locale_provider.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class HomeTuristaPage extends StatefulWidget {
   const HomeTuristaPage({super.key});
@@ -150,9 +153,11 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
     final isTablet = screenW >= 600;
     final isLarge = screenW >= 900;
     final bottomSafePadding = mq.padding.bottom;
+    final lang = context.watch<LocaleProvider>().langCode;
+    String s(String k) => AppStrings.tr(k, lang);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F8F8),
+      backgroundColor: AppColors.background(context),
       appBar: const HomeAppBar(),
       body: Center(
         child: ConstrainedBox(
@@ -171,7 +176,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
 
               SectionHeader(
                 icon: Icons.location_on_outlined,
-                titulo: 'Destinos para ti',
+                titulo: s('destinos_para_ti'),
                 mostrarVerTodos: true,
                 onVerTodos: () {
                   final destinoProvider = context.read<DestinoProvider>();
@@ -193,9 +198,9 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
                       if (destinoProvider.listStatus == DestinoStatus.loading) {
                         return SizedBox(
                           height: cardHeight,
-                          child: const Center(
+                          child: Center(
                             child: CircularProgressIndicator(
-                              color: Color(0xFF2E7D32),
+                              color: AppColors.primary(context),
                             ),
                           ),
                         );
@@ -209,7 +214,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
                             child: _SeccionError(
                               message:
                                   destinoProvider.listErrorMessage ??
-                                  'No fue posible obtener los destinos',
+                                  s('error_destinos'),
                               onRetry: () {
                                 destinoProvider.loadDestinos(limit: 10);
                               },
@@ -221,12 +226,12 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
                       if (destinoProvider.destinos.isEmpty) {
                         return SizedBox(
                           height: cardHeight,
-                          child: const Center(
+                          child: Center(
                             child: Text(
-                              'No hay destinos disponibles',
+                              s('sin_destinos'),
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Color(0xFF777777),
+                                color: AppColors.textSecondary(context),
                               ),
                             ),
                           ),
@@ -261,7 +266,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
 
                             return DestinoCard(
                               nombre: destino.name,
-                              categoria: 'Destino turístico',
+                              categoria: s('destino_turistico'),
                               calificacion: destino.averageRating,
                               imageUrl: null,
                               esFavorito: false,
@@ -291,9 +296,9 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
               const SizedBox(height: 24),
 
               if (_promociones.isNotEmpty) ...[
-                const SectionHeader(
+                SectionHeader(
                   icon: Icons.local_offer_outlined,
-                  titulo: 'Promociones activas',
+                  titulo: s('promociones_activas'),
                 ),
                 const SizedBox(height: 14),
                 SizedBox(
@@ -333,7 +338,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
                       child: _SeccionError(
                         message:
                             eventosProvider.errorMessage ??
-                            'No fue posible obtener los eventos',
+                            s('error_eventos_carga'),
                         onRetry: () =>
                             eventosProvider.cargarEventos(proximas: true),
                       ),
@@ -347,9 +352,9 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SectionHeader(
+                      SectionHeader(
                         icon: Icons.event_outlined,
-                        titulo: 'Próximos eventos',
+                        titulo: s('proximos_eventos'),
                       ),
                       const SizedBox(height: 14),
                       ...eventosProvider.eventos.map(
@@ -363,23 +368,23 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
 
               SectionHeader(
                 icon: Icons.restaurant_outlined,
-                titulo: 'Restaurantes destacados',
+                titulo: s('restaurantes_destacados'),
                 mostrarVerTodos: true,
-                onVerTodos: () => _irANegocios('restaurante', 'Restaurantes'),
+                onVerTodos: () => _irANegocios('restaurante', s('restaurantes')),
               ),
               const SizedBox(height: 14),
-              _buildRestaurantes(isTablet),
+              _buildRestaurantes(isTablet, s),
 
               const SizedBox(height: 24),
 
               SectionHeader(
                 icon: Icons.hotel_outlined,
-                titulo: 'Hoteles recomendados',
+                titulo: s('hoteles_recomendados'),
                 mostrarVerTodos: true,
-                onVerTodos: () => _irANegocios('hotel', 'Hoteles'),
+                onVerTodos: () => _irANegocios('hotel', s('hoteles')),
               ),
               const SizedBox(height: 14),
-              _buildHoteles(isTablet, isLarge),
+              _buildHoteles(isTablet, isLarge, s),
 
               const SizedBox(height: 24),
             ],
@@ -388,7 +393,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => Navigator.pushNamed(context, '/chat'),
-        backgroundColor: const Color(0xFF2E7D32),
+        backgroundColor: AppColors.primary(context),
         child: const Icon(Icons.smart_toy_outlined, color: Colors.white),
       ),
       bottomNavigationBar: AppBottomNav(
@@ -399,7 +404,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
     );
   }
 
-  Widget _buildRestaurantes(bool isTablet) {
+  Widget _buildRestaurantes(bool isTablet, String Function(String) s) {
     if (isTablet) {
       return GridView.count(
         shrinkWrap: true,
@@ -412,7 +417,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
         children: _restaurantes
             .map(
               (r) => GestureDetector(
-                onTap: () => _irANegocios('restaurante', 'Restaurantes'),
+                onTap: () => _irANegocios('restaurante', s('restaurantes')),
                 child: RestauranteItem(
                   nombre: r.nombre,
                   calificacion: r.calificacion,
@@ -431,7 +436,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
         children: _restaurantes
             .map(
               (r) => GestureDetector(
-                onTap: () => _irANegocios('restaurante', 'Restaurantes'),
+                onTap: () => _irANegocios('restaurante', s('restaurantes')),
                 child: RestauranteItem(
                   nombre: r.nombre,
                   calificacion: r.calificacion,
@@ -446,7 +451,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
     );
   }
 
-  Widget _buildHoteles(bool isTablet, bool isLarge) {
+  Widget _buildHoteles(bool isTablet, bool isLarge, String Function(String) s) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final maxWidth = constraints.maxWidth;
@@ -463,7 +468,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
             children: _hoteles
                 .map(
                   (h) => GestureDetector(
-                    onTap: () => _irANegocios('hotel', 'Hoteles'),
+                    onTap: () => _irANegocios('hotel', s('hoteles')),
                     child: HotelCard(
                       nombre: h.nombre,
                       precioPorNoche: h.precioPorNoche,
@@ -489,7 +494,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
                 child: FractionallySizedBox(
                   widthFactor: 0.5,
                   child: GestureDetector(
-                    onTap: () => _irANegocios('hotel', 'Hoteles'),
+                    onTap: () => _irANegocios('hotel', s('hoteles')),
                     child: HotelCard(
                       nombre: h.nombre,
                       precioPorNoche: h.precioPorNoche,
@@ -542,35 +547,36 @@ class _SeccionError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LocaleProvider>().langCode;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFFFCDD2)),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
+          Icon(
             Icons.cloud_off_outlined,
             size: 36,
-            color: Color(0xFFD32F2F),
+            color: AppColors.error(context),
           ),
           const SizedBox(height: 10),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 13, color: Color(0xFF666666)),
+            style: TextStyle(fontSize: 13, color: AppColors.textSecondary(context)),
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh, size: 18),
-            label: const Text('Reintentar'),
+            label: Text(AppStrings.tr('reintentar', lang)),
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF2E7D32),
+              foregroundColor: AppColors.primary(context),
             ),
           ),
         ],
@@ -590,7 +596,7 @@ class _PromocionCard extends StatelessWidget {
       width: 220,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface(context),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFE8F5E9)),
         boxShadow: [
@@ -607,17 +613,17 @@ class _PromocionCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.local_offer, size: 16, color: Color(0xFF2E7D32)),
+              Icon(Icons.local_offer, size: 16, color: AppColors.primary(context)),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   promo.titulo,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1B1B1B),
+                    color: AppColors.textPrimary(context),
                   ),
                 ),
               ),
@@ -629,7 +635,7 @@ class _PromocionCard extends StatelessWidget {
               promo.negocioNombre!,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 12, color: Color(0xFF666666)),
+              style: TextStyle(fontSize: 12, color: AppColors.textSecondary(context)),
             ),
           ],
           if (promo.descripcion != null) ...[
@@ -638,7 +644,7 @@ class _PromocionCard extends StatelessWidget {
               promo.descripcion!,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 12, color: Color(0xFF888888)),
+              style: TextStyle(fontSize: 12, color: AppColors.textSecondary(context)),
             ),
           ],
           const Spacer(),
@@ -646,15 +652,15 @@ class _PromocionCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFFE8F5E9),
+                color: AppColors.primaryContainer(context),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 '\$${promo.precio!.toStringAsFixed(0)}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF2E7D32),
+                  color: AppColors.primary(context),
                 ),
               ),
             ),
@@ -672,8 +678,7 @@ class _PromocionesBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // LayoutBuilder: adapta proporción y tamaños según el ancho real
-    // disponible (no solo el ancho de pantalla).
+    final lang = context.watch<LocaleProvider>().langCode;
     return LayoutBuilder(
       builder: (context, constraints) {
         final isTablet = constraints.maxWidth >= 560;
@@ -724,7 +729,7 @@ class _PromocionesBanner extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
-                                  'PROMOCIONES',
+                                  AppStrings.tr('promociones_label', lang),
                                   style: TextStyle(
                                     fontSize: isTablet ? 12 : 10.5,
                                     fontWeight: FontWeight.w800,
@@ -738,8 +743,7 @@ class _PromocionesBanner extends StatelessWidget {
                             // Flexible: la descripción se recorta si no cabe.
                             Flexible(
                               child: Text(
-                                'Descubre descuentos exclusivos de '
-                                'hoteles, restaurantes, tours y más.',
+                                AppStrings.tr('promociones_desc', lang),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
@@ -756,7 +760,7 @@ class _PromocionesBanner extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  'Ver promociones',
+                                  AppStrings.tr('ver_promociones', lang),
                                   style: TextStyle(
                                     fontSize: isTablet ? 13.5 : 12.5,
                                     fontWeight: FontWeight.bold,
@@ -818,7 +822,7 @@ class _EventoItem extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface(context),
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
@@ -834,12 +838,12 @@ class _EventoItem extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: const Color(0xFFE8F5E9),
+                color: AppColors.primaryContainer(context),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.event,
-                color: Color(0xFF2E7D32),
+                color: AppColors.primary(context),
                 size: 24,
               ),
             ),
@@ -853,34 +857,34 @@ class _EventoItem extends StatelessWidget {
                     evento.titulo,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1B1B1B),
+                      color: AppColors.textPrimary(context),
                     ),
                   ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.calendar_today_outlined,
                         size: 12,
-                        color: Color(0xFF888888),
+                        color: AppColors.textSecondary(context),
                       ),
                       const SizedBox(width: 4),
                       Text(
                         _formatearFecha(evento.fechaInicio),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF888888),
+                          color: AppColors.textSecondary(context),
                         ),
                       ),
                       if (evento.municipio != null) ...[
                         const SizedBox(width: 10),
-                        const Icon(
+                        Icon(
                           Icons.place_outlined,
                           size: 12,
-                          color: Color(0xFF888888),
+                          color: AppColors.textSecondary(context),
                         ),
                         const SizedBox(width: 4),
                         Expanded(
@@ -888,9 +892,9 @@ class _EventoItem extends StatelessWidget {
                             evento.municipio!,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF888888),
+                              color: AppColors.textSecondary(context),
                             ),
                           ),
                         ),

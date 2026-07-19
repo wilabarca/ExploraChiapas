@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'core/di/injector.dart';
 import 'core/providers/preferences_provider.dart';
 import 'core/providers/locale_provider.dart';
+import 'core/theme/app_theme.dart';
 
 import 'features/auth/presentation/pages/welcome_page.dart';
 import 'features/auth/presentation/pages/register_page.dart';
@@ -106,18 +106,8 @@ class _ExploraChiapasAppState extends State<ExploraChiapasApp> {
               GlobalCupertinoLocalizations.delegate,
             ],
             themeMode: prefs.themeMode,
-            theme: ThemeData(
-              textTheme: GoogleFonts.poppinsTextTheme(),
-              brightness: Brightness.light,
-            ),
-            darkTheme: ThemeData(
-              textTheme: GoogleFonts.poppinsTextTheme(
-                ThemeData(brightness: Brightness.dark).textTheme,
-              ),
-              brightness: Brightness.dark,
-              scaffoldBackgroundColor: const Color(0xFF1A1A1A),
-              cardColor: const Color(0xFF2A2A2A),
-            ),
+            theme: AppTheme.light(),
+            darkTheme: AppTheme.dark(),
             initialRoute: '/',
             onGenerateRoute: (settings) {
               debugPrint('Navegando a: ${settings.name}');

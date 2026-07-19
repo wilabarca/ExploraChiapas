@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../home/presentation/widgets/home_app_bar.dart';
 import '../../../home/presentation/widgets/custom_bottom_nav_bar.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class ExplorarCercaPage extends StatefulWidget {
   const ExplorarCercaPage({super.key});
@@ -39,7 +40,7 @@ class _ExplorarCercaPageState extends State<ExplorarCercaPage> {
     final isLarge = screenW >= 900;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F8F8),
+      backgroundColor: AppColors.background(context),
       appBar: const HomeAppBar(),
       body: Center(
         // ConstrainedBox: evita que el contenido se estire de más en
@@ -72,7 +73,7 @@ class _ExplorarCercaPageState extends State<ExplorarCercaPage> {
                       'y experiencias locales te esperan.',
                       style: TextStyle(
                         fontSize: isTablet ? 15 : 13.5,
-                        color: const Color(0xFF666666),
+                        color: AppColors.textSecondary(context),
                         height: 1.5,
                       ),
                     ),
@@ -170,7 +171,7 @@ class _ExplorarCercaPageState extends State<ExplorarCercaPage> {
                         style: TextStyle(
                           fontSize: isTablet ? 18 : 15,
                           fontWeight: FontWeight.w600,
-                          color: const Color(0xFF1B1B1B),
+                          color: AppColors.textPrimary(context),
                         ),
                       ),
                     ),
@@ -187,7 +188,7 @@ class _ExplorarCercaPageState extends State<ExplorarCercaPage> {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: isTablet ? 14 : 12.5,
-                            color: const Color(0xFF888888),
+                            color: AppColors.textSecondary(context),
                             height: 1.5,
                           ),
                         ),
@@ -350,7 +351,7 @@ class _RutasUrbanasCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface(context),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -381,40 +382,40 @@ class _RutasUrbanasCard extends StatelessWidget {
               children: [
                 Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: const [
+                  children: [
                     Icon(
                       Icons.directions_walk_outlined,
                       size: 14,
-                      color: Color(0xFF2E7D32),
+                      color: AppColors.primary(context),
                     ),
-                    SizedBox(width: 6),
+                    const SizedBox(width: 6),
                     Text(
                       'CAMINATA',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF2E7D32),
+                        color: AppColors.primary(context),
                         letterSpacing: 0.8,
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 10),
-                const Text(
+                Text(
                   '🥾 Rutas Urbanas',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1B1B1B),
+                    color: AppColors.textPrimary(context),
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   'Micro-aventuras culturales diseñadas para recorrer a '
                   'pie. Conecta con la esencia de la ciudad.',
                   style: TextStyle(
                     fontSize: 13,
-                    color: Color(0xFF666666),
+                    color: AppColors.textSecondary(context),
                     height: 1.4,
                   ),
                 ),

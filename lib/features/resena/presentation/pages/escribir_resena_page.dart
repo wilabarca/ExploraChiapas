@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../domain/entities/DestinoResenaEntity.dart';
 import '../providers/ResenasProvider.dart';
 import '../../../home/presentation/widgets/home_app_bar.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class EscribirResenaPage extends StatefulWidget {
   final DestinoResenaEntity destino;
@@ -28,9 +29,9 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
   Future<void> _publicarResena() async {
     if (_calificacion == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Por favor selecciona una calificación'),
-          backgroundColor: Color(0xFF2E7D32),
+        SnackBar(
+          content: const Text('Por favor selecciona una calificación'),
+          backgroundColor: AppColors.primary(context),
         ),
       );
       return;
@@ -38,9 +39,9 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
 
     if (_comentarioCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Por favor escribe un comentario'),
-          backgroundColor: Color(0xFF2E7D32),
+        SnackBar(
+          content: const Text('Por favor escribe un comentario'),
+          backgroundColor: AppColors.primary(context),
         ),
       );
       return;
@@ -59,9 +60,9 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
 
     if (exito) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('¡Reseña publicada exitosamente!'),
-          backgroundColor: Color(0xFF2E7D32),
+        SnackBar(
+          content: const Text('¡Reseña publicada exitosamente!'),
+          backgroundColor: AppColors.primary(context),
         ),
       );
       Navigator.pop(context, true);
@@ -87,7 +88,7 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
         PublicarStatus.loading;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface(context),
       appBar: const HomeAppBar(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -137,7 +138,7 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
                                 vertical: 3,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF2E7D32),
+                                color: AppColors.primary(context),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: const Text(
@@ -187,19 +188,19 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
 
             SizedBox(height: size.height * 0.04),
 
-            const Text(
+            Text(
               '¿Qué tal fue tu visita?',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1B1B1B),
+                color: AppColors.textPrimary(context),
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Califica tu experiencia para ayudar a otros eco-viajeros.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: Color(0xFF888888)),
+              style: TextStyle(fontSize: 13, color: AppColors.textSecondary(context)),
             ),
 
             SizedBox(height: size.height * 0.03),
@@ -216,7 +217,7 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
                       i < _calificacion ? Icons.star : Icons.star_border,
                       color: i < _calificacion
                           ? const Color(0xFFFFC107)
-                          : const Color(0xFFDDDDDD),
+                          : AppColors.border(context),
                       size: 42,
                     ),
                   ),
@@ -226,14 +227,14 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
 
             SizedBox(height: size.height * 0.03),
 
-            const Align(
+            Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 'TU COMENTARIO',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF2E7D32),
+                  color: AppColors.primary(context),
                   letterSpacing: 1.2,
                 ),
               ),
@@ -245,17 +246,17 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
               child: TextField(
                 controller: _comentarioCtrl,
                 maxLines: null,
-                style: const TextStyle(fontSize: 14, color: Color(0xFF1B1B1B)),
+                style: TextStyle(fontSize: 14, color: AppColors.textPrimary(context)),
                 decoration: InputDecoration(
                   hintText:
                       'Comparte tu experiencia...\n¿Cómo estuvo el agua? ¿Viste fauna local?',
-                  hintStyle: const TextStyle(
-                    color: Color(0xFFAAAAAA),
+                  hintStyle: TextStyle(
+                    color: AppColors.textHint(context),
                     fontSize: 14,
                     height: 1.6,
                   ),
                   filled: true,
-                  fillColor: const Color(0xFFF5F5F5),
+                  fillColor: AppColors.background(context),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
                     borderSide: BorderSide.none,
@@ -300,7 +301,7 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2E7D32),
+                    backgroundColor: AppColors.primary(context),
                     disabledBackgroundColor: const Color(0xFFB0BEC5),
                     elevation: 0,
                     shape: RoundedRectangleBorder(

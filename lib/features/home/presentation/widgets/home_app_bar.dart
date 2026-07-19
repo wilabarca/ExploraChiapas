@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/di/injector.dart';
 import '../../../../core/services/avatar/avatar_service.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../profile/presentation/providers/profile_provider.dart';
 
 class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -32,7 +33,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           );
 
     return AppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface(context),
       elevation: 0,
       titleSpacing: screenW * 0.04,
       title: Row(
@@ -52,7 +53,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
               'ExploraChiapas',
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                color: const Color(0xFF2E7D32),
+                color: AppColors.primary(context),
                 fontWeight: FontWeight.bold,
                 fontSize: fontSize,
               ),

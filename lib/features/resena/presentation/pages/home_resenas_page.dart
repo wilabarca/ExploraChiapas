@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../domain/entities/DestinoResenaEntity.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../widgets/destino_resena_card.dart';
 import '../../../home/presentation/widgets/home_app_bar.dart';
 import '../../../destinos/presentation/providers/destinos_provider.dart';
@@ -64,29 +65,29 @@ class _HomeResenasPageState extends State<HomeResenasPage> {
     final size = MediaQuery.sizeOf(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F8F8),
+      backgroundColor: AppColors.background(context),
       appBar: const HomeAppBar(),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            color: Colors.white,
+            color: AppColors.surface(context),
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Reseñas',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1B1B1B),
+                    color: AppColors.textPrimary(context),
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   'Descubre experiencias reales de otros viajeros',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF888888)),
+                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary(context)),
                 ),
               ],
             ),
@@ -97,8 +98,8 @@ class _HomeResenasPageState extends State<HomeResenasPage> {
             child: Consumer<DestinoProvider>(
               builder: (context, destinoProvider, child) {
                 if (destinoProvider.listStatus == DestinoStatus.loading) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF2E7D32)),
+                  return Center(
+                    child: CircularProgressIndicator(color: AppColors.primary(context)),
                   );
                 }
 
@@ -110,7 +111,7 @@ class _HomeResenasPageState extends State<HomeResenasPage> {
                         destinoProvider.listErrorMessage ??
                             'No fue posible obtener los destinos',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Color(0xFF888888)),
+                        style: TextStyle(color: AppColors.textSecondary(context)),
                       ),
                     ),
                   );
@@ -121,19 +122,19 @@ class _HomeResenasPageState extends State<HomeResenasPage> {
                     .toList();
 
                 if (destinos.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
                           Icons.search_off,
                           size: 48,
-                          color: Color(0xFFCCCCCC),
+                          color: AppColors.textHint(context),
                         ),
-                        SizedBox(height: 12),
+                        const SizedBox(height: 12),
                         Text(
                           'No hay destinos disponibles',
-                          style: TextStyle(color: Color(0xFF888888)),
+                          style: TextStyle(color: AppColors.textSecondary(context)),
                         ),
                       ],
                     ),

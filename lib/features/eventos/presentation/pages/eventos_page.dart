@@ -6,6 +6,9 @@ import '../providers/eventos_provider.dart';
 import '../widgets/evento_card.dart';
 import '../widgets/evento_filtro_chip.dart';
 import 'detalle_evento_page.dart';
+import '../../../../core/l10n/app_strings.dart';
+import '../../../../core/providers/locale_provider.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class EventosPage extends StatefulWidget {
   const EventosPage({super.key});
@@ -102,19 +105,22 @@ class _EventosPageState extends State<EventosPage> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LocaleProvider>().langCode;
+    String s(String k) => AppStrings.tr(k, lang);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface(context),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface(context),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF1B1B1B)),
+          icon: Icon(Icons.arrow_back, color: AppColors.textPrimary(context)),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Eventos y Actividades',
+        title: Text(
+          s('eventos_y_actividades'),
           style: TextStyle(
-            color: Color(0xFF1B1B1B),
+            color: AppColors.textPrimary(context),
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
@@ -130,19 +136,19 @@ class _EventosPageState extends State<EventosPage> {
               child: TextField(
                 controller: _searchCtrl,
                 onChanged: (v) => setState(() => _busqueda = v),
-                style: const TextStyle(fontSize: 15, color: Color(0xFF1B1B1B)),
+                style: TextStyle(fontSize: 15, color: AppColors.textPrimary(context)),
                 decoration: InputDecoration(
-                  hintText: 'Buscar eventos...',
-                  hintStyle: const TextStyle(
-                    color: Color(0xFFAAAAAA),
+                  hintText: s('buscar_eventos'),
+                  hintStyle: TextStyle(
+                    color: AppColors.textHint(context),
                     fontSize: 15,
                   ),
-                  prefixIcon: const Icon(
+                  prefixIcon: Icon(
                     Icons.search,
-                    color: Color(0xFF2E7D32),
+                    color: AppColors.primary(context),
                   ),
                   filled: true,
-                  fillColor: const Color(0xFFF5F5F5),
+                  fillColor: AppColors.background(context),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(30),
                     borderSide: BorderSide.none,
@@ -175,8 +181,8 @@ class _EventosPageState extends State<EventosPage> {
             child: Consumer<EventosProvider>(
               builder: (context, provider, _) {
                 if (provider.status == EventosStatus.loading) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF2E7D32)),
+                  return Center(
+                    child: CircularProgressIndicator(color: AppColors.primary(context)),
                   );
                 }
 
@@ -185,16 +191,16 @@ class _EventosPageState extends State<EventosPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.cloud_off_outlined,
                           size: 48,
-                          color: Color(0xFFCCCCCC),
+                          color: AppColors.textHint(context),
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          provider.errorMessage ?? 'Error al cargar eventos',
-                          style: const TextStyle(
-                            color: Color(0xFF888888),
+                          provider.errorMessage ?? s('error_cargar_eventos'),
+                          style: TextStyle(
+                            color: AppColors.textSecondary(context),
                             fontSize: 14,
                           ),
                           textAlign: TextAlign.center,
@@ -203,9 +209,9 @@ class _EventosPageState extends State<EventosPage> {
                         OutlinedButton.icon(
                           onPressed: () => provider.cargarEventos(),
                           icon: const Icon(Icons.refresh),
-                          label: const Text('Reintentar'),
+                          label: Text(s('reintentar')),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF2E7D32),
+                            foregroundColor: AppColors.primary(context),
                           ),
                         ),
                       ],
@@ -220,16 +226,16 @@ class _EventosPageState extends State<EventosPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.event_busy,
                           size: 48,
-                          color: Color(0xFFCCCCCC),
+                          color: AppColors.textHint(context),
                         ),
                         const SizedBox(height: 12),
-                        const Text(
-                          'No hay eventos disponibles',
+                        Text(
+                          s('sin_eventos'),
                           style: TextStyle(
-                            color: Color(0xFF888888),
+                            color: AppColors.textSecondary(context),
                             fontSize: 15,
                           ),
                         ),

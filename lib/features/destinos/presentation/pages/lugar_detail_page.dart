@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Página de detalle para un lugar/destino turístico.
 ///
@@ -25,7 +26,7 @@ class LugarDetailPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(nombre),
-        backgroundColor: const Color(0xFF2E7D32),
+        backgroundColor: AppColors.primary(context),
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
@@ -43,11 +44,11 @@ class LugarDetailPage extends StatelessWidget {
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => Container(
                     height: 220,
-                    color: const Color(0xFFE8F5E9),
-                    child: const Icon(
+                    color: AppColors.primaryContainer(context),
+                    child: Icon(
                       Icons.image_not_supported_outlined,
                       size: 48,
-                      color: Color(0xFF2E7D32),
+                      color: AppColors.primary(context),
                     ),
                   ),
                 ),
@@ -55,16 +56,16 @@ class LugarDetailPage extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               nombre,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1B1B1B),
+                color: AppColors.textPrimary(context),
               ),
             ),
             const SizedBox(height: 6),
             Text(
               categoria,
-              style: const TextStyle(fontSize: 14, color: Color(0xFF888888)),
+              style: TextStyle(fontSize: 14, color: AppColors.textSecondary(context)),
             ),
             const SizedBox(height: 10),
             Row(
@@ -81,9 +82,9 @@ class LugarDetailPage extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'Más información próximamente.',
-              style: TextStyle(fontSize: 14, color: Color(0xFF666666)),
+              style: TextStyle(fontSize: 14, color: AppColors.textSecondary(context)),
             ),
           ],
         ),
