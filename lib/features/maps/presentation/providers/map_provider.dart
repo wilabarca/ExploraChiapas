@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../domain/entities/destination_entity.dart';
 import '../../domain/usecases/get_destinations_usecase.dart';
 import '../../domain/usecases/get_routes_usecase.dart';
@@ -23,6 +25,18 @@ class MapProvider extends ChangeNotifier {
   DestinationEntity? _selected;
   DestinationEntity? get selected => _selected;
 
+  // Navegación en tiempo real
+  bool _enNavegacion = false;
+  bool get enNavegacion => _enNavegacion;
+
+  Position? _userPosition;
+  Position? get userPosition => _userPosition;
+
+  double _userHeading = 0;
+  double get userHeading => _userHeading;
+
+  StreamSubscription<Position>? _posicionStream;
+
   Future<void> loadDestinations({String? tipo}) async {
     _status = MapStatus.loading;
     _routePoints = [];
@@ -46,12 +60,32 @@ class MapProvider extends ChangeNotifier {
   void clearSelection() {
     _selected = null;
     _routePoints = [];
+    _detenerNavegacion();
     notifyListeners();
   }
 
   Future<void> loadRouteTo(DestinationEntity destino) async {
-    const originLat = 16.7521;
-    const originLng = -93.1152;
+    double originLat = 16.7521;
+    double originLng = -93.1152;
+
+    try {
+      final permission = await Geolocator.checkPermission();
+      final tienePermiso = permission == LocationPermission.always ||
+          permission == LocationPermission.whileInUse;
+
+      if (tienePermiso) {
+        final pos = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            timeLimit: Duration(seconds: 6),
+          ),
+        );
+        originLat = pos.latitude;
+        originLng = pos.longitude;
+        _userPosition = pos;
+        _userHeading = pos.heading;
+      }
+    } catch (_) {}
 
     try {
       final puntos = await _getRoute(
@@ -63,5 +97,38 @@ class MapProvider extends ChangeNotifier {
       _routePoints = puntos;
       notifyListeners();
     } catch (_) {}
+
+    _iniciarNavegacion();
+  }
+
+  void _iniciarNavegacion() {
+    _posicionStream?.cancel();
+    _enNavegacion = true;
+    notifyListeners();
+
+    _posicionStream = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 3,
+      ),
+    ).listen((pos) {
+      _userPosition = pos;
+      _userHeading = pos.heading;
+      notifyListeners();
+    });
+  }
+
+  void _detenerNavegacion() {
+    _posicionStream?.cancel();
+    _posicionStream = null;
+    _enNavegacion = false;
+    _userPosition = null;
+    _userHeading = 0;
+  }
+
+  @override
+  void dispose() {
+    _posicionStream?.cancel();
+    super.dispose();
   }
 }
