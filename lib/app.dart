@@ -34,6 +34,7 @@ import 'features/maps/domain/usecases/get_destinations_usecase.dart';
 import 'features/maps/domain/usecases/get_routes_usecase.dart';
 import 'features/maps/data/repositories/map_repository_impl.dart';
 import 'features/maps/data/datasources/map_remote_datasource.dart';
+import 'core/network/api_client.dart';
 import 'features/destinos/presentation/pages/explorar_cerca_page.dart';
 import 'features/destinos/presentation/pages/recomendar_lugar_page.dart';
 import 'features/resena/presentation/pages/home_resenas_page.dart';
@@ -185,14 +186,14 @@ class _ExploraChiapasAppState extends State<ExploraChiapasApp> {
                 case '/mapa':
                   return MaterialPageRoute(
                     builder: (_) => ChangeNotifierProvider<MapProvider>(
-                      create: (_) => MapProvider(
-                        GetDestinationsUseCase(
-                          MapRepositoryImpl(MapRemoteDatasourceImpl()),
-                        ),
-                        GetRouteUseCase(
-                          MapRepositoryImpl(MapRemoteDatasourceImpl()),
-                        ),
-                      ),
+                      create: (_) {
+                        final ds = MapRemoteDatasourceImpl(getIt<ApiClient>());
+                        final repo = MapRepositoryImpl(ds);
+                        return MapProvider(
+                          GetDestinationsUseCase(repo),
+                          GetRouteUseCase(repo),
+                        );
+                      },
                       child: const MapPage(),
                     ),
                     settings: settings,
