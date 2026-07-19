@@ -10,7 +10,7 @@ import '../widgets/profile_stats.dart';
 import '../widgets/profile_menu_item.dart';
 import 'edit_profile_page.dart';
 import '../../../home/presentation/widgets/custom_bottom_nav_bar.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../home/presentation/widgets/home_app_bar.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -94,21 +94,8 @@ class _ProfilePageState extends State<ProfilePage> {
     String s(String key) => AppStrings.tr(key, lang);
 
     return Scaffold(
-      backgroundColor: AppColors.background(context),
-      appBar: AppBar(
-        backgroundColor: AppColors.surface(context),
-        elevation: 0,
-        centerTitle: false,
-        automaticallyImplyLeading: false,
-        title: Text(
-          s('app_name'),
-          style: const TextStyle(
-            color:      Color(0xFF1B5E20),
-            fontSize:   18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
+      backgroundColor: const Color(0xFFF2F7F2),
+      appBar: const HomeAppBar(),
       bottomNavigationBar: AppBottomNav(
         navItems:   AppBottomNav.items,
         currentTab: BottomNavTab.perfil,
