@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class SectionHeader extends StatelessWidget {
   final IconData icon;
@@ -23,14 +24,14 @@ class SectionHeader extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 20, color: const Color(0xFF2E7D32)),
+              Icon(icon, size: 20, color: AppColors.primary(context)),
               const SizedBox(width: 6),
               Text(
                 titulo,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 19,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1B1B1B),
+                  color: AppColors.primary(context),
                 ),
               ),
             ],
@@ -38,11 +39,11 @@ class SectionHeader extends StatelessWidget {
           if (mostrarVerTodos)
             GestureDetector(
               onTap: onVerTodos,
-              child: const Text(
+              child: Text(
                 'Ver todos',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Color(0xFF2E7D32),
+                  color: AppColors.primary(context),
                   fontWeight: FontWeight.w600,
                 ),
               ),
