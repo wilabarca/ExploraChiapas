@@ -49,11 +49,6 @@ class ApiClient {
           debugPrint(
             '❌ Error ${error.response?.statusCode}: ${error.response?.data}',
           );
-          if (error.response?.statusCode == 401) {
-            throw UnauthorizedException(
-              message: error.response?.data['message'] ?? 'No autorizado',
-            );
-          }
           handler.next(error);
         },
       ),

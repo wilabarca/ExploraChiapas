@@ -307,6 +307,7 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i188.LoginUseCase>(),
         gh<_i941.RegisterUseCase>(),
         gh<_i568.GetProfileUseCase>(),
+        gh<_i787.AuthRepository>(),
       ),
     );
     gh.factory<_i112.ResenasProvider>(

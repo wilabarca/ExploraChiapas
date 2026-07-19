@@ -83,6 +83,26 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Either<Failure, String>> loginWithGoogle({
+    required String idToken,
+  }) async {
+    try {
+      final token = await _dataSource.loginWithGoogle(idToken: idToken);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(AppConstants.jwtTokenKey, token);
+      return Right(token);
+    } on UnauthorizedException catch (e) {
+      return Left(UnauthorizedFailure(message: e.message));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(message: e.message));
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, Usuario>> getProfile() async {
     try {
       final usuario = await _dataSource.getProfile();

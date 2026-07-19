@@ -73,8 +73,6 @@ class ProfileProvider extends ChangeNotifier {
     );
   }
 
-  /// Sube la imagen y, si tiene éxito, actualiza el perfil con la nueva
-  /// URL en un solo flujo (subir → persistir → refrescar UI).
   Future<bool> subirFotoPerfil(File file) async {
     _subiendoFoto = true;
     _errorMessage = null;
@@ -89,11 +87,16 @@ class ProfileProvider extends ChangeNotifier {
         notifyListeners();
         return false;
       },
-      (url) async {
-        final actualizado = await updatePerfil(fotoPerfilUrl: url);
+      (_) async {
+        // El endpoint de upload ya persiste imagen_perfil_url en PostgreSQL.
+        // Recargamos el perfil desde la API para que la BD sea la fuente de verdad.
+        await loadPerfil();
         _subiendoFoto = false;
+        final success = _status == ProfileStatus.success &&
+            _perfil != null &&
+            _perfil!.ImgUrl.isNotEmpty;
         notifyListeners();
-        return actualizado;
+        return success;
       },
     );
   }
