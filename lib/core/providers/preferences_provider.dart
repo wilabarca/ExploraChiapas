@@ -54,4 +54,6 @@ class PreferencesProvider extends ChangeNotifier {
     await prefs.setString(key, value);
     notifyListeners();
   }
+
+  void setCompartirUbicacion(bool v) {}
 }
