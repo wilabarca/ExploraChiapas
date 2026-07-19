@@ -12,6 +12,8 @@ abstract class AuthRepository {
     required String password,
   });
 
+  Future<Either<Failure, String>> loginWithGoogle({required String idToken});
+
   Future<Either<Failure, Usuario>> getProfile();
 
   Future<Either<Failure, Usuario>> updateProfile({

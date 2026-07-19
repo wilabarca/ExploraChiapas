@@ -12,6 +12,8 @@ class AppStrings {
       'guardar':           'Guardar',
       'continuar':         'Continuar',
       'cerrar':            'Cerrar',
+      'ver_todos':         'Ver todos',
+      'error_red':         'Sin conexión. Verifica tu red.',
 
       // Perfil
       'perfil':             'Perfil',
@@ -52,8 +54,45 @@ class AppStrings {
       'continuar_google':  'Continuar con Google',
       'o':                 'o',
 
-      // Home
+      // Home – perfil
       'no_cargo_perfil':   'No se pudo cargar el perfil',
+
+      // Home – secciones
+      'destinos_para_ti':         'Destinos para ti',
+      'error_destinos':           'No fue posible obtener los destinos',
+      'sin_destinos':             'No hay destinos disponibles',
+      'destino_turistico':        'Destino turístico',
+      'promociones_activas':      'Promociones activas',
+      'error_eventos_carga':      'No fue posible obtener los eventos',
+      'proximos_eventos':         'Próximos eventos',
+      'restaurantes_destacados':  'Restaurantes destacados',
+      'hoteles_recomendados':     'Hoteles recomendados',
+      'restaurantes':             'Restaurantes',
+      'hoteles':                  'Hoteles',
+      'ver_promociones':          'Ver promociones',
+      'promociones_label':        'PROMOCIONES',
+      'promociones_desc':         'Descubre descuentos exclusivos de hoteles, restaurantes, tours y más.',
+
+      // Eventos
+      'eventos_y_actividades':    'Eventos y Actividades',
+      'buscar_eventos':           'Buscar eventos...',
+      'error_cargar_eventos':     'Error al cargar eventos',
+      'sin_eventos':              'No hay eventos disponibles',
+      'filtro_todos':             'Todos',
+      'filtro_festivales':        'Festivales',
+      'filtro_talleres':          'Talleres',
+      'filtro_gastronomia':       'Gastronomía',
+      'filtro_cultura':           'Cultura',
+
+      // Favoritos
+      'favoritos_titulo':         'Favoritos',
+      'favoritos_subtitulo':      'Tus destinos y negocios guardados',
+      'filtro_general':           'General',
+      'filtro_destinos':          'Destinos',
+      'filtro_negocios':          'Negocios',
+      'error_favoritos':          'No fue posible obtener tus favoritos',
+      'sin_favoritos':            'Aún no tienes favoritos aquí',
+      'error_quitar_favorito':    'No se pudo quitar de favoritos',
     },
     'en': {
       // General
@@ -63,6 +102,8 @@ class AppStrings {
       'guardar':           'Save',
       'continuar':         'Continue',
       'cerrar':            'Close',
+      'ver_todos':         'See all',
+      'error_red':         'No connection. Check your network.',
 
       // Profile
       'perfil':             'Profile',
@@ -103,8 +144,45 @@ class AppStrings {
       'continuar_google':  'Continue with Google',
       'o':                 'or',
 
-      // Home
+      // Home – profile
       'no_cargo_perfil':   'Could not load profile',
+
+      // Home – sections
+      'destinos_para_ti':         'Destinations for you',
+      'error_destinos':           'Could not load destinations',
+      'sin_destinos':             'No destinations available',
+      'destino_turistico':        'Tourist destination',
+      'promociones_activas':      'Active promotions',
+      'error_eventos_carga':      'Could not load events',
+      'proximos_eventos':         'Upcoming events',
+      'restaurantes_destacados':  'Featured restaurants',
+      'hoteles_recomendados':     'Recommended hotels',
+      'restaurantes':             'Restaurants',
+      'hoteles':                  'Hotels',
+      'ver_promociones':          'See promotions',
+      'promociones_label':        'PROMOTIONS',
+      'promociones_desc':         'Discover exclusive discounts on hotels, restaurants, tours and more.',
+
+      // Events
+      'eventos_y_actividades':    'Events & Activities',
+      'buscar_eventos':           'Search events...',
+      'error_cargar_eventos':     'Error loading events',
+      'sin_eventos':              'No events available',
+      'filtro_todos':             'All',
+      'filtro_festivales':        'Festivals',
+      'filtro_talleres':          'Workshops',
+      'filtro_gastronomia':       'Gastronomy',
+      'filtro_cultura':           'Culture',
+
+      // Favorites
+      'favoritos_titulo':         'Favorites',
+      'favoritos_subtitulo':      'Your saved destinations and businesses',
+      'filtro_general':           'All',
+      'filtro_destinos':          'Destinations',
+      'filtro_negocios':          'Businesses',
+      'error_favoritos':          'Could not load your favorites',
+      'sin_favoritos':            'No favorites here yet',
+      'error_quitar_favorito':    'Could not remove from favorites',
     },
   };
 

@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/register_usecase.dart';
 import '../../domain/usecases/get_profile_usecase.dart';
+import '../../domain/repositories/auth_repository.dart';
 import '../../domain/entities/usuario_registro.dart';
 import '../../domain/entities/usuario.dart';
 import '../../../../core/utils/app_constants.dart';
@@ -15,11 +16,13 @@ class AuthProvider extends ChangeNotifier {
   final LoginUseCase _loginUseCase;
   final RegisterUseCase _registerUseCase;
   final GetProfileUseCase _getProfileUseCase;
+  final AuthRepository _authRepository;
 
   AuthProvider(
     this._loginUseCase,
     this._registerUseCase,
     this._getProfileUseCase,
+    this._authRepository,
   );
 
   AuthStatus _status = AuthStatus.idle;
@@ -82,6 +85,46 @@ class AuthProvider extends ChangeNotifier {
           '✅ Login OK — tipo: ${prefs.getString(AppConstants.tipoUsuarioKey)}',
         );
 
+        _setSuccess();
+        return true;
+      },
+    );
+  }
+
+  // ── Login con Google ─────────────────────────────────────
+  Future<bool> loginWithGoogle({required String idToken}) async {
+    _setLoading();
+
+    final loginResult = await _authRepository.loginWithGoogle(idToken: idToken);
+
+    final tokenOk = await loginResult.fold(
+      (failure) async {
+        _setError(failure.message);
+        return false;
+      },
+      (token) async {
+        _token = token;
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(AppConstants.jwtTokenKey, token);
+        return true;
+      },
+    );
+
+    if (!tokenOk) return false;
+
+    final profileResult = await _getProfileUseCase();
+
+    return profileResult.fold(
+      (failure) {
+        debugPrint('⚠️ Perfil no cargado tras login Google: ${failure.message}');
+        _setSuccess();
+        return true;
+      },
+      (usuario) async {
+        _usuario = usuario;
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(AppConstants.userNameKey, usuario.name);
+        await prefs.setString(AppConstants.userEmailKey, usuario.email);
         _setSuccess();
         return true;
       },

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/utils/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../profile/presentation/providers/profile_provider.dart';
 import 'home_turista_page.dart';
 import 'home_local_page.dart';
 
@@ -29,6 +31,13 @@ class _HomePageState extends State<HomePage> {
       _loaded = true;
     });
     debugPrint('🏠 Tipo de usuario cargado: $_tipoUsuario');
+
+    if (mounted) {
+      final profileProvider = context.read<ProfileProvider>();
+      if (profileProvider.perfil == null) {
+        profileProvider.loadPerfil();
+      }
+    }
   }
 
   bool get _esLocal => _tipoUsuario == AppConstants.tipoHabitanteLocal;
