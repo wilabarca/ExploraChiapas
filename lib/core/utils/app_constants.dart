@@ -35,7 +35,7 @@ static const String uploadPerfilFotoEndpoint = '/uploads/usuarios/perfil';
   static const String reviewTargetBusiness = 'business';
   static const String reviewTargetLocation = 'location';
 
-  static const String mlServiceBaseUrl = 'https://nlp-service-6hvo.onrender.com';
+  static const String mlServiceBaseUrl = 'http://18.213.180.41';
   static const String planearEndpoint = '/planear';
 
   // Endpoints de preferencias

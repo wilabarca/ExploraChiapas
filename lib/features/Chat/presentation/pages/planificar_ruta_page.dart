@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/di/injector.dart';
+import '../../../../core/network/ml_api_client.dart';
 import '../providers/chat_provider.dart';
 
 class PlanificarRutaPage extends StatefulWidget {
@@ -15,6 +17,14 @@ class _PlanificarRutaPageState extends State<PlanificarRutaPage> {
   String _presupuesto = 'Moderado';
   String _tiempo = '1 día';
   bool _generando = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Warm-up temprano: el usuario llenará el formulario ~30 seg,
+    // tiempo suficiente para que Render despierte el servidor NLP.
+    getIt<MlApiClient>().warmup();
+  }
 
   static const _tipos = [
     {'label': 'Naturaleza', 'icon': Icons.eco_outlined},
