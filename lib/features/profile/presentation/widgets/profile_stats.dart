@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class ProfileStats extends StatelessWidget {
   final String rutasCreadas;
@@ -50,8 +51,9 @@ class _StatCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface(context),
           borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.borderSubtle(context)),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -59,10 +61,10 @@ class _StatCard extends StatelessWidget {
             FittedBox(
               child: Text(
                 valor,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1B5E20),
+                  color: AppColors.primary(context),
                 ),
               ),
             ),
@@ -70,9 +72,9 @@ class _StatCard extends StatelessWidget {
             Text(
               label,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
-                color: Color(0xFF777777),
+                color: AppColors.textSecondary(context),
                 height: 1.3,
               ),
             ),

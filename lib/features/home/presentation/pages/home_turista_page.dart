@@ -366,6 +366,10 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
                 },
               ),
 
+              // ── Turismo Sostenible ────────────────────────────────────
+              _SostenibleSection(onVerMapa: () => Navigator.pushNamed(context, '/mapa')),
+              const SizedBox(height: 24),
+
               SectionHeader(
                 icon: Icons.restaurant_outlined,
                 titulo: s('restaurantes_destacados'),
@@ -392,7 +396,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.pushNamed(context, '/chat'),
+        onPressed: () => Navigator.pushNamed(context, '/planificar'),
         backgroundColor: AppColors.primary(context),
         child: const Icon(Icons.smart_toy_outlined, color: Colors.white),
       ),
@@ -788,6 +792,168 @@ class _PromocionesBanner extends StatelessWidget {
       },
     );
   }
+}
+
+// ── Sección de Turismo Sostenible ────────────────────────────────────────────
+class _SostenibleSection extends StatelessWidget {
+  final VoidCallback onVerMapa;
+  const _SostenibleSection({required this.onVerMapa});
+
+  static const _consejos = [
+    _Consejo(
+      icon: Icons.nature_people_outlined,
+      texto: 'Respeta las áreas naturales y no dejes basura.',
+    ),
+    _Consejo(
+      icon: Icons.storefront_outlined,
+      texto: 'Consume en negocios locales y artesanías regionales.',
+    ),
+    _Consejo(
+      icon: Icons.groups_outlined,
+      texto: 'Prefiere guías de turismo locales certificados.',
+    ),
+    _Consejo(
+      icon: Icons.map_outlined,
+      texto: 'Explora rutas alternativas para evitar zonas saturadas.',
+    ),
+  ];
+
+  static const _destinosEco = [
+    _EcoDestino(
+      nombre: 'Reserva Montes Azules',
+      categoria: 'Naturaleza',
+      imagen:
+          'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80',
+    ),
+    _EcoDestino(
+      nombre: 'Comunidad El Corralito',
+      categoria: 'Cultura',
+      imagen:
+          'https://images.unsplash.com/photo-1518638150340-f706e86654de?w=400&q=80',
+    ),
+    _EcoDestino(
+      nombre: 'Selva Lacandona',
+      categoria: 'Naturaleza',
+      imagen:
+          'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&q=80',
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(
+          icon: Icons.eco_outlined,
+          titulo: 'Turismo Sostenible',
+        ),
+        const SizedBox(height: 14),
+
+        // Banner de consejos
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.primaryContainer(context),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: AppColors.primary(context).withValues(alpha: 0.2),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.eco,
+                      color: AppColors.primary(context),
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Viaja con responsabilidad',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary(context),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ..._consejos.map(
+                  (c) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(c.icon, size: 16, color: AppColors.primary(context)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            c.texto,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textSecondary(context),
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 14),
+
+        // Destinos eco — carrusel horizontal
+        SizedBox(
+          height: 200,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            itemCount: _destinosEco.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (context, i) {
+              final d = _destinosEco[i];
+              return DestinoCard(
+                nombre: d.nombre,
+                categoria: d.categoria,
+                calificacion: 4.8,
+                imageUrl: d.imagen,
+                esSostenible: true,
+                onTap: onVerMapa,
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _Consejo {
+  final IconData icon;
+  final String texto;
+  const _Consejo({required this.icon, required this.texto});
+}
+
+class _EcoDestino {
+  final String nombre;
+  final String categoria;
+  final String imagen;
+  const _EcoDestino({
+    required this.nombre,
+    required this.categoria,
+    required this.imagen,
+  });
 }
 
 // ── Formatea una fecha como "14 jul" sin depender del paquete intl ─────────

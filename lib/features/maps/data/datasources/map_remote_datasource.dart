@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../../core/utils/app_constants.dart';
 import 'remote/models/destination_model.dart';
 
 abstract class IMapRemoteDatasource {
@@ -8,7 +10,7 @@ abstract class IMapRemoteDatasource {
     required double lng,
     required double radioKm,
   });
-  Future<List<List<double>>> getRoute({
+  Future<List<List<List<double>>>> getRoutes({
     required double originLat,
     required double originLng,
     required double destLat,
@@ -17,10 +19,13 @@ abstract class IMapRemoteDatasource {
 }
 
 class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
-  // Datos ficticios — reemplazar con llamada real al backend
+  final ApiClient _apiClient;
+
+  MapRemoteDatasourceImpl(this._apiClient);
+
   static const List<Map<String, dynamic>> _mockDestinations = [
     {
-      'id': '1',
+      'id': 'a1b2c3d4-e5f6-4a7b-8c9d-000000000001',
       'nombre': 'Cañón del Sumidero',
       'tipo': 'naturaleza',
       'descripcion': 'Impresionante cañón con paredes de hasta 1,000 m.',
@@ -31,7 +36,7 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
       'es_sostenible': false,
     },
     {
-      'id': '2',
+      'id': 'a1b2c3d4-e5f6-4a7b-8c9d-000000000002',
       'nombre': 'San Cristóbal de las Casas',
       'tipo': 'cultura',
       'descripcion': 'Ciudad colonial con mercados y arquitectura colonial.',
@@ -42,7 +47,7 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
       'es_sostenible': false,
     },
     {
-      'id': '3',
+      'id': 'a1b2c3d4-e5f6-4a7b-8c9d-000000000003',
       'nombre': 'Lagunas de Montebello',
       'tipo': 'naturaleza',
       'descripcion': 'Sistema de lagunas de colores únicos en la frontera.',
@@ -53,7 +58,7 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
       'es_sostenible': true,
     },
     {
-      'id': '4',
+      'id': 'a1b2c3d4-e5f6-4a7b-8c9d-000000000004',
       'nombre': 'Palenque',
       'tipo': 'cultura',
       'descripcion': 'Zona arqueológica maya rodeada de selva tropical.',
@@ -64,7 +69,7 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
       'es_sostenible': false,
     },
     {
-      'id': '5',
+      'id': 'a1b2c3d4-e5f6-4a7b-8c9d-000000000005',
       'nombre': 'Cascadas de Agua Azul',
       'tipo': 'naturaleza',
       'descripcion': 'Cascadas turquesas en medio de la selva chiapaneca.',
@@ -75,7 +80,7 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
       'es_sostenible': true,
     },
     {
-      'id': '6',
+      'id': 'a1b2c3d4-e5f6-4a7b-8c9d-000000000006',
       'nombre': 'Restaurante La Galería',
       'tipo': 'gastronomia',
       'descripcion': 'Cocina chiapaneca tradicional en el centro histórico.',
@@ -86,7 +91,7 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
       'es_sostenible': true,
     },
     {
-      'id': '7',
+      'id': 'a1b2c3d4-e5f6-4a7b-8c9d-000000000007',
       'nombre': 'Cascada El Chiflón',
       'tipo': 'aventura',
       'descripcion': 'Cascada de 120 m ideal para tirolesa y senderismo.',
@@ -96,15 +101,54 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
       'afluencia': 40,
       'es_sostenible': true,
     },
+    {
+      'id': 'a1b2c3d4-e5f6-4a7b-8c9d-000000000008',
+      'nombre': 'Hotel Parador San Juan de Dios',
+      'tipo': 'descanso',
+      'descripcion': 'Hotel boutique en el corazón de San Cristóbal.',
+      'lat': 16.7368,
+      'lng': -92.6385,
+      'calificacion': 4.5,
+      'afluencia': 25,
+      'es_sostenible': true,
+    },
+    {
+      'id': 'a1b2c3d4-e5f6-4a7b-8c9d-000000000009',
+      'nombre': 'Spa Cañón del Sumidero',
+      'tipo': 'descanso',
+      'descripcion': 'Spa con vista al cañón, masajes y terapias naturales.',
+      'lat': 16.8540,
+      'lng': -93.0720,
+      'calificacion': 4.3,
+      'afluencia': 20,
+      'es_sostenible': true,
+    },
   ];
 
   @override
   Future<List<DestinationModel>> getDestinations({String? tipo}) async {
-    await Future.delayed(const Duration(milliseconds: 600));
-    final data = tipo == null
-        ? _mockDestinations
-        : _mockDestinations.where((d) => d['tipo'] == tipo).toList();
-    return data.map(DestinationModel.fromJson).toList();
+    try {
+      final response = await _apiClient.get(AppConstants.destinationsEndpoint);
+      final raw = response.data['data'] as List<dynamic>;
+      if (raw.isEmpty) throw Exception('backend_empty');
+      final all = raw
+          .map((e) => DestinationModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+      if (tipo != null) {
+        final filtered = all
+            .where((d) => d.tipo.toLowerCase() == tipo.toLowerCase())
+            .toList();
+        if (filtered.isEmpty) throw Exception('no_match');
+        return filtered;
+      }
+      return all;
+    } catch (_) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      final data = tipo == null
+          ? _mockDestinations
+          : _mockDestinations.where((d) => d['tipo'] == tipo).toList();
+      return data.map(DestinationModel.fromJson).toList();
+    }
   }
 
   @override
@@ -118,7 +162,7 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
   }
 
   @override
-  Future<List<List<double>>> getRoute({
+  Future<List<List<List<double>>>> getRoutes({
     required double originLat,
     required double originLng,
     required double destLat,
@@ -129,15 +173,22 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
     final response = await dio.get<Map<String, dynamic>>(
       'https://router.project-osrm.org/route/v1/driving/'
       '$originLng,$originLat;$destLng,$destLat',
-      queryParameters: {'overview': 'full', 'geometries': 'geojson'},
+      queryParameters: {
+        'overview': 'full',
+        'geometries': 'geojson',
+        'alternatives': 'true',
+      },
     );
 
     final routes = response.data!['routes'] as List<dynamic>;
     if (routes.isEmpty) throw Exception('No se encontró ruta');
 
-    final coords = (routes[0]['geometry']['coordinates'] as List<dynamic>)
-        .cast<List<dynamic>>();
-
-    return coords.map((c) => [(c[1] as num).toDouble(), (c[0] as num).toDouble()]).toList();
+    return routes.map((route) {
+      final coords =
+          (route['geometry']['coordinates'] as List<dynamic>).cast<List<dynamic>>();
+      return coords
+          .map((c) => [(c[1] as num).toDouble(), (c[0] as num).toDouble()])
+          .toList();
+    }).toList();
   }
 }

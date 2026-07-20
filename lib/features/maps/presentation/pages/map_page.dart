@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -5,6 +6,8 @@ import 'package:provider/provider.dart';
 import '../providers/map_provider.dart';
 import '../widgets/destination_bottom_sheet.dart';
 import '../widgets/map_filter_bar.dart';
+import '../../../favoritos/presentation/providers/favoritos_provider.dart';
+import '../../../favoritos/domain/entities/favorito.dart';
 
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
@@ -15,6 +18,8 @@ class MapPage extends StatefulWidget {
 
 class _MapPageState extends State<MapPage> {
   final MapController _mapController = MapController();
+  MapProvider? _mapProvider;
+  bool _estabaSiguiendo = false;
 
   static const _chiapasCenter = LatLng(16.7521, -93.1152);
 
@@ -26,8 +31,43 @@ class _MapPageState extends State<MapPage> {
     });
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final provider = context.read<MapProvider>();
+    if (_mapProvider != provider) {
+      _mapProvider?.removeListener(_seguirUsuario);
+      _mapProvider = provider;
+      _mapProvider!.addListener(_seguirUsuario);
+    }
+  }
+
+  void _seguirUsuario() {
+    final provider = _mapProvider;
+    if (provider == null) return;
+
+    if (!provider.enNavegacion) {
+      if (_estabaSiguiendo) {
+        _estabaSiguiendo = false;
+        _mapController.move(_chiapasCenter, 7.5);
+      }
+      return;
+    }
+
+    _estabaSiguiendo = true;
+    final pos = provider.userPosition;
+    if (pos == null) return;
+    _mapController.move(LatLng(pos.latitude, pos.longitude), 17);
+  }
+
+  @override
+  void dispose() {
+    _mapProvider?.removeListener(_seguirUsuario);
+    super.dispose();
+  }
+
   void _moverCamaraA(double lat, double lng) {
-    _mapController.move(LatLng(lat, lng), 13);
+    _mapController.move(LatLng(lat, lng), 15);
   }
 
   Color _colorPorTipo(String tipo) {
@@ -64,37 +104,80 @@ class _MapPageState extends State<MapPage> {
                       'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.explorachiapas.app',
                 ),
-                if (provider.routePoints.isNotEmpty)
+                if (provider.allRoutes.isNotEmpty)
                   PolylineLayer(
-                    polylines: [
-                      Polyline(
-                        points: provider.routePoints
+                    polylines: List.generate(
+                      provider.allRoutes.length,
+                      (i) => Polyline(
+                        points: provider.allRoutes[i]
                             .map((p) => LatLng(p[0], p[1]))
                             .toList(),
-                        color: const Color(0xFF2E7D32),
-                        strokeWidth: 4,
+                        color: i == provider.selectedRouteIndex
+                            ? const Color(0xFF2E7D32)
+                            : const Color(0xFF2E7D32).withValues(alpha: 0.35),
+                        strokeWidth: i == provider.selectedRouteIndex ? 5 : 3,
+                        pattern: i == provider.selectedRouteIndex
+                            ? const StrokePattern.solid()
+                            : const StrokePattern.dotted(),
                       ),
-                    ],
+                    ),
                   ),
                 MarkerLayer(
-                  markers: provider.destinations.map((d) {
-                    return Marker(
-                      point: LatLng(d.lat, d.lng),
-                      width: 36,
-                      height: 36,
-                      child: GestureDetector(
-                        onTap: () => provider.selectDestination(d),
-                        child: Icon(
-                          Icons.location_on,
-                          color: _colorPorTipo(d.tipo),
-                          size: 36,
-                          shadows: const [
-                            Shadow(color: Colors.black26, blurRadius: 4),
-                          ],
+                  markers: [
+                    // Marcadores de destinos
+                    ...provider.destinations.map((d) {
+                      return Marker(
+                        point: LatLng(d.lat, d.lng),
+                        width: 36,
+                        height: 36,
+                        child: GestureDetector(
+                          onTap: () => provider.selectDestination(d),
+                          child: Icon(
+                            Icons.location_on,
+                            color: _colorPorTipo(d.tipo),
+                            size: 36,
+                            shadows: const [
+                              Shadow(color: Colors.black26, blurRadius: 4),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+
+                    // Flecha de navegación del usuario
+                    if (provider.enNavegacion &&
+                        provider.userPosition != null)
+                      Marker(
+                        point: LatLng(
+                          provider.userPosition!.latitude,
+                          provider.userPosition!.longitude,
+                        ),
+                        width: 56,
+                        height: 56,
+                        child: Transform.rotate(
+                          angle: provider.userHeading * math.pi / 180,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1565C0),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF1565C0)
+                                      .withValues(alpha: 0.4),
+                                  blurRadius: 10,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.navigation,
+                              color: Colors.white,
+                              size: 32,
+                            ),
+                          ),
                         ),
                       ),
-                    );
-                  }).toList(),
+                  ],
                 ),
               ],
             ),
@@ -108,7 +191,7 @@ class _MapPageState extends State<MapPage> {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
@@ -120,25 +203,28 @@ class _MapPageState extends State<MapPage> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.explore_outlined,
-                          color: Color(0xFF2E7D32)),
+                      Icon(
+                        Icons.explore_outlined,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                       const SizedBox(width: 10),
-                      const Expanded(
+                      Expanded(
                         child: Text(
                           'Explorar Chiapas',
                           style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1B1B1B),
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),
                       Consumer<MapProvider>(
                         builder: (_, p, __) => Text(
                           '${p.destinations.length} lugares',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF777777),
+                            color: Theme.of(context).colorScheme.onSurface
+                                .withValues(alpha: 0.55),
                           ),
                         ),
                       ),
@@ -166,6 +252,69 @@ class _MapPageState extends State<MapPage> {
             },
           ),
 
+          // Selector de ruta alternativa — visible solo cuando hay >1 ruta
+          Consumer<MapProvider>(
+            builder: (_, provider, __) {
+              if (!provider.hayAlternativas) return const SizedBox.shrink();
+              return Positioned(
+                bottom: 260,
+                left: 16,
+                right: 16,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 8,
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: List.generate(provider.allRoutes.length, (i) {
+                        final isActive = provider.selectedRouteIndex == i;
+                        return GestureDetector(
+                          onTap: () => provider.selectRoute(i),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isActive
+                                  ? const Color(0xFF2E7D32)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              i == 0 ? 'Ruta principal' : 'Alternativa ${i}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: isActive
+                                    ? Colors.white
+                                    : Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+
           Consumer<MapProvider>(
             builder: (_, provider, __) {
               final selected = provider.selected;
@@ -177,17 +326,30 @@ class _MapPageState extends State<MapPage> {
                   destino: selected,
                   onCerrar: provider.clearSelection,
                   onGuardar: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content:
-                            Text('${selected.nombre} guardado en favoritos'),
-                        backgroundColor: const Color(0xFF2E7D32),
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                    context
+                        .read<FavoritosProvider>()
+                        .agregarFavorito(
+                          targetType: FavoritoTargetType.destination,
+                          targetId: selected.id,
+                        )
+                        .then((ok) {
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            ok
+                                ? '${selected.nombre} guardado en favoritos'
+                                : 'No se pudo guardar en favoritos',
+                          ),
+                          backgroundColor:
+                              ok ? const Color(0xFF2E7D32) : Colors.red,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                      ),
-                    );
+                      );
+                    });
                   },
                   onVerRuta: () async {
                     await provider.loadRouteTo(selected);
@@ -198,15 +360,53 @@ class _MapPageState extends State<MapPage> {
             },
           ),
 
+          // Botón para recentrar en el usuario (durante navegación) o en Chiapas
           Positioned(
             right: 16,
             bottom: 200,
-            child: FloatingActionButton.small(
-              onPressed: () => _mapController.move(_chiapasCenter, 7.5),
-              backgroundColor: Colors.white,
-              elevation: 4,
-              child: const Icon(Icons.my_location, color: Color(0xFF2E7D32)),
+            child: Consumer<MapProvider>(
+              builder: (_, provider, __) => FloatingActionButton.small(
+                onPressed: () {
+                  if (provider.enNavegacion &&
+                      provider.userPosition != null) {
+                    _mapController.move(
+                      LatLng(
+                        provider.userPosition!.latitude,
+                        provider.userPosition!.longitude,
+                      ),
+                      17,
+                    );
+                  } else {
+                    _mapController.move(_chiapasCenter, 7.5);
+                  }
+                },
+                backgroundColor: Colors.white,
+                elevation: 4,
+                child: Icon(
+                  provider.enNavegacion
+                      ? Icons.my_location
+                      : Icons.my_location,
+                  color: const Color(0xFF2E7D32),
+                ),
+              ),
             ),
+          ),
+
+          // Botón para detener navegación
+          Consumer<MapProvider>(
+            builder: (_, provider, __) {
+              if (!provider.enNavegacion) return const SizedBox.shrink();
+              return Positioned(
+                left: 16,
+                bottom: 200,
+                child: FloatingActionButton.small(
+                  onPressed: provider.clearSelection,
+                  backgroundColor: Colors.red,
+                  elevation: 4,
+                  child: const Icon(Icons.close, color: Colors.white),
+                ),
+              );
+            },
           ),
         ],
       ),

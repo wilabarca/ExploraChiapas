@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/providers/preferences_provider.dart';
 import '../../../../core/providers/locale_provider.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../providers/profile_provider.dart';
 import '../widgets/profile_avatar.dart';
 import '../widgets/profile_interests.dart';
@@ -94,7 +95,7 @@ class _ProfilePageState extends State<ProfilePage> {
     String s(String key) => AppStrings.tr(key, lang);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F7F2),
+      backgroundColor: AppColors.background(context),
       appBar: const HomeAppBar(),
       bottomNavigationBar: AppBottomNav(
         navItems:   AppBottomNav.items,
@@ -103,13 +104,14 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
       body: Consumer<ProfileProvider>(
         builder: (context, provider, _) {
-          if (provider.status == ProfileStatus.loading) {
+          final perfil = provider.perfil;
+
+          if (provider.status == ProfileStatus.loading && perfil == null) {
             return Center(
               child: CircularProgressIndicator(color: AppColors.primary(context)),
             );
           }
 
-          final perfil = provider.perfil;
           if (perfil == null) {
             return Center(
               child: Column(
@@ -140,7 +142,6 @@ class _ProfilePageState extends State<ProfilePage> {
                 children: [
                   SizedBox(height: screenH * 0.025),
 
-                  // ── Avatar + nombre + email ──────────────
                   Center(
                     child: Column(
                       children: [
@@ -176,7 +177,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   SizedBox(height: screenH * 0.025),
 
-                  // ── Stats ─────────────────────────────────
                   const ProfileStats(
                     rutasCreadas: '0',
                     favoritos:    '0',
@@ -185,7 +185,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   SizedBox(height: screenH * 0.016),
 
-                  // ── Mis Intereses (acordeón) ───────────────
                   _Acordeon(
                     titulo: s('mis_intereses'),
                     icono:  Icons.favorite_outline,
@@ -212,7 +211,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   SizedBox(height: screenH * 0.01),
 
-                  // ── Menú principal (acordeón) ─────────────
                   _Acordeon(
                     titulo: s('menu'),
                     icono:  Icons.menu_outlined,
@@ -233,7 +231,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   SizedBox(height: screenH * 0.01),
 
-                  // ── Preferencias (acordeón) ───────────────
                   _Acordeon(
                     titulo: s('preferencias'),
                     icono:  Icons.settings_outlined,
@@ -297,7 +294,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   SizedBox(height: screenH * 0.01),
 
-                  // ── Privacidad (acordeón) ─────────────────
                   _Acordeon(
                     titulo: s('privacidad'),
                     icono:  Icons.shield_outlined,
@@ -434,8 +430,6 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 }
 
-// ── Acordeón ─────────────────────────────────────────────────────────────────
-
 class _Acordeon extends StatefulWidget {
   final String    titulo;
   final IconData  icono;
@@ -495,15 +489,14 @@ class _AcordeonState extends State<_Acordeon>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color:   Colors.black.withOpacity(0.04),
+            color:      Colors.black.withValues(alpha: 0.04),
             blurRadius: 4,
-            offset: const Offset(0, 2),
+            offset:     const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         children: [
-          // ── Header ──────────────────────────────────────
           InkWell(
             borderRadius: BorderRadius.circular(16),
             onTap: _toggle,
@@ -547,8 +540,6 @@ class _AcordeonState extends State<_Acordeon>
               ),
             ),
           ),
-
-          // ── Contenido animado ────────────────────────────
           AnimatedCrossFade(
             duration:      const Duration(milliseconds: 250),
             firstChild:    const SizedBox(width: double.infinity),
@@ -568,8 +559,6 @@ class _AcordeonState extends State<_Acordeon>
     );
   }
 }
-
-// ── Tile de preferencia con valor actual ──────────────────────────────────────
 
 class _PreferenciaTile extends StatelessWidget {
   final IconData     icon;
@@ -622,12 +611,10 @@ class _PreferenciaTile extends StatelessWidget {
   }
 }
 
-// ── Toggle tile ───────────────────────────────────────────────────────────────
-
 class _ToggleTile extends StatelessWidget {
-  final IconData           icon;
-  final String             label;
-  final bool               valor;
+  final IconData            icon;
+  final String              label;
+  final bool                valor;
   final void Function(bool) onChanged;
 
   const _ToggleTile({
@@ -661,10 +648,10 @@ class _ToggleTile extends StatelessWidget {
             ),
           ),
           Switch(
-            value:     valor,
-            onChanged: onChanged,
-            activeColor:              AppColors.primary(context),
-            materialTapTargetSize:    MaterialTapTargetSize.shrinkWrap,
+            value:                 valor,
+            onChanged:             onChanged,
+            activeThumbColor:      AppColors.primary(context),
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
         ],
       ),

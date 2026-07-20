@@ -7,29 +7,22 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../profile/presentation/providers/profile_provider.dart';
 
 class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
-  /// Controla si se muestra la flecha de "volver".
-  /// Por defecto es `false`: ninguna pantalla que use
-  /// `const HomeAppBar()` sin parámetros mostrará la flecha. Si en algún
-  /// punto necesitas la flecha de regreso en una pantalla específica,
-  /// pásala explícitamente como `HomeAppBar(mostrarFlecha: true)`.
   final bool mostrarFlecha;
 
   const HomeAppBar({super.key, this.mostrarFlecha = false});
 
   @override
-  Size get preferredSize => const Size.fromHeight(76);
+  Size get preferredSize => const Size.fromHeight(64);
 
   @override
   Widget build(BuildContext context) {
-    // ✓ MediaQuery: en vez de solo 2 tamaños fijos (chico/normal), aquí
-    // el tamaño escala proporcional al ancho real de pantalla y se
-    // limita con .clamp() para que nunca se vea ni diminuto en un
-    // teléfono angosto ni gigante en una tablet.
     final screenW = MediaQuery.of(context).size.width;
+    final isDark = AppColors.isDark(context);
 
-    final logoHeight = (screenW * 0.13).clamp(44.0, 60.0);
-    final fontSize = (screenW * 0.055).clamp(20.0, 24.0);
-    final avatarRadius = (screenW * 0.065).clamp(22.0, 28.0);
+    // Tamaños proporcionales con clamp para phone → tablet
+    final logoSize = (screenW * 0.1).clamp(36.0, 52.0);
+    final fontSize = (screenW * 0.052).clamp(18.0, 22.0);
+    final avatarRadius = (screenW * 0.06).clamp(20.0, 26.0);
 
     final perfil = context.watch<ProfileProvider>().perfil;
     final tieneFotoPropia = perfil != null && perfil.ImgUrl.isNotEmpty;
@@ -42,36 +35,34 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: AppColors.surface(context),
       elevation: 0,
-      // ✓ Sin esto, Flutter mostraría la flecha automáticamente cada vez
-      // que la ruta puede hacer pop. Con esto, queda apagada salvo que
-      // se pida explícitamente con mostrarFlecha: true.
       automaticallyImplyLeading: mostrarFlecha,
+      // Separador sutil que delimita el AppBar del contenido
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(1),
+        child: Divider(
+          height: 1,
+          thickness: 1,
+          color: AppColors.borderSubtle(context),
+        ),
+      ),
       titleSpacing: screenW * 0.04,
-      // ✓ LayoutBuilder: da el ancho real disponible del título para
-      // que el logo/texto puedan ajustarse si el espacio es angosto
-      // (por ejemplo, cuando sí hay flecha de regreso).
       title: LayoutBuilder(
         builder: (context, constraints) {
           return Row(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // ✓ ConstrainedBox + AspectRatio: el logo mantiene una
-              // relación 1:1 y nunca crece más allá de logoHeight.
-              ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: logoHeight,
-                  maxHeight: logoHeight,
-                ),
-                child: AspectRatio(
-                  aspectRatio: 1,
-                  child: Image.asset(
-                    'assets/images/ExploraChiapas Logo.png',
-                    fit: BoxFit.contain,
-                  ),
+              // Logo con relación 1:1 fija
+              SizedBox(
+                width: logoSize,
+                height: logoSize,
+                child: Image.asset(
+                  'assets/images/ExploraChiapas Logo.png',
+                  fit: BoxFit.contain,
                 ),
               ),
-              SizedBox(width: screenW * 0.02),
-              // Flexible: el texto se trunca con "…" si el ancho es chico.
+              SizedBox(width: screenW * 0.022),
+              // Texto truncable si el espacio es angosto
               Flexible(
                 child: Text(
                   'ExploraChiapas',
@@ -80,6 +71,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                     color: const Color(0xFF2E7D32),
                     fontWeight: FontWeight.bold,
                     fontSize: fontSize,
+                    letterSpacing: 0.2,
                   ),
                 ),
               ),
@@ -92,24 +84,36 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           padding: EdgeInsets.only(right: screenW * 0.04),
           child: GestureDetector(
             onTap: () => Navigator.pushNamed(context, '/perfil'),
-            child: CircleAvatar(
-              radius: avatarRadius,
-              backgroundColor: const Color(0xFFD8F5D8),
+            child: Container(
+              width: avatarRadius * 2,
+              height: avatarRadius * 2,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                // Anillo exterior que destaca el avatar sobre cualquier fondo
+                border: Border.all(
+                  color: AppColors.primary(context).withValues(alpha: 0.35),
+                  width: 2,
+                ),
+              ),
               child: ClipOval(
                 child: CachedNetworkImage(
                   imageUrl: avatarUrl,
-                  width: avatarRadius * 2,
-                  height: avatarRadius * 2,
                   fit: BoxFit.cover,
-                  placeholder: (_, __) => Icon(
-                    Icons.person,
-                    color: const Color(0xFF2E7D32),
-                    size: avatarRadius,
+                  placeholder: (_, __) => Container(
+                    color: AppColors.primaryContainer(context),
+                    child: Icon(
+                      Icons.person,
+                      color: AppColors.primary(context),
+                      size: avatarRadius * 0.9,
+                    ),
                   ),
-                  errorWidget: (_, __, ___) => Icon(
-                    Icons.person,
-                    color: const Color(0xFF2E7D32),
-                    size: avatarRadius,
+                  errorWidget: (_, __, ___) => Container(
+                    color: AppColors.primaryContainer(context),
+                    child: Icon(
+                      Icons.person,
+                      color: AppColors.primary(context),
+                      size: avatarRadius * 0.9,
+                    ),
                   ),
                 ),
               ),

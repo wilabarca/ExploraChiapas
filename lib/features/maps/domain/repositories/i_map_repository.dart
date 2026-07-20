@@ -7,7 +7,7 @@ abstract class IMapRepository {
     required double lng,
     required double radioKm,
   });
-  Future<List<List<double>>> getRoute({
+  Future<List<List<List<double>>>> getRoutes({
     required double originLat,
     required double originLng,
     required double destLat,
