@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../favoritos/domain/entities/favorito.dart';
+import '../../../favoritos/presentation/providers/favoritos_provider.dart';
 import '../../domain/entities/negocio.dart';
 import '../../domain/usecases/obtener_negocio_por_id.dart';
 import '../../../../core/di/injector.dart';
@@ -22,18 +25,20 @@ class _NegocioDetallePageState extends State<NegocioDetallePage> {
   final _obtenerNegocioPorId = getIt<ObtenerNegocioPorId>();
 
   late Future<Negocio> _future;
-  bool _esFavorito = false; // TODO: sincronizar con feature favoritos/API
 
   @override
   void initState() {
     super.initState();
     _future = _obtenerNegocioPorId(widget.negocioId).then(
       (either) =>
-          either.fold((failure) => throw Exception(failure.message), (negocio) {
-            _esFavorito = negocio.esFavorito;
-            return negocio;
-          }),
+          either.fold((failure) => throw Exception(failure.message), (n) => n),
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final favProvider = context.read<FavoritosProvider>();
+      if (favProvider.status == FavoritosStatus.idle) {
+        favProvider.cargarFavoritos();
+      }
+    });
   }
 
   @override
@@ -89,6 +94,11 @@ class _NegocioDetallePageState extends State<NegocioDetallePage> {
           }
 
           final negocio = snapshot.data!;
+          final favProvider = context.watch<FavoritosProvider>();
+          final esFavorito = favProvider.esFavorito(
+            FavoritoTargetType.business,
+            widget.negocioId,
+          );
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -99,10 +109,12 @@ class _NegocioDetallePageState extends State<NegocioDetallePage> {
                 children: [
                   NegocioHeader(
                     negocio: negocio,
-                    esFavorito: _esFavorito,
+                    esFavorito: esFavorito,
                     onToggleFavorito: () {
-                      setState(() => _esFavorito = !_esFavorito);
-                      // TODO: persistir en tabla favorito_negocio vía API
+                      context.read<FavoritosProvider>().toggleFavorito(
+                            targetType: FavoritoTargetType.business,
+                            targetId: widget.negocioId,
+                          );
                     },
                   ),
                   const SizedBox(height: 22),

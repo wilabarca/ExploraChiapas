@@ -160,10 +160,12 @@ class _MapPageState extends State<MapPage> {
   @override
   Widget build(BuildContext context) {
     final mostrarNegocios = _currentZoom >= _zoomNegocios && _busqueda.isEmpty;
+    final _negociosConCoordenadas =
+        _negocios.where((n) => n.latitud != 0.0 && n.longitud != 0.0).toList();
     final mostrarHintNegocios = _currentZoom >= 10 &&
         _currentZoom < _zoomNegocios &&
         _busqueda.isEmpty &&
-        _negocios.isNotEmpty;
+        _negociosConCoordenadas.isNotEmpty;
 
     return Scaffold(
       body: Stack(
@@ -235,7 +237,7 @@ class _MapPageState extends State<MapPage> {
 
                       // Negocios — appear only when zoomed in (city level)
                       if (mostrarNegocios)
-                        ..._negocios.map(
+                        ..._negociosConCoordenadas.map(
                           (n) => Marker(
                             point: LatLng(n.latitud, n.longitud),
                             width: 28,

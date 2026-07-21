@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../domain/entities/envento_entity.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../favoritos/domain/entities/favorito.dart';
+import '../../../favoritos/presentation/providers/favoritos_provider.dart';
 
 class DetalleEventoPage extends StatelessWidget {
   final EventoEntity evento;
@@ -86,26 +89,44 @@ class DetalleEventoPage extends StatelessWidget {
                   },
                 ),
               ),
-              Container(
-                margin: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.surface(context),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 8,
+              Consumer<FavoritosProvider>(
+                builder: (context, favProvider, _) {
+                  final esFav = favProvider.esFavorito(
+                    FavoritoTargetType.event,
+                    evento.id,
+                  );
+                  return Container(
+                    margin: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface(context),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 8,
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: IconButton(
-                  icon: Icon(
-                    Icons.favorite_outline,
-                    color: AppColors.textPrimary(context),
-                    size: 20,
-                  ),
-                  onPressed: () {},
-                ),
+                    child: IconButton(
+                      icon: Icon(
+                        esFav ? Icons.favorite : Icons.favorite_outline,
+                        color: esFav
+                            ? Colors.red
+                            : AppColors.textPrimary(context),
+                        size: 20,
+                      ),
+                      onPressed: () {
+                        if (favProvider.status == FavoritosStatus.idle) {
+                          favProvider.cargarFavoritos();
+                        }
+                        favProvider.toggleFavorito(
+                          targetType: FavoritoTargetType.event,
+                          targetId: evento.id,
+                        );
+                      },
+                    ),
+                  );
+                },
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(
