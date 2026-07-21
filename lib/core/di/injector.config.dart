@@ -18,8 +18,12 @@ import '../../features/auth/data/repositories/auth_repository_impl.dart'
     as _i153;
 import '../../features/auth/domain/repositories/auth_repository.dart' as _i787;
 import '../../features/auth/domain/usecases/get_profile_usecase.dart' as _i568;
+import '../../features/auth/domain/usecases/get_user_interests_usecase.dart'
+    as _i128;
 import '../../features/auth/domain/usecases/login_usecase.dart' as _i188;
 import '../../features/auth/domain/usecases/register_usecase.dart' as _i941;
+import '../../features/auth/domain/usecases/update_user_interests_usecase.dart'
+    as _i70;
 import '../../features/auth/presentation/providers/auth_provider.dart'
     as _i1054;
 import '../../features/Chat/data/datasource/chat_remote_datasource.dart'
@@ -227,14 +231,30 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i568.GetProfileUseCase>(
       () => _i568.GetProfileUseCase(gh<_i787.AuthRepository>()),
     );
+    gh.factory<_i128.GetUserInterestsUseCase>(
+      () => _i128.GetUserInterestsUseCase(gh<_i787.AuthRepository>()),
+    );
     gh.factory<_i188.LoginUseCase>(
       () => _i188.LoginUseCase(gh<_i787.AuthRepository>()),
     );
     gh.factory<_i941.RegisterUseCase>(
       () => _i941.RegisterUseCase(gh<_i787.AuthRepository>()),
     );
+    gh.factory<_i70.UpdateUserInterestsUseCase>(
+      () => _i70.UpdateUserInterestsUseCase(gh<_i787.AuthRepository>()),
+    );
     gh.lazySingleton<_i908.ResenasRepository>(
       () => _i913.ResenasRepositoryImpl(gh<_i402.ResenasRemoteDataSource>()),
+    );
+    gh.factory<_i1054.AuthProvider>(
+      () => _i1054.AuthProvider(
+        gh<_i188.LoginUseCase>(),
+        gh<_i941.RegisterUseCase>(),
+        gh<_i568.GetProfileUseCase>(),
+        gh<_i787.AuthRepository>(),
+        gh<_i128.GetUserInterestsUseCase>(),
+        gh<_i70.UpdateUserInterestsUseCase>(),
+      ),
     );
     gh.factory<_i879.IProfileRepository>(
       () => _i334.ProfileRepositoryImpl(gh<_i1031.IProfileRemoteDatasource>()),
@@ -300,14 +320,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i226.UpdatePerfilUseCase>(),
         gh<_i331.DeletePerfilUseCase>(),
         gh<_i453.UploadFotoPerfilUseCase>(),
-      ),
-    );
-    gh.factory<_i1054.AuthProvider>(
-      () => _i1054.AuthProvider(
-        gh<_i188.LoginUseCase>(),
-        gh<_i941.RegisterUseCase>(),
-        gh<_i568.GetProfileUseCase>(),
-        gh<_i787.AuthRepository>(),
       ),
     );
     gh.factory<_i112.ResenasProvider>(

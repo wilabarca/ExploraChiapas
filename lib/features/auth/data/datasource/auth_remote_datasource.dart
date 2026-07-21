@@ -3,6 +3,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/utils/app_constants.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../data/datasource/remote/models/usuario_model.dart';
+import 'remote/models/user_interests_model.dart';
 
 abstract class AuthRemoteDataSource {
   Future<Map<String, dynamic>> register({
@@ -22,6 +23,10 @@ abstract class AuthRemoteDataSource {
   Future<UsuarioModel> updateProfile({String? name, String? phone});
 
   Future<void> deleteProfile();
+  Future<UserInterestsModel> getUserInterests();
+  Future<List<UserInterestModel>>getInterestCategories();
+
+  Future<UserInterestsModel> updateUserInterests({required List<String> categoryIds,});
 }
 
 @LazySingleton(as: AuthRemoteDataSource)
@@ -29,6 +34,33 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final ApiClient _apiClient;
 
   AuthRemoteDataSourceImpl(this._apiClient);
+
+  @override
+Future<UserInterestsModel>
+    getUserInterests() async {
+  final response = await _apiClient.get(
+    AppConstants.userInterestsEndpoint,
+  );
+
+  if (response.statusCode == 200) {
+    final body =
+        response.data as Map<String, dynamic>;
+
+    final data =
+        body['data'] as Map<String, dynamic>;
+
+    return UserInterestsModel.fromJson(
+      data,
+    );
+  }
+
+  throw ServerException(
+    message:
+        response.data['message'] ??
+        'Error al obtener intereses',
+    statusCode: response.statusCode,
+  );
+}
 
   @override
   Future<Map<String, dynamic>> register({
@@ -60,6 +92,77 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       statusCode: response.statusCode,
     );
   }
+
+  @override
+  Future<List<UserInterestModel>>
+      getInterestCategories() async {
+    final response = await _apiClient.get(
+      AppConstants.categoriesEndpoint,
+      queryParameters: {
+        'scope': 'destinos',
+      },
+    );
+
+  if (response.statusCode == 200) {
+    final body =
+        response.data as Map<String, dynamic>;
+
+    final rawCategories =
+        body['data'] as List<dynamic>? ?? [];
+
+    return rawCategories.map((item) {
+      final json =
+          Map<String, dynamic>.from(
+        item as Map,
+      );
+
+      return UserInterestModel(
+        id: json['id'].toString(),
+        name: json['nombre']?.toString() ?? '',
+        icon: json['icono']?.toString(),
+      );
+    }).toList();
+  }
+
+  throw ServerException(
+    message:
+        response.data['message'] ??
+        'Error al obtener categorías',
+    statusCode: response.statusCode,
+  );
+}
+
+  @override
+  Future<UserInterestsModel>
+    updateUserInterests({
+  required List<String> categoryIds,
+  }) async {
+    final response = await _apiClient.put(
+      AppConstants.userInterestsEndpoint,
+      data: {
+        'categoryIds': categoryIds,
+      },
+    );
+
+  if (response.statusCode == 200) {
+    final body =
+        response.data as Map<String, dynamic>;
+
+    final data =
+        body['data'] as Map<String, dynamic>;
+
+    return UserInterestsModel.fromJson(
+      data,
+    );
+  }
+
+  throw ServerException(
+    message:
+        response.data['message'] ??
+        'Error al actualizar intereses',
+    statusCode: response.statusCode,
+  );
+}
 
   @override
   Future<String> login({
