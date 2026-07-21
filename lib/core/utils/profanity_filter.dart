@@ -19,7 +19,7 @@ class ProfanityFilter {
 
     // ── pendejo ──────────────────────────────────────────────────
     'pendejo', 'pendeja', 'pendejos', 'pendejas',
-    'pendejada', 'pendejadas', 'pendejez', 'pendejadas',
+    'pendejada', 'pendejadas', 'pendejez',
 
     // ── mierda ───────────────────────────────────────────────────
     'mierda', 'mierdas', 'mierdon', 'mierdona',
@@ -52,7 +52,7 @@ class ProfanityFilter {
     'pinche', 'pinches', 'pinchada', 'pinchado',
 
     // ── maricón ──────────────────────────────────────────────────
-    'maricon', 'maricona', 'maricones', 'maricona',
+    'maricon', 'maricona', 'maricones',
     'marica', 'maricas', 'maricada', 'maricadas',
 
     // ── nalga ────────────────────────────────────────────────────
