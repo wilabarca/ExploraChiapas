@@ -1,3 +1,4 @@
+import '../../../../core/utils/media_url_resolver.dart';
 import '../../domain/entities/evento.dart';
 
 class EventoModel extends Evento {
@@ -24,8 +25,10 @@ class EventoModel extends Evento {
         fieldName: 'titulo',
       ),
       descripcion: _parseOptionalString(_readValue(json, 'descripcion')),
-      imagenUrl: _parseOptionalString(
-        _readValue(json, 'imagenUrl', alternativeKey: 'imagen_url'),
+      imagenUrl: resolveMediaUrl(
+        _parseOptionalString(
+          _readValue(json, 'imagenUrl', alternativeKey: 'imagen_url'),
+        ),
       ),
       fechaInicio: _parseRequiredDateTime(
         _readValue(json, 'fechaInicio', alternativeKey: 'fecha_inicio'),

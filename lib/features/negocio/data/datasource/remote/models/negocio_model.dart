@@ -1,3 +1,4 @@
+import '../../../../../../core/utils/media_url_resolver.dart';
 import '../../../../domain/entities/negocio.dart';
 import 'negocio_horario_model.dart';
 import 'negocio_servicio_model.dart';
@@ -33,8 +34,10 @@ class NegocioModel extends Negocio {
         (json['businessTypeId'] ?? json['tipoNegocioId'])?.toString() ?? '';
     final precioDesde =
         ((json['priceFrom'] ?? json['precioDesde']) as num?)?.toDouble();
-    final imagenPrincipal =
-        (json['imageUrl'] ?? json['imagenPrincipal'])?.toString() ?? '';
+    final imagenPrincipal = resolveMediaUrl(
+          (json['imageUrl'] ?? json['imagenPrincipal'])?.toString(),
+        ) ??
+        '';
     final verificado =
         (json['isVerified'] ?? json['verificado']) as bool? ?? false;
     final calificacionPromedio =
@@ -59,7 +62,7 @@ class NegocioModel extends Negocio {
       verificado: verificado,
       imagenPrincipal: imagenPrincipal,
       imagenes: (json['imagenes'] as List<dynamic>? ?? [])
-          .map((e) => e.toString())
+          .map((e) => resolveMediaUrl(e.toString()) ?? '')
           .toList(),
       servicios: (json['servicios'] as List<dynamic>? ?? [])
           .map((e) => NegocioServicioModel.fromJson(e as Map<String, dynamic>))
