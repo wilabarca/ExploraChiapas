@@ -14,7 +14,9 @@ import '../../../destinos/presentation/providers/destinos_provider.dart';
 import '../../../eventos/domain/entities/evento.dart';
 import '../../../eventos/presentation/providers/eventos_provider.dart';
 import '../../data/home_api_service.dart';
+import '../../../../core/di/injector.dart';
 import '../../../../core/l10n/app_strings.dart';
+import '../../../../core/network/ml_api_client.dart';
 import '../../../../core/providers/locale_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/skeleton_loader.dart';
@@ -30,12 +32,14 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
   final HomeApiService _apiService = HomeApiService();
 
   List<PromocionItem> _promociones = [];
+  List<Map<String, dynamic>> _destacadosML = [];
 
   @override
   void initState() {
     super.initState();
 
     _cargarPromociones();
+    _cargarDestacadosML();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -60,6 +64,12 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
     } catch (_) {
       // Las promociones no bloquean la pantalla principal.
     }
+  }
+
+  Future<void> _cargarDestacadosML() async {
+    final resultados = await getIt<MlApiClient>().fetchDestacados(limite: 10);
+    if (!mounted) return;
+    setState(() => _destacadosML = resultados);
   }
 
   void _onNavTap(BottomNavTab tab) {
@@ -221,17 +231,39 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
                         );
                       }
 
+                      // Si el backend no tiene datos usa los del motor ML
                       if (destinoProvider.destinos.isEmpty) {
-                        return SizedBox(
-                          height: cardHeight,
-                          child: Center(
-                            child: Text(
-                              s('sin_destinos'),
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: AppColors.textSecondary(context),
+                        if (_destacadosML.isEmpty) {
+                          return SizedBox(
+                            height: cardHeight,
+                            child: Center(
+                              child: Text(
+                                s('sin_destinos'),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: AppColors.textSecondary(context),
+                                ),
                               ),
                             ),
+                          );
+                        }
+                        return SizedBox(
+                          height: cardHeight,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            itemCount: _destacadosML.length,
+                            separatorBuilder: (_, __) => const SizedBox(width: 12),
+                            itemBuilder: (context, index) {
+                              final d = _destacadosML[index];
+                              return DestinoCard(
+                                nombre: d['nombre'] as String? ?? '',
+                                categoria: d['categoria'] as String? ?? 'destino',
+                                calificacion: 0,
+                                imageUrl: d['foto_principal'] as String?,
+                                esFavorito: false,
+                              );
+                            },
                           ),
                         );
                       }
