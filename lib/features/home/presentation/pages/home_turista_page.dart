@@ -393,7 +393,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.pushNamed(context, '/planificar'),
+        onPressed: () => Navigator.pushNamed(context, '/chat'),
         backgroundColor: AppColors.primary(context),
         child: const Icon(Icons.smart_toy_outlined, color: Colors.white),
       ),

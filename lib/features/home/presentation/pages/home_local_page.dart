@@ -58,7 +58,7 @@ class _HomeLocalPageState extends State<HomeLocalPage> {
       backgroundColor: AppColors.background(context),
       appBar: const HomeAppBar(),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.pushNamed(context, '/planificar'),
+        onPressed: () => Navigator.pushNamed(context, '/chat'),
         backgroundColor: AppColors.primary(context),
         child: const Icon(Icons.smart_toy_outlined, color: Colors.white),
       ),
@@ -250,7 +250,7 @@ class _HomeLocalPageState extends State<HomeLocalPage> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: GestureDetector(
-              onTap: () => Navigator.pushNamed(context, '/planificar'),
+              onTap: () => Navigator.pushNamed(context, '/chat'),
               child: Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(

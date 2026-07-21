@@ -38,6 +38,8 @@ import '../../features/categorias/presentation/providers/categorias_provider.dar
     as _i426;
 import '../../features/Chat/data/datasource/chat_remote_datasource.dart'
     as _i730;
+import '../../features/Chat/data/datasource/conversacion_remote_datasource.dart'
+    as _i498;
 import '../../features/Chat/data/repositories/chat_repository_impl.dart'
     as _i1018;
 import '../../features/Chat/domain/repositories/i_chat_repository.dart'
@@ -152,6 +154,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i557.ApiClient>(() => _i557.ApiClient());
     gh.lazySingleton<_i322.MlApiClient>(() => _i322.MlApiClient());
     gh.lazySingleton<_i45.AvatarService>(() => _i149.AvatarServiceImpl());
+    gh.lazySingleton<_i498.ConversacionRemoteDatasource>(
+      () => _i498.ConversacionRemoteDatasource(gh<_i557.ApiClient>()),
+    );
     gh.lazySingleton<_i730.IChatRemoteDatasource>(
       () => _i730.ChatRemoteDatasourceImpl(gh<_i322.MlApiClient>()),
     );
@@ -224,6 +229,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i905.GetPromocionesUseCase>(
       () => _i905.GetPromocionesUseCase(gh<_i559.PromocionesRepository>()),
     );
+    gh.factory<_i116.ChatProvider>(
+      () => _i116.ChatProvider(
+        gh<_i301.EnviarMensajeUseCase>(),
+        gh<_i498.ConversacionRemoteDatasource>(),
+      ),
+    );
     gh.factory<_i820.BuscarNegocios>(
       () => _i820.BuscarNegocios(gh<_i252.NegocioRepository>()),
     );
@@ -245,9 +256,6 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i488.ListDestinosUseCase>(
       () => _i488.ListDestinosUseCase(gh<_i991.DestinoRepository>()),
-    );
-    gh.factory<_i116.ChatProvider>(
-      () => _i116.ChatProvider(gh<_i301.EnviarMensajeUseCase>()),
     );
     gh.factory<_i309.PromocionesProvider>(
       () => _i309.PromocionesProvider(gh<_i905.GetPromocionesUseCase>()),

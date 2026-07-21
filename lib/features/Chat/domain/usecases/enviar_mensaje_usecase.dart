@@ -9,7 +9,10 @@ class EnviarMensajeUseCase {
   final IChatRepository _repository;
   EnviarMensajeUseCase(this._repository);
 
-  Future<Either<Failure, RecomendacionEntity>> call(String texto) {
-    return _repository.enviarMensaje(texto);
+  Future<Either<Failure, RecomendacionEntity>> call(
+    String texto, {
+    List<Map<String, String>> historial = const [],
+  }) {
+    return _repository.enviarMensaje(texto, historial: historial);
   }
 }

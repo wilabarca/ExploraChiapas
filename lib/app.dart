@@ -31,7 +31,7 @@ import 'features/favoritos/presentation/pages/favoritos_page.dart';
 import 'features/eventos/presentation/pages/eventos_page.dart';
 
 import 'features/maps/presentation/pages/map_page.dart';
-import 'features/Chat/presentation/pages/planificar_ruta_page.dart';
+
 import 'features/maps/presentation/providers/map_provider.dart';
 import 'features/maps/domain/usecases/get_destinations_usecase.dart';
 import 'features/maps/domain/usecases/get_routes_usecase.dart';
@@ -169,12 +169,6 @@ class _ExploraChiapasAppState extends State<ExploraChiapasApp> {
                 case '/chat':
                   return MaterialPageRoute(
                     builder: (_) => const ChatRoutesPage(),
-                    settings: settings,
-                  );
-
-                case '/planificar':
-                  return MaterialPageRoute(
-                    builder: (_) => const PlanificarRutaPage(),
                     settings: settings,
                   );
 
