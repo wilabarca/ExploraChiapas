@@ -11,6 +11,7 @@ import '../../../../core/utils/app_constants.dart';
 import '../../domain/usecases/get_user_interests_usecase.dart';
 import '../../domain/usecases/update_user_interests_usecase.dart';
 import '../../domain/entities/user_interests.dart';
+import '../../../../core/services/notifications/onesignal_service.dart';
 
 enum AuthStatus { idle, loading, success, error }
 
@@ -93,6 +94,7 @@ class AuthProvider extends ChangeNotifier {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString(AppConstants.userNameKey, usuario.name);
         await prefs.setString(AppConstants.userEmailKey, usuario.email);
+        await OneSignalService.loginUser(usuario.id,);
 
         debugPrint(
           '✅ Login OK — tipo: ${prefs.getString(AppConstants.tipoUsuarioKey)}',
@@ -138,6 +140,7 @@ class AuthProvider extends ChangeNotifier {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString(AppConstants.userNameKey, usuario.name);
         await prefs.setString(AppConstants.userEmailKey, usuario.email);
+        await OneSignalService.loginUser(usuario.id,);
         _setSuccess();
         return true;
       },
@@ -280,6 +283,7 @@ Future<bool> saveUserInterests({
 
     // El JWT es lo que mantiene autenticada la sesión.
     await prefs.remove(AppConstants.jwtTokenKey);
+    await OneSignalService.logoutUser();
 
     // Limpiamos datos de usuario cacheados.
     await prefs.remove(AppConstants.userNameKey);
