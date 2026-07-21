@@ -23,6 +23,15 @@ class MlApiClient {
     );
   }
 
+  /// Despierta el servidor NLP en Render antes de que se necesite,
+  /// ya que estos servicios se duermen tras inactividad. Best-effort:
+  /// ignora cualquier error, pues solo es una optimización de latencia.
+  Future<void> warmup() async {
+    try {
+      await _dio.get('/');
+    } catch (_) {}
+  }
+
   Future<Response> post(String path, {Map<String, dynamic>? data}) async {
     try {
       return await _dio.post(path, data: data);
