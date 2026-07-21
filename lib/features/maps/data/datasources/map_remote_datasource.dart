@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/utils/app_constants.dart';
 import 'remote/models/destination_model.dart';
@@ -142,12 +143,18 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
         return filtered;
       }
       return all;
-    } catch (_) {
+    } catch (e, st) {
+      debugPrint(
+        '[MapRemoteDatasource] getDestinations($tipo) falló, usando mock: $e',
+      );
+      debugPrintStack(stackTrace: st);
       await Future.delayed(const Duration(milliseconds: 300));
       final data = tipo == null
           ? _mockDestinations
           : _mockDestinations.where((d) => d['tipo'] == tipo).toList();
-      return data.map(DestinationModel.fromJson).toList();
+      return data
+          .map((json) => DestinationModel.fromJson(json, esMock: true))
+          .toList();
     }
   }
 
@@ -158,7 +165,9 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
     required double radioKm,
   }) async {
     await Future.delayed(const Duration(milliseconds: 500));
-    return _mockDestinations.map(DestinationModel.fromJson).toList();
+    return _mockDestinations
+        .map((json) => DestinationModel.fromJson(json, esMock: true))
+        .toList();
   }
 
   @override

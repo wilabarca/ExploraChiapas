@@ -7,13 +7,15 @@ class GoogleAuthService {
     serverClientId: '600216508344-arr16mlnv5g9ieh38dfbg9qmh1htslat.apps.googleusercontent.com',
   );
 
+  // No atrapa la excepción: quien llama decide cómo mostrarla al usuario.
+  // Antes se tragaba el error aquí y la app solo "regresaba al login" sin
+  // explicación (ej. DEVELOPER_ERROR por SHA-1 no registrado en Firebase).
   static Future<GoogleSignInAccount?> signIn() async {
     try {
-      final account = await _googleSignIn.signIn();
-      return account;
+      return await _googleSignIn.signIn();
     } catch (e) {
       debugPrint('[GoogleAuthService] Error al iniciar sesión con Google: $e');
-      return null;
+      rethrow;
     }
   }
 
