@@ -262,6 +262,20 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
                                 calificacion: 0,
                                 imageUrl: d['foto_principal'] as String?,
                                 esFavorito: false,
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => LugarDetailPage(
+                                      id: d['id']?.toString() ?? '',
+                                      nombre: d['nombre'] as String? ?? '',
+                                      categoria: d['categoria'] as String? ?? 'destino',
+                                      calificacion: 0,
+                                      imageUrl: d['foto_principal'] as String? ?? '',
+                                      lat: (d['lat'] as num?)?.toDouble(),
+                                      lng: (d['lng'] as num?)?.toDouble(),
+                                    ),
+                                  ),
+                                ),
                               );
                             },
                           ),

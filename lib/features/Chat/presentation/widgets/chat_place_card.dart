@@ -16,17 +16,22 @@ class ChatPlaceCard extends StatelessWidget {
     final fotoUrl      = data['foto_principal'] as String? ?? '';
     final idRaw        = data['id'];
     final id           = idRaw?.toString() ?? '';
+    final coords       = data['coordenadas'] as Map<String, dynamic>?;
+    final lat          = (coords?['lat'] as num?)?.toDouble();
+    final lng          = (coords?['lng'] as num?)?.toDouble();
 
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => LugarDetailPage(
-          id:          id,
-          nombre:      nombre,
-          categoria:   categoria,
+          id:           id,
+          nombre:       nombre,
+          categoria:    categoria,
           calificacion: calificacion,
-          imageUrl:    fotoUrl,
-          descripcion: descripcion.isNotEmpty ? descripcion : null,
+          imageUrl:     fotoUrl,
+          descripcion:  descripcion.isNotEmpty ? descripcion : null,
+          lat:          lat,
+          lng:          lng,
         ),
       ),
     );
