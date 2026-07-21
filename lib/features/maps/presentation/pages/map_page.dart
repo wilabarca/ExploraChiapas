@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../providers/map_provider.dart';
@@ -35,6 +36,9 @@ class _MapPageState extends State<MapPage> {
   String _busqueda = '';
   bool _mostrandoBusqueda = false;
 
+  Position? _liveUserPosition;
+  StreamSubscription<Position>? _liveLocationSub;
+
   static const _chiapasCenter = LatLng(16.7521, -93.1152);
 
   // Negocios appear at zoom 13 (city-level detail)
@@ -48,6 +52,7 @@ class _MapPageState extends State<MapPage> {
       if (!mounted) return;
       context.read<MapProvider>().loadDestinations();
       _cargarNegocios();
+      _iniciarUbicacionEnVivo();
     });
 
     // Track zoom to reveal/hide business markers
@@ -60,6 +65,39 @@ class _MapPageState extends State<MapPage> {
         }
       }
     });
+  }
+
+  // Punto de ubicación en tiempo real en la vista general (fuera de navegación).
+  Future<void> _iniciarUbicacionEnVivo() async {
+    try {
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        return;
+      }
+      if (!await Geolocator.isLocationServiceEnabled()) return;
+
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+      );
+      if (!mounted) return;
+      setState(() => _liveUserPosition = pos);
+
+      _liveLocationSub = Geolocator.getPositionStream(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: 5,
+        ),
+      ).listen((pos) {
+        if (!mounted) return;
+        setState(() => _liveUserPosition = pos);
+      });
+    } catch (_) {
+      // Sin permiso o GPS no disponible: simplemente no se muestra el punto.
+    }
   }
 
   Future<void> _cargarNegocios() async {
@@ -104,12 +142,13 @@ class _MapPageState extends State<MapPage> {
   void dispose() {
     _mapProvider?.removeListener(_seguirUsuario);
     _zoomSub?.cancel();
+    _liveLocationSub?.cancel();
     _busquedaCtrl.dispose();
     super.dispose();
   }
 
   void _moverCamaraA(double lat, double lng) {
-    _mapController.move(LatLng(lat, lng), 15);
+    _mapController.move(LatLng(lat, lng), 16);
   }
 
   void _cerrarBusqueda() {
@@ -221,7 +260,10 @@ class _MapPageState extends State<MapPage> {
                           width: 36,
                           height: 36,
                           child: GestureDetector(
-                            onTap: () => provider.selectDestination(d),
+                            onTap: () {
+                              provider.selectDestination(d);
+                              _moverCamaraA(d.lat, d.lng);
+                            },
                             child: Icon(
                               _iconoPorTipo(d.tipo),
                               color: _colorPorTipo(d.tipo),
@@ -290,6 +332,27 @@ class _MapPageState extends State<MapPage> {
                                 color: Colors.white,
                                 size: 32,
                               ),
+                            ),
+                          ),
+                        ),
+
+                      // Punto de ubicación en tiempo real (fuera de navegación)
+                      if (!provider.enNavegacion && _liveUserPosition != null)
+                        Marker(
+                          point: LatLng(
+                            _liveUserPosition!.latitude,
+                            _liveUserPosition!.longitude,
+                          ),
+                          width: 24,
+                          height: 24,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: const Color(0xFF2196F3),
+                              border: Border.all(color: Colors.white, width: 3),
+                              boxShadow: const [
+                                BoxShadow(color: Colors.black38, blurRadius: 6),
+                              ],
                             ),
                           ),
                         ),
