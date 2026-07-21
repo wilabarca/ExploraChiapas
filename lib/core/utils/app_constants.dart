@@ -41,6 +41,9 @@ static const String uploadPerfilFotoEndpoint = '/uploads/usuarios/perfil';
   static const String mlServiceBaseUrl = 'http://18.213.180.41';
   static const String planearEndpoint = '/planear';
 
+  // Endpoints de historial de chat
+  static const String conversacionesEndpoint = '/chat/conversaciones';
+
   // Endpoints de preferencias
   static const String preferencesEndpoint = '/users/preferences';
 

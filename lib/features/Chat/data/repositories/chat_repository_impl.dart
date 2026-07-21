@@ -13,9 +13,12 @@ class ChatRepositoryImpl implements IChatRepository {
   ChatRepositoryImpl(this._datasource);
 
   @override
-  Future<Either<Failure, RecomendacionEntity>> enviarMensaje(String texto) async {
+  Future<Either<Failure, RecomendacionEntity>> enviarMensaje(
+    String texto, {
+    List<Map<String, String>> historial = const [],
+  }) async {
     try {
-      final recomendacion = await _datasource.enviarMensaje(texto);
+      final recomendacion = await _datasource.enviarMensaje(texto, historial: historial);
       return Right(recomendacion);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
