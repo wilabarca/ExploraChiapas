@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/destination_entity.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class DestinationBottomSheet extends StatelessWidget {
   final DestinationEntity destino;
@@ -19,9 +20,16 @@ class DestinationBottomSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: AppColors.surface(context),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 16,
+            offset: const Offset(0, -2),
+          ),
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -33,7 +41,7 @@ class DestinationBottomSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: AppColors.borderSubtle(context),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -48,10 +56,10 @@ class DestinationBottomSheet extends StatelessWidget {
                   children: [
                     Text(
                       destino.nombre,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1B1B1B),
+                        color: AppColors.textPrimary(context),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -62,9 +70,10 @@ class DestinationBottomSheet extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           destino.calificacion.toStringAsFixed(1),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary(context),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -74,26 +83,43 @@ class DestinationBottomSheet extends StatelessWidget {
                   ],
                 ),
               ),
-              if (destino.esSostenible)
-                const Tooltip(
-                  message: 'Destino con baja afluencia: experiencia tranquila',
-                  child: Icon(Icons.eco, color: Color(0xFF2E7D32), size: 28),
-                ),
+              // Close + eco badge
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  GestureDetector(
+                    onTap: onCerrar,
+                    child: Icon(Icons.close,
+                        size: 20, color: AppColors.textSecondary(context)),
+                  ),
+                  if (destino.esSostenible) ...[
+                    const SizedBox(height: 6),
+                    Tooltip(
+                      message:
+                          'Destino con baja afluencia: experiencia tranquila',
+                      child: Icon(Icons.eco,
+                          color: AppColors.primary(context), size: 24),
+                    ),
+                  ],
+                ],
+              ),
             ],
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
-          // Barra de afluencia
+          // Crowd level bar
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Afluencia actual',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF777777)),
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary(context)),
                   ),
                   Row(
                     mainAxisSize: MainAxisSize.min,
@@ -101,11 +127,8 @@ class DestinationBottomSheet extends StatelessWidget {
                       if (destino.afluencia > 75)
                         const Padding(
                           padding: EdgeInsets.only(right: 4),
-                          child: Icon(
-                            Icons.warning_amber_rounded,
-                            size: 14,
-                            color: Colors.orange,
-                          ),
+                          child: Icon(Icons.warning_amber_rounded,
+                              size: 14, color: Colors.orange),
                         ),
                       Text(
                         destino.afluencia > 75 ? 'Alta' : 'Normal',
@@ -114,7 +137,7 @@ class DestinationBottomSheet extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                           color: destino.afluencia > 75
                               ? Colors.orange
-                              : const Color(0xFF2E7D32),
+                              : AppColors.primary(context),
                         ),
                       ),
                     ],
@@ -127,11 +150,11 @@ class DestinationBottomSheet extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: destino.afluencia / 100,
                   minHeight: 6,
-                  backgroundColor: Colors.grey[200],
+                  backgroundColor: AppColors.surfaceContainer(context),
                   valueColor: AlwaysStoppedAnimation(
                     destino.afluencia > 75
                         ? Colors.orange
-                        : const Color(0xFF2E7D32),
+                        : AppColors.primary(context),
                   ),
                 ),
               ),
@@ -142,9 +165,9 @@ class DestinationBottomSheet extends StatelessWidget {
 
           Text(
             destino.descripcion,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: Color(0xFF555555),
+              color: AppColors.textSecondary(context),
               height: 1.5,
             ),
           ),
@@ -156,17 +179,16 @@ class DestinationBottomSheet extends StatelessWidget {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: onGuardar,
-                  icon: const Icon(Icons.bookmark_border,
-                      color: Color(0xFF2E7D32)),
-                  label: const Text(
+                  icon: Icon(Icons.bookmark_border,
+                      color: AppColors.primary(context)),
+                  label: Text(
                     'Guardar',
-                    style: TextStyle(color: Color(0xFF2E7D32)),
+                    style: TextStyle(color: AppColors.primary(context)),
                   ),
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFF2E7D32)),
+                    side: BorderSide(color: AppColors.primary(context)),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
+                        borderRadius: BorderRadius.circular(30)),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                 ),
@@ -176,16 +198,13 @@ class DestinationBottomSheet extends StatelessWidget {
                 child: ElevatedButton.icon(
                   onPressed: onVerRuta,
                   icon: const Icon(Icons.directions, color: Colors.white),
-                  label: const Text(
-                    'Ver ruta',
-                    style: TextStyle(color: Colors.white),
-                  ),
+                  label: const Text('Ver ruta',
+                      style: TextStyle(color: Colors.white)),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2E7D32),
+                    backgroundColor: AppColors.primary(context),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
+                        borderRadius: BorderRadius.circular(30)),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                 ),
@@ -202,28 +221,41 @@ class _TipoBadge extends StatelessWidget {
   final String tipo;
   const _TipoBadge({required this.tipo});
 
-  static const _colores = {
+  // Softer background colors (same palette, reduced saturation)
+  static const _fondos = {
     'naturaleza':  Color(0xFFE8F5E9),
     'cultura':     Color(0xFFE3F2FD),
     'gastronomia': Color(0xFFFFF3E0),
     'aventura':    Color(0xFFF3E5F5),
     'descanso':    Color(0xFFE0F7FA),
   };
-
-  static const _textColores = {
-    'naturaleza':  Color(0xFF2E7D32),
-    'cultura':     Color(0xFF1565C0),
-    'gastronomia': Color(0xFFE65100),
-    'aventura':    Color(0xFF6A1B9A),
-    'descanso':    Color(0xFF00838F),
+  static const _fondosDark = {
+    'naturaleza':  Color(0xFF1B3A1C),
+    'cultura':     Color(0xFF0D253A),
+    'gastronomia': Color(0xFF3A2200),
+    'aventura':    Color(0xFF2A0B3A),
+    'descanso':    Color(0xFF003A40),
+  };
+  static const _textos = {
+    'naturaleza':  Color(0xFF43A047),
+    'cultura':     Color(0xFF1976D2),
+    'gastronomia': Color(0xFFEF6C00),
+    'aventura':    Color(0xFF7B1FA2),
+    'descanso':    Color(0xFF00ACC1),
   };
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppColors.isDark(context);
+    final fondo = isDark
+        ? (_fondosDark[tipo] ?? const Color(0xFF1B3A1C))
+        : (_fondos[tipo] ?? const Color(0xFFE8F5E9));
+    final texto = _textos[tipo] ?? const Color(0xFF43A047);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
       decoration: BoxDecoration(
-        color: _colores[tipo] ?? const Color(0xFFE8F5E9),
+        color: fondo,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -231,7 +263,7 @@ class _TipoBadge extends StatelessWidget {
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w600,
-          color: _textColores[tipo] ?? const Color(0xFF2E7D32),
+          color: texto,
         ),
       ),
     );

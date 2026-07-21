@@ -23,13 +23,14 @@ class MlApiClient {
     );
   }
 
-  /// Despierta el servidor NLP en Render antes de que se necesite,
-  /// ya que estos servicios se duermen tras inactividad. Best-effort:
-  /// ignora cualquier error, pues solo es una optimización de latencia.
+  // Despierta el servidor de Render (free tier duerme tras 15 min inactivo).
+  // Llamar esto cuando el usuario abre la pantalla de chat.
   Future<void> warmup() async {
     try {
-      await _dio.get('/');
-    } catch (_) {}
+      await _dio.get('/health').timeout(const Duration(seconds: 10));
+    } catch (_) {
+      // Error esperado si no existe GET / — lo importante es enviar tráfico.
+    }
   }
 
   Future<Response> post(String path, {Map<String, dynamic>? data}) async {

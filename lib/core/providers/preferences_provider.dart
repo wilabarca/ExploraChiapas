@@ -9,6 +9,8 @@ class PreferencesProvider extends ChangeNotifier {
   static const _kCompartirUbicacion  = 'pref_compartir_ubicacion';
   static const _kCompartirHistorial  = 'pref_compartir_historial';
   static const _kMostrarPerfil       = 'pref_mostrar_perfil_publico';
+  static const _kPresupuesto         = 'pref_presupuesto';
+  static const _kTiempoViaje         = 'pref_tiempo_viaje';
 
   String _idioma   = 'Español';
   String _unidades = 'km';
@@ -17,6 +19,8 @@ class PreferencesProvider extends ChangeNotifier {
   bool _compartirUbicacion  = false;
   bool _compartirHistorial  = false;
   bool _mostrarPerfilPublico = true;
+  String _presupuesto = 'Moderado';
+  String _tiempoViaje = '1 día';
 
   String get idioma   => _idioma;
   String get unidades => _unidades;
@@ -25,6 +29,8 @@ class PreferencesProvider extends ChangeNotifier {
   bool get compartirUbicacion   => _compartirUbicacion;
   bool get compartirHistorial   => _compartirHistorial;
   bool get mostrarPerfilPublico => _mostrarPerfilPublico;
+  String get presupuesto => _presupuesto;
+  String get tiempoViaje => _tiempoViaje;
 
   ThemeMode get themeMode =>
       _tema == 'Oscuro' ? ThemeMode.dark : ThemeMode.light;
@@ -38,6 +44,8 @@ class PreferencesProvider extends ChangeNotifier {
     _compartirUbicacion  = prefs.getBool(_kCompartirUbicacion)  ?? false;
     _compartirHistorial  = prefs.getBool(_kCompartirHistorial)  ?? false;
     _mostrarPerfilPublico = prefs.getBool(_kMostrarPerfil)       ?? true;
+    _presupuesto = prefs.getString(_kPresupuesto) ?? 'Moderado';
+    _tiempoViaje = prefs.getString(_kTiempoViaje) ?? '1 día';
     notifyListeners();
   }
 
@@ -74,6 +82,16 @@ class PreferencesProvider extends ChangeNotifier {
   Future<void> setMostrarPerfilPublico(bool v) async {
     _mostrarPerfilPublico = v;
     await _guardarBool(_kMostrarPerfil, v);
+  }
+
+  Future<void> setPresupuesto(String v) async {
+    _presupuesto = v;
+    await _guardar(_kPresupuesto, v);
+  }
+
+  Future<void> setTiempoViaje(String v) async {
+    _tiempoViaje = v;
+    await _guardar(_kTiempoViaje, v);
   }
 
   Future<void> _guardar(String key, String value) async {

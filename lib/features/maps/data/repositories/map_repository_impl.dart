@@ -19,13 +19,13 @@ class MapRepositoryImpl implements IMapRepository {
       _datasource.getDestinationsNearby(lat: lat, lng: lng, radioKm: radioKm);
 
   @override
-  Future<List<List<double>>> getRoute({
+  Future<List<List<List<double>>>> getRoutes({
     required double originLat,
     required double originLng,
     required double destLat,
     required double destLng,
   }) =>
-      _datasource.getRoute(
+      _datasource.getRoutes(
         originLat: originLat,
         originLng: originLng,
         destLat: destLat,

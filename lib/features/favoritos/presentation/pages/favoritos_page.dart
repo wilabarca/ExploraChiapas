@@ -9,6 +9,7 @@ import '../../../destinos/presentation/providers/destinos_provider.dart';
 import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/providers/locale_provider.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/skeleton_loader.dart';
 
 /// ⚠️ La API de favoritos solo da targetType/targetId/addedAt. Para
 /// destinos, cruzamos contra `DestinoProvider.destinos` (si ya está
@@ -144,11 +145,7 @@ class _FavoritosPageState extends State<FavoritosPage> {
             child: Consumer<FavoritosProvider>(
               builder: (context, provider, child) {
                 if (provider.status == FavoritosStatus.loading) {
-                  return Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.primary(context),
-                    ),
-                  );
+                  return const SkeletonFavoritosGrid(count: 4);
                 }
 
                 if (provider.status == FavoritosStatus.error) {

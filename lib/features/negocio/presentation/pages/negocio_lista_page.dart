@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/skeleton_loader.dart';
 import '../../domain/entities/negocio.dart';
 import '../../domain/usecases/obtener_negocio.dart';
 import '../../../../core/di/injector.dart';
@@ -105,9 +106,7 @@ class _NegocioListaPageState extends State<NegocioListaPage> {
               future: _future,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(
-                    child: CircularProgressIndicator(color: AppColors.primary(context)),
-                  );
+                  return const SkeletonList(count: 5);
                 }
 
                 if (snapshot.hasError) {
