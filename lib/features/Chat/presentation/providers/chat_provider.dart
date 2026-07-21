@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:injectable/injectable.dart';
 import '../../../../../core/error/failures.dart';
 import '../../../../../core/utils/profanity_filter.dart';
@@ -87,9 +88,13 @@ class ChatProvider extends ChangeNotifier {
     // Crear conversación en backend al primer mensaje real
     await _asegurarConversacion(textoLimpio);
 
+    final ubicacion = await _obtenerUbicacion();
+
     final result = await _enviarMensajeUseCase(
       textoLimpio,
       historial: List.unmodifiable(_historialGroq),
+      userLat: ubicacion?.latitude,
+      userLng: ubicacion?.longitude,
     );
 
     result.fold(
@@ -165,6 +170,34 @@ class ChatProvider extends ChangeNotifier {
   }
 
   // ── Helpers privados ───────────────────────────────────
+
+  // Intenta obtener la ubicación del dispositivo.
+  // Devuelve null si el permiso es denegado o la ubicación no está disponible.
+  Future<Position?> _obtenerUbicacion() async {
+    try {
+      final servicioActivo = await Geolocator.isLocationServiceEnabled();
+      if (!servicioActivo) return null;
+
+      var permiso = await Geolocator.checkPermission();
+      if (permiso == LocationPermission.denied) {
+        permiso = await Geolocator.requestPermission();
+      }
+      if (permiso == LocationPermission.denied ||
+          permiso == LocationPermission.deniedForever) {
+        return null;
+      }
+
+      return await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.low,
+          timeLimit: Duration(seconds: 5),
+        ),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> _asegurarConversacion(String primerMensaje) async {
     if (_conversacionId != null) return;
     try {
