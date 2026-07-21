@@ -120,6 +120,43 @@ class ApiClient {
     throw const ServerException(message: 'Error desconocido');
   }
 
+  Future<Response> put(
+  String path, {
+  dynamic data,
+}) async {
+  try {
+    debugPrint('📤 PUT: $_baseUrl$path');
+    debugPrint('📦 Body: $data');
+
+    final response = await _dio.put(
+      path,
+      data: data,
+    );
+
+    debugPrint(
+      '📥 Response ${response.statusCode}: ${response.data}',
+    );
+
+    return response;
+  } on DioException catch (e) {
+    debugPrint(
+      '💥 DioError PUT: ${e.type} - ${e.message}',
+    );
+
+    debugPrint(
+      '📥 Response: '
+      '${e.response?.statusCode} - '
+      '${e.response?.data}',
+    );
+
+    _handleDioError(e);
+  }
+
+  throw const ServerException(
+    message: 'Error desconocido hoy no duerme Abarca',
+  );
+}
+
   Future<Response> delete(String path) async {
     try {
       debugPrint('📤 DELETE: $_baseUrl$path');

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/register_field.dart';
 import '../providers/auth_provider.dart';
@@ -58,30 +57,78 @@ class _LoginPageState extends State<LoginPage> {
 
     if (!mounted) return;
 
-    if (success) {
-      final prefs = await SharedPreferences.getInstance();
-      final onboardingCompleto =
-          prefs.getBool(AppConstants.onboardingKey) ?? false;
+if (success) {
+  await _continuarDespuesDeLogin(
+    provider,
+  );
+} else {
+  ScaffoldMessenger.of(context)
+      .showSnackBar(
+    SnackBar(
+      content: Text(
+        provider.errorMessage ??
+            'Error al iniciar sesión '
+                'con Google',
+      ),
+      backgroundColor: Colors.red,
+      behavior:
+          SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+        borderRadius:
+            BorderRadius.circular(12),
+      ),
+    ),
+  );
 
-      if (onboardingCompleto) {
-        await LocationPermissionHelper().checkAndRequestOnLogin(context);
-        if (!mounted) return;
-        Navigator.pushReplacementNamed(context, '/home');
-      } else {
-        Navigator.pushReplacementNamed(context, '/intereses');
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(provider.errorMessage ?? 'Error al iniciar sesión con Google'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
-      provider.resetStatus();
-    }
+  provider.resetStatus();
+}
   }
+
+  Future<void> _continuarDespuesDeLogin(
+  AuthProvider provider,
+) async {
+  final interests =
+      await provider.loadUserInterests();
+
+  if (!mounted) return;
+
+  if (interests == null) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(
+      SnackBar(
+        content: Text(
+          provider.errorMessage ??
+              'No se pudo verificar '
+                  'la configuración '
+                  'de tu cuenta',
+        ),
+        backgroundColor: Colors.red,
+      ),
+    );
+
+    return;
+  }
+
+  if (interests.onboardingCompleted) {
+    await LocationPermissionHelper()
+        .checkAndRequestOnLogin(
+      context,
+    );
+
+    if (!mounted) return;
+
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/home',
+      (route) => false,
+    );
+  } else {
+    Navigator.pushReplacementNamed(
+      context,
+      '/intereses',
+    );
+  }
+}
 
   Future<void> _handleLogin() async {
     final provider = context.read<AuthProvider>();
@@ -93,31 +140,30 @@ class _LoginPageState extends State<LoginPage> {
 
     if (!mounted) return;
 
-    if (success) {
-      final prefs = await SharedPreferences.getInstance();
-      final onboardingCompleto =
-          prefs.getBool(AppConstants.onboardingKey) ?? false;
+   if (success) {
+  await _continuarDespuesDeLogin(
+    provider,
+  );
+} else {
+  ScaffoldMessenger.of(context)
+      .showSnackBar(
+    SnackBar(
+      content: Text(
+        provider.errorMessage ??
+            'Error al iniciar sesión',
+      ),
+      backgroundColor: Colors.red,
+      behavior:
+          SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+        borderRadius:
+            BorderRadius.circular(12),
+      ),
+    ),
+  );
 
-      if (onboardingCompleto) {
-        await LocationPermissionHelper().checkAndRequestOnLogin(context);
-        if (!mounted) return;
-        Navigator.pushReplacementNamed(context, '/home');
-      } else {
-        Navigator.pushReplacementNamed(context, '/intereses');
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(provider.errorMessage ?? 'Error al iniciar sesión'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
-      provider.resetStatus();
-    }
+  provider.resetStatus();
+}
   }
 
   @override
