@@ -295,7 +295,9 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
                 ),
                 const SizedBox(height: 14),
                 SizedBox(
-                  height: 130,
+                  // 130 se quedaba corto: título + negocio + 2 líneas de
+                  // descripción + precio necesitan más alto y desbordaban.
+                  height: 172,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -347,6 +349,9 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
                       SectionHeader(
                         icon: Icons.event_outlined,
                         titulo: s('proximos_eventos'),
+                        mostrarVerTodos: true,
+                        onVerTodos: () =>
+                            Navigator.pushNamed(context, '/eventos'),
                       ),
                       const SizedBox(height: 14),
                       ...eventosProvider.eventos.map(
@@ -477,7 +482,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
         }
 
         return SizedBox(
-          height: 200,
+          height: 212,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 20),

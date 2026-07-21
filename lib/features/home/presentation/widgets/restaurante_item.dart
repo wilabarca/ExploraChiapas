@@ -63,6 +63,8 @@ class RestauranteItem extends StatelessWidget {
               children: [
                 Text(
                   nombre,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
@@ -75,11 +77,15 @@ class RestauranteItem extends StatelessWidget {
                     const Icon(Icons.star,
                         color: Color(0xFFFFC107), size: 13),
                     const SizedBox(width: 3),
-                    Text(
-                      '$calificacion  •  $distanciaKm km de ti',
-                      style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary(context)),
+                    Expanded(
+                      child: Text(
+                        '$calificacion  •  $distanciaKm km de ti',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary(context)),
+                      ),
                     ),
                   ],
                 ),
