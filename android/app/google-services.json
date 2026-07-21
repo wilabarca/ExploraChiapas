@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "600216508344-q10t6k75su2hti1sbp6pqfce69ttqqm4.apps.googleusercontent.com",
+          "client_id": "600216508344-u0p9e6dil5096u1b9pq86lpm8b29iitt.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.explorachiapas.app",
-            "certificate_hash": "cfcf745dd3316fa9dc0bcde93a9131734ab923c8"
+            "certificate_hash": "640c5307d46fe657aeda4c168be8b1c1236b2300"
           }
         },
         {

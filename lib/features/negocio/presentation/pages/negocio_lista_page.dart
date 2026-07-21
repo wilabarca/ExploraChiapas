@@ -102,7 +102,12 @@ class _NegocioListaPageState extends State<NegocioListaPage> {
             ),
           ),
           Expanded(
-            child: FutureBuilder<List<Negocio>>(
+            child: RefreshIndicator(
+              color: AppColors.primary(context),
+              onRefresh: () async => _cargar(busqueda: _busquedaCtrl.text.trim().isEmpty
+                  ? null
+                  : _busquedaCtrl.text.trim()),
+              child: FutureBuilder<List<Negocio>>(
               future: _future,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -113,10 +118,32 @@ class _NegocioListaPageState extends State<NegocioListaPage> {
                   return Center(
                     child: Padding(
                       padding: const EdgeInsets.all(24),
-                      child: Text(
-                        'No se pudo cargar la información.\n${snapshot.error}',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: AppColors.textSecondary(context)),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.wifi_off_outlined,
+                              size: 48, color: Colors.grey.shade400),
+                          const SizedBox(height: 12),
+                          Text(
+                            'No se pudo cargar la información.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                color: AppColors.textSecondary(context)),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: () => _cargar(),
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Reintentar'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary(context),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20)),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   );
@@ -172,6 +199,7 @@ class _NegocioListaPageState extends State<NegocioListaPage> {
                   ),
                 );
               },
+            ),
             ),
           ),
         ],
