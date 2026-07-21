@@ -6,5 +6,7 @@ abstract class IChatRepository {
   Future<Either<Failure, RecomendacionEntity>> enviarMensaje(
     String texto, {
     List<Map<String, String>> historial = const [],
+    double? userLat,
+    double? userLng,
   });
 }

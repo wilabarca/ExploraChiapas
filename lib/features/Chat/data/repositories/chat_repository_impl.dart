@@ -16,9 +16,16 @@ class ChatRepositoryImpl implements IChatRepository {
   Future<Either<Failure, RecomendacionEntity>> enviarMensaje(
     String texto, {
     List<Map<String, String>> historial = const [],
+    double? userLat,
+    double? userLng,
   }) async {
     try {
-      final recomendacion = await _datasource.enviarMensaje(texto, historial: historial);
+      final recomendacion = await _datasource.enviarMensaje(
+        texto,
+        historial: historial,
+        userLat: userLat,
+        userLng: userLng,
+      );
       return Right(recomendacion);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
