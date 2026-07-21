@@ -69,14 +69,14 @@ class PlanificaBanner extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () => Navigator.pushNamed(context, '/planificar'),
+                  onPressed: () => Navigator.pushNamed(context, '/chat'),
                   icon: Icon(
-                    Icons.route,
+                    Icons.smart_toy_outlined,
                     color: isDark ? Colors.black : Colors.white,
                     size: 18,
                   ),
                   label: Text(
-                    'Crear mi ruta personalizada',
+                    'Hablar con el guía',
                     style: TextStyle(
                       color: isDark ? Colors.black : Colors.white,
                       fontWeight: FontWeight.w600,
@@ -106,7 +106,7 @@ class PlanificaBanner extends StatelessWidget {
                   const SizedBox(width: 6),
                   Flexible(
                     child: GestureDetector(
-                      onTap: () => Navigator.pushNamed(context, '/planificar'),
+                      onTap: () => Navigator.pushNamed(context, '/chat'),
                       child: Text(
                         'Habla con nuestro guía inteligente',
                         style: TextStyle(

@@ -96,7 +96,7 @@ class _ProfilePageState extends State<ProfilePage> {
     String s(String key) => AppStrings.tr(key, lang);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F7F2),
+      backgroundColor: AppColors.background(context),
       appBar: const HomeAppBar(),
       bottomNavigationBar: AppBottomNav(
         navItems:   AppBottomNav.items,
@@ -239,18 +239,8 @@ class _ProfilePageState extends State<ProfilePage> {
                       _PreferenciaTile(
                         icon:  Icons.language_outlined,
                         label: s('idioma'),
-                        valor: prefs.idioma,
-                        onTap: () => _seleccionarOpcion(
-                          s('idioma'),
-                          ['Español', 'English'],
-                          prefs.idioma,
-                          (v) {
-                            prefs.setIdioma(v);
-                            context.read<LocaleProvider>().setLocale(
-                              Locale(v == 'English' ? 'en' : 'es'),
-                            );
-                          },
-                        ),
+                        valor: _nombreDeIdioma(lang),
+                        onTap: () => _mostrarSelectorIdioma(context, prefs, lang),
                       ),
                       const SizedBox(height: 8),
                       _PreferenciaTile(
@@ -346,6 +336,41 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
           );
+        },
+      ),
+    );
+  }
+
+  static String _nombreDeIdioma(String code) {
+    const map = {
+      'es': 'Español',          'en': 'English',
+      'fr': 'Français',         'de': 'Deutsch',
+      'it': 'Italiano',         'pt': 'Português',
+      'zh': '中文',              'ja': '日本語',
+      'ko': '한국어',            'ru': 'Русский',
+      'ar': 'العربية',          'nl': 'Nederlands',
+      'pl': 'Polski',           'tr': 'Türkçe',
+      'vi': 'Tiếng Việt',       'th': 'ภาษาไทย',
+      'id': 'Bahasa Indonesia', 'hi': 'हिन्दी',
+      'sv': 'Svenska',          'da': 'Dansk',
+      'fi': 'Suomi',            'nb': 'Norsk',
+      'cs': 'Čeština',          'hu': 'Magyar',
+      'ro': 'Română',           'uk': 'Українська',
+      'el': 'Ελληνικά',         'ca': 'Català',
+    };
+    return map[code] ?? code.toUpperCase();
+  }
+
+  void _mostrarSelectorIdioma(BuildContext context, PreferencesProvider prefs, String currentCode) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _LanguagePickerSheet(
+        currentCode: currentCode,
+        onSelected: (nombre, code) {
+          prefs.setIdioma(nombre);
+          context.read<LocaleProvider>().setLocale(Locale(code));
         },
       ),
     );
@@ -641,6 +666,163 @@ class _PreferenciaTile extends StatelessWidget {
             Icon(Icons.chevron_right, color: AppColors.textHint(context), size: 18),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _LanguagePickerSheet extends StatefulWidget {
+  final String currentCode;
+  final void Function(String nombre, String code) onSelected;
+
+  const _LanguagePickerSheet({required this.currentCode, required this.onSelected});
+
+  @override
+  State<_LanguagePickerSheet> createState() => _LanguagePickerSheetState();
+}
+
+class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
+  static const _todos = [
+    ['es', 'Español',          '🇪🇸'],
+    ['en', 'English',          '🇬🇧'],
+    ['fr', 'Français',         '🇫🇷'],
+    ['de', 'Deutsch',          '🇩🇪'],
+    ['it', 'Italiano',         '🇮🇹'],
+    ['pt', 'Português',        '🇧🇷'],
+    ['zh', '中文',              '🇨🇳'],
+    ['ja', '日本語',            '🇯🇵'],
+    ['ko', '한국어',            '🇰🇷'],
+    ['ru', 'Русский',          '🇷🇺'],
+    ['ar', 'العربية',          '🇸🇦'],
+    ['nl', 'Nederlands',       '🇳🇱'],
+    ['pl', 'Polski',           '🇵🇱'],
+    ['tr', 'Türkçe',           '🇹🇷'],
+    ['vi', 'Tiếng Việt',       '🇻🇳'],
+    ['th', 'ภาษาไทย',          '🇹🇭'],
+    ['id', 'Bahasa Indonesia', '🇮🇩'],
+    ['hi', 'हिन्दी',            '🇮🇳'],
+    ['sv', 'Svenska',          '🇸🇪'],
+    ['da', 'Dansk',            '🇩🇰'],
+    ['fi', 'Suomi',            '🇫🇮'],
+    ['nb', 'Norsk',            '🇳🇴'],
+    ['cs', 'Čeština',          '🇨🇿'],
+    ['hu', 'Magyar',           '🇭🇺'],
+    ['ro', 'Română',           '🇷🇴'],
+    ['uk', 'Українська',       '🇺🇦'],
+    ['el', 'Ελληνικά',         '🇬🇷'],
+    ['ca', 'Català',           '🏳️'],
+  ];
+
+  final _ctrl = TextEditingController();
+  List<List<String>> _filtrados = _todos;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl.addListener(() {
+      final q = _ctrl.text.toLowerCase();
+      setState(() {
+        _filtrados = q.isEmpty
+            ? _todos
+            : _todos.where((l) => l[1].toLowerCase().contains(q)).toList();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.75,
+      decoration: BoxDecoration(
+        color:        AppColors.surface(context),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 12),
+          Container(
+            width: 40, height: 4,
+            decoration: BoxDecoration(
+              color:        AppColors.borderSubtle(context),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              children: [
+                Icon(Icons.language_outlined, color: AppColors.primary(context)),
+                const SizedBox(width: 10),
+                Text(
+                  'Idioma / Language',
+                  style: TextStyle(
+                    fontSize:   17,
+                    fontWeight: FontWeight.bold,
+                    color:      AppColors.textPrimary(context),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: TextField(
+              controller: _ctrl,
+              style: TextStyle(color: AppColors.textPrimary(context)),
+              decoration: InputDecoration(
+                prefixIcon: Icon(Icons.search, color: AppColors.textHint(context)),
+                hintText:   'Buscar idioma...',
+                hintStyle:  TextStyle(color: AppColors.textHint(context)),
+                filled:     true,
+                fillColor:  AppColors.background(context),
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide:   BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: ListView.builder(
+              itemCount: _filtrados.length,
+              itemBuilder: (_, i) {
+                final lang       = _filtrados[i];
+                final isSelected = lang[0] == widget.currentCode;
+                return ListTile(
+                  leading: Text(lang[2], style: const TextStyle(fontSize: 24)),
+                  title: Text(
+                    lang[1],
+                    style: TextStyle(
+                      fontSize:   15,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      color:      isSelected
+                          ? AppColors.primary(context)
+                          : AppColors.textPrimary(context),
+                    ),
+                  ),
+                  trailing: isSelected
+                      ? Icon(Icons.check_circle, color: AppColors.primary(context), size: 20)
+                      : null,
+                  onTap: () {
+                    Navigator.pop(context);
+                    widget.onSelected(lang[1], lang[0]);
+                  },
+                );
+              },
+            ),
+          ),
+          SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
+        ],
       ),
     );
   }
