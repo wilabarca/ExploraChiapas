@@ -78,6 +78,25 @@ class DestinationBottomSheet extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         _TipoBadge(tipo: destino.tipo),
+                        if (destino.esMock) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Text(
+                              'Muestra',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.orange,
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ],

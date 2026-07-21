@@ -1,4 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../../../core/utils/profanity_filter.dart';
+
+// Letras (incluye acentos/ñ), números, espacios y puntuación básica de
+// direcciones/nombres de lugares. Bloquea símbolos de código/inyección
+// (< > { } $ ; \ ` ~ ^ | etc.) que no tienen razón de estar aquí.
+final RegExp _caracteresNoPermitidos =
+    RegExp(r"[^a-zA-Z0-9À-ÿñÑ\s.,'\-()°/¿?¡!:]");
+
+List<TextInputFormatter> _formatoTextoSeguro({required int maxLength}) => [
+      FilteringTextInputFormatter.deny(_caracteresNoPermitidos),
+      LengthLimitingTextInputFormatter(maxLength),
+    ];
 
 class RecomendarLugarPage extends StatefulWidget {
   const RecomendarLugarPage({super.key});
@@ -32,15 +45,31 @@ class _RecomendarLugarPageState extends State<RecomendarLugarPage> {
   }
 
   Future<void> _enviar() async {
-    if (_nombreController.text.trim().isEmpty) {
+    final nombre = _nombreController.text.trim();
+    final ubicacion = _ubicacionController.text.trim();
+    final descripcion = _descripcionController.text.trim();
+
+    if (nombre.length < 3) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Escribe el nombre del lugar')),
+        const SnackBar(
+          content: Text('El nombre del lugar debe tener al menos 3 caracteres'),
+        ),
       );
       return;
     }
-    if (_ubicacionController.text.trim().isEmpty) {
+    if (ubicacion.length < 3) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Indica la ubicación del lugar')),
+      );
+      return;
+    }
+    if (ProfanityFilter.contiene(nombre) ||
+        ProfanityFilter.contiene(descripcion)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('El texto contiene lenguaje inapropiado, revísalo.'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -115,6 +144,7 @@ class _RecomendarLugarPageState extends State<RecomendarLugarPage> {
               label: 'Nombre del lugar',
               controller: _nombreController,
               hint: 'Ej: Cascada El Chiflón',
+              maxLength: 80,
             ),
             const SizedBox(height: 16),
             _Campo(
@@ -122,6 +152,7 @@ class _RecomendarLugarPageState extends State<RecomendarLugarPage> {
               controller: _ubicacionController,
               hint: 'Municipio o dirección aproximada',
               icono: Icons.location_on_outlined,
+              maxLength: 120,
             ),
             const SizedBox(height: 16),
             const Text(
@@ -169,6 +200,9 @@ class _RecomendarLugarPageState extends State<RecomendarLugarPage> {
               controller: _descripcionController,
               maxLines: 4,
               maxLength: 300,
+              inputFormatters: [
+                FilteringTextInputFormatter.deny(_caracteresNoPermitidos),
+              ],
               decoration: InputDecoration(
                 hintText:
                     'Cuéntanos más sobre este lugar: qué hace especial, cómo llegar, etc.',
@@ -234,12 +268,14 @@ class _Campo extends StatelessWidget {
   final TextEditingController controller;
   final String hint;
   final IconData icono;
+  final int maxLength;
 
   const _Campo({
     required this.label,
     required this.controller,
     required this.hint,
     this.icono = Icons.edit_outlined,
+    this.maxLength = 100,
   });
 
   @override
@@ -258,6 +294,7 @@ class _Campo extends StatelessWidget {
         const SizedBox(height: 8),
         TextField(
           controller: controller,
+          inputFormatters: _formatoTextoSeguro(maxLength: maxLength),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle:
