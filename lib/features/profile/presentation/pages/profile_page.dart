@@ -12,6 +12,7 @@ import '../widgets/profile_menu_item.dart';
 import 'edit_profile_page.dart';
 import '../../../home/presentation/widgets/custom_bottom_nav_bar.dart';
 import '../../../home/presentation/widgets/home_app_bar.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -95,7 +96,7 @@ class _ProfilePageState extends State<ProfilePage> {
     String s(String key) => AppStrings.tr(key, lang);
 
     return Scaffold(
-      backgroundColor: AppColors.background(context),
+      backgroundColor: const Color(0xFFF2F7F2),
       appBar: const HomeAppBar(),
       bottomNavigationBar: AppBottomNav(
         navItems:   AppBottomNav.items,
@@ -359,38 +360,72 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
-  void _confirmarCerrarSesion(BuildContext context, String lang) {
-    String s(String key) => AppStrings.tr(key, lang);
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title:   Text(s('cerrar_sesion_titulo')),
-        content: Text(s('cerrar_sesion_msg')),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(s('cancelar'),
-                style: const TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              Navigator.pushReplacementNamed(context, '/');
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary(context),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-            child: Text(s('cerrar_sesion'),
-                style: const TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
+  void _confirmarCerrarSesion(
+  BuildContext context,
+  String lang,
+) {
+  String s(String key) =>
+      AppStrings.tr(key, lang);
 
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      title: Text(
+        s('cerrar_sesion_titulo'),
+      ),
+      content: Text(
+        s('cerrar_sesion_msg'),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () =>
+              Navigator.pop(ctx),
+          child: Text(
+            s('cancelar'),
+            style: const TextStyle(
+              color: Colors.grey,
+            ),
+          ),
+        ),
+
+        ElevatedButton(
+          onPressed: () async {
+            Navigator.pop(ctx);
+
+            await context
+                .read<AuthProvider>()
+                .logout();
+
+            if (!context.mounted) return;
+
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/',
+              (route) => false,
+            );
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor:
+                AppColors.primary(context),
+            shape: RoundedRectangleBorder(
+              borderRadius:
+                  BorderRadius.circular(10),
+            ),
+          ),
+          child: Text(
+            s('cerrar_sesion'),
+            style: const TextStyle(
+              color: Colors.white,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
   void _confirmarEliminarCuenta(
     BuildContext context,
     ProfileProvider provider,

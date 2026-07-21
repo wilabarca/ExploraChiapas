@@ -10,7 +10,9 @@ class AppConstants {
   static const String registerEndpoint = '/users/register';
   static const String loginEndpoint = '/users/login';
   static const String profileEndpoint = '/users/profile';
+  static const String userInterestsEndpoint = '/users/interests';
   static const String userTypesEndpoint = '/user-types';
+  static const String categoriesEndpoint = '/categories';
 
   // Endpoints principales
   static const String destinationsEndpoint = '/destinations';

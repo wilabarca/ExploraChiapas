@@ -8,6 +8,10 @@ import '../../domain/repositories/auth_repository.dart';
 import '../../domain/entities/usuario_registro.dart';
 import '../../domain/entities/usuario.dart';
 import '../../../../core/utils/app_constants.dart';
+import '../../domain/usecases/get_user_interests_usecase.dart';
+import '../../domain/usecases/update_user_interests_usecase.dart';
+import '../../domain/entities/user_interests.dart';
+import '../../../../core/services/notifications/onesignal_service.dart';
 
 enum AuthStatus { idle, loading, success, error }
 
@@ -17,12 +21,16 @@ class AuthProvider extends ChangeNotifier {
   final RegisterUseCase _registerUseCase;
   final GetProfileUseCase _getProfileUseCase;
   final AuthRepository _authRepository;
+  final GetUserInterestsUseCase _getUserInterestsUseCase;
+  final UpdateUserInterestsUseCase _updateUserInterestsUseCase;
 
   AuthProvider(
     this._loginUseCase,
     this._registerUseCase,
     this._getProfileUseCase,
     this._authRepository,
+    this._getUserInterestsUseCase,
+    this._updateUserInterestsUseCase,
   );
 
   AuthStatus _status = AuthStatus.idle;
@@ -36,6 +44,12 @@ class AuthProvider extends ChangeNotifier {
 
   Usuario? _usuario;
   Usuario? get usuario => _usuario;
+  UserInterests? _userInterests;
+  UserInterests? get userInterests => _userInterests;
+
+  List<UserInterest> _availableInterests = [];
+  List<UserInterest> get availableInterests =>
+  List.unmodifiable(_availableInterests);
 
   // ── Datos temporales del registro para auto-login ──
   Map<String, dynamic>? _registroData;
@@ -80,6 +94,7 @@ class AuthProvider extends ChangeNotifier {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString(AppConstants.userNameKey, usuario.name);
         await prefs.setString(AppConstants.userEmailKey, usuario.email);
+        await OneSignalService.loginUser(usuario.id,);
 
         debugPrint(
           '✅ Login OK — tipo: ${prefs.getString(AppConstants.tipoUsuarioKey)}',
@@ -125,11 +140,99 @@ class AuthProvider extends ChangeNotifier {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString(AppConstants.userNameKey, usuario.name);
         await prefs.setString(AppConstants.userEmailKey, usuario.email);
+        await OneSignalService.loginUser(usuario.id,);
         _setSuccess();
         return true;
       },
     );
   }
+
+// ── Cargar intereses del usuario ─────────────────────────
+
+  Future<UserInterests?>
+    loadUserInterests() async {
+  final result =
+      await _getUserInterestsUseCase();
+
+  return result.fold(
+    (failure) {
+      _errorMessage = failure.message;
+
+      debugPrint(
+        'Error cargando intereses: '
+        '${failure.message}',
+      );
+
+      notifyListeners();
+
+      return null;
+    },
+    (userInterests) {
+      _userInterests = userInterests;
+      _errorMessage = null;
+
+      notifyListeners();
+
+      return userInterests;
+    },
+  );
+}
+
+// ── Guardar intereses del usuario ─────────────────────────
+
+Future<bool> saveUserInterests({
+  required List<String> categoryIds,
+}) async {
+  final result =
+      await _updateUserInterestsUseCase(
+    categoryIds: categoryIds,
+  );
+
+  return result.fold(
+    (failure) {
+      _errorMessage = failure.message;
+
+      debugPrint(
+        'Error guardando intereses: '
+        '${failure.message}',
+      );
+
+      notifyListeners();
+
+      return false;
+    },
+    (userInterests) async {
+      _userInterests = userInterests;
+      _errorMessage = null;
+
+      /*
+       * Se conserva como caché local,
+       * pero el backend ya es la
+       * fuente real de verdad.
+       */
+      final prefs =
+          await SharedPreferences.getInstance();
+
+      await prefs.setBool(
+        AppConstants.onboardingKey,
+        userInterests.onboardingCompleted,
+      );
+
+      await prefs.setStringList(
+        AppConstants.interesesKey,
+        userInterests.interests
+            .map(
+              (interest) => interest.name,
+            )
+            .toList(),
+      );
+
+      notifyListeners();
+
+      return true;
+    },
+  );
+}
 
   // ── Register ──────────────────────────────────────────────
   Future<bool> register(UsuarioRegistro datos) async {
@@ -173,6 +276,62 @@ class AuthProvider extends ChangeNotifier {
       },
     );
   }
+
+  // ── Cerrar sesión ─────────────────────────────────────────
+  Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // El JWT es lo que mantiene autenticada la sesión.
+    await prefs.remove(AppConstants.jwtTokenKey);
+    await OneSignalService.logoutUser();
+
+    // Limpiamos datos de usuario cacheados.
+    await prefs.remove(AppConstants.userNameKey);
+    await prefs.remove(AppConstants.userEmailKey);
+    await prefs.remove(AppConstants.tipoUsuarioKey);
+
+    // Limpiar estado en memoria.
+    _token = null;
+    _usuario = null;
+    _userInterests = null;
+    _availableInterests = [];
+    _registroData = null;
+
+    _status = AuthStatus.idle;
+    _errorMessage = null;
+
+    notifyListeners();
+}
+
+  Future<List<UserInterest>?>
+    loadInterestCategories() async {
+  final result =
+      await _authRepository
+          .getInterestCategories();
+
+  return result.fold(
+    (failure) {
+      _errorMessage = failure.message;
+
+      debugPrint(
+        'Error cargando categorías: '
+        '${failure.message}',
+      );
+
+      notifyListeners();
+
+      return null;
+    },
+    (categories) {
+      _availableInterests = categories;
+      _errorMessage = null;
+
+      notifyListeners();
+
+      return categories;
+    },
+  );
+}
 
   // ── Limpiar datos temporales del registro ──
   void clearRegistroData() {
