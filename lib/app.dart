@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'core/di/injector.dart';
+import 'core/navigation/app_navigator.dart';
 import 'core/providers/preferences_provider.dart';
 import 'core/providers/locale_provider.dart';
 import 'core/theme/app_theme.dart';
@@ -98,6 +99,7 @@ class _ExploraChiapasAppState extends State<ExploraChiapasApp> {
       child: Consumer2<PreferencesProvider, LocaleProvider>(
         builder: (context, prefs, locale, _) {
           return MaterialApp(
+            navigatorKey: AppNavigator.key,
             title: 'ExploraChiapas',
             debugShowCheckedModeBanner: false,
             locale: locale.locale,

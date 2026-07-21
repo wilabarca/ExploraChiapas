@@ -143,7 +143,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i322.MlApiClient>(() => _i322.MlApiClient());
     gh.lazySingleton<_i45.AvatarService>(() => _i149.AvatarServiceImpl());
     gh.lazySingleton<_i907.NegocioRemoteDataSource>(
-      () => _i907.NegocioRemoteDataSourceMock(),
+      () => _i907.NegocioRemoteDataSourceImpl(gh<_i557.ApiClient>()),
     );
     gh.lazySingleton<_i252.NegocioRepository>(
       () => _i722.NegocioRepositoryImpl(gh<_i907.NegocioRemoteDataSource>()),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../error/exceptions.dart';
+import '../navigation/app_navigator.dart';
 import '../utils/app_constants.dart';
 
 @lazySingleton
@@ -45,10 +46,16 @@ class ApiClient {
           );
           handler.next(response);
         },
-        onError: (error, handler) {
+        onError: (error, handler) async {
           debugPrint(
             '❌ Error ${error.response?.statusCode}: ${error.response?.data}',
           );
+          if (error.response?.statusCode == 401) {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.remove(AppConstants.jwtTokenKey);
+            AppNavigator.key.currentState
+                ?.pushNamedAndRemoveUntil('/', (_) => false);
+          }
           handler.next(error);
         },
       ),

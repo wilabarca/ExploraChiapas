@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../domain/entities/destination_entity.dart';
 import '../../../../core/theme/app_colors.dart';
 
@@ -227,6 +228,17 @@ class DestinationBottomSheet extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                 ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Icon(Icons.share_outlined),
+                color: AppColors.textSecondary(context),
+                tooltip: 'Compartir',
+                onPressed: () {
+                  Share.share(
+                    '¡Visita ${destino.nombre} en ExploraChiapas!\n${destino.descripcion}',
+                  );
+                },
               ),
             ],
           ),

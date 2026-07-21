@@ -1,4 +1,6 @@
 import 'package:injectable/injectable.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../../core/utils/app_constants.dart';
 import '../../data/datasource/remote/models/negocio_model.dart';
 
 abstract class NegocioRemoteDataSource {
@@ -15,33 +17,48 @@ abstract class NegocioRemoteDataSource {
   Future<List<NegocioModel>> buscarNegocios(String query);
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// TODO: Cuando el endpoint esté listo, reemplazar por:
-//
-// @LazySingleton(as: NegocioRemoteDataSource)
-// class NegocioRemoteDataSourceImpl implements NegocioRemoteDataSource {
-//   final ApiClient _apiClient;
-//   NegocioRemoteDataSourceImpl(this._apiClient);
-//
-//   @override
-//   Future<List<NegocioModel>> obtenerNegocios({...}) async {
-//     final response = await _apiClient.get(
-//       AppConstants.negociosEndpoint,
-//       queryParameters: {
-//         if (tipoNegocioId != null) 'tipoNegocioId': tipoNegocioId,
-//         if (busqueda != null) 'busqueda': busqueda,
-//       },
-//     );
-//     final body = response.data as Map<String, dynamic>;
-//     return (body['data'] as List)
-//         .map((e) => NegocioModel.fromJson(e as Map<String, dynamic>))
-//         .toList();
-//   }
-//   ...
-// }
-// ─────────────────────────────────────────────────────────────────────────
-
 @LazySingleton(as: NegocioRemoteDataSource)
+class NegocioRemoteDataSourceImpl implements NegocioRemoteDataSource {
+  final ApiClient _apiClient;
+  NegocioRemoteDataSourceImpl(this._apiClient);
+
+  @override
+  Future<List<NegocioModel>> obtenerNegocios({
+    String? tipoNegocioId,
+    String? busqueda,
+    bool? soloVerificados,
+    double? latitud,
+    double? longitud,
+  }) async {
+    final response = await _apiClient.get(
+      AppConstants.businessesEndpoint,
+      queryParameters: {
+        if (tipoNegocioId != null && tipoNegocioId.isNotEmpty)
+          'businessTypeId': tipoNegocioId,
+        if (busqueda != null && busqueda.trim().isNotEmpty) 'search': busqueda,
+        if (soloVerificados == true) 'isVerified': 'true',
+      },
+    );
+    final body = response.data as Map<String, dynamic>;
+    return (body['data'] as List)
+        .map((e) => NegocioModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  @override
+  Future<NegocioModel> obtenerNegocioPorId(String id) async {
+    final response =
+        await _apiClient.get('${AppConstants.businessesEndpoint}/$id');
+    final body = response.data as Map<String, dynamic>;
+    return NegocioModel.fromJson(body['data'] as Map<String, dynamic>);
+  }
+
+  @override
+  Future<List<NegocioModel>> buscarNegocios(String query) async {
+    return obtenerNegocios(busqueda: query);
+  }
+}
+
 class NegocioRemoteDataSourceMock implements NegocioRemoteDataSource {
   // ── Catálogo ficticio ──────────────────────────────────────────────────
   static final List<Map<String, dynamic>> _negociosMock = [

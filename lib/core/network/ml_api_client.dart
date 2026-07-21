@@ -14,7 +14,7 @@ class MlApiClient {
       BaseOptions(
         baseUrl: _baseUrl,
         connectTimeout: AppConstants.connectTimeout,
-        receiveTimeout: AppConstants.receiveTimeout,
+        receiveTimeout: AppConstants.mlReceiveTimeout,
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -23,13 +23,15 @@ class MlApiClient {
     );
   }
 
-  // Despierta el servidor de Render (free tier duerme tras 15 min inactivo).
+  // Despierta tanto el NLP service como el motor ML (ambos en Render free tier).
   // Llamar esto cuando el usuario abre la pantalla de chat.
   Future<void> warmup() async {
     try {
-      await _dio.get('/health').timeout(const Duration(seconds: 10));
+      await _dio
+          .get('/warmup')
+          .timeout(const Duration(seconds: 15));
     } catch (_) {
-      // Error esperado si no existe GET / — lo importante es enviar tráfico.
+      // silencioso — es solo un ping preventivo
     }
   }
 
@@ -48,18 +50,19 @@ class MlApiClient {
       case DioExceptionType.receiveTimeout:
       case DioExceptionType.sendTimeout:
         throw const NetworkException(
-          message: 'Tiempo de espera agotado. Verifica tu conexion.',
+          message:
+              'El servidor tardó demasiado en responder. Intenta de nuevo.',
         );
       case DioExceptionType.connectionError:
         throw const NetworkException(
-          message: 'Sin conexion a internet. Verifica tu red.',
+          message: 'Sin conexión a internet. Verifica tu red.',
         );
       default:
         final statusCode = e.response?.statusCode;
-        // nlp-service y ml-engine devuelven { "error": "..." }, no { "message": ... }
         final message =
             e.response?.data?['error'] ?? e.message ?? 'Error del servidor';
-        throw ServerException(message: message.toString(), statusCode: statusCode);
+        throw ServerException(
+            message: message.toString(), statusCode: statusCode);
     }
   }
 }

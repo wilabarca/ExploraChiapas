@@ -8,6 +8,7 @@ import '../widgets/destino_card.dart';
 import '../widgets/restaurante_item.dart';
 import '../widgets/hotel_card.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
+import '../../../destinos/domain/entities/destino.dart';
 import '../../../destinos/presentation/pages/lugar_detail_page.dart';
 import '../../../destinos/presentation/providers/destinos_provider.dart';
 import '../../../eventos/domain/entities/evento.dart';
@@ -80,19 +81,18 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
     }
   }
 
-  // ── Navegación al detalle de un destino turístico ───────────────────────
-  void _openDestinoDetail({
-    required String nombre,
-    required double calificacion,
-  }) {
+  void _openDestinoDetail(Destino destino) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => LugarDetailPage(
-          nombre: nombre,
+          id: destino.id,
+          nombre: destino.name,
           categoria: 'Destino turístico',
-          calificacion: calificacion,
-          imageUrl: '',
+          calificacion: destino.averageRating,
+          imageUrl: destino.imageUrl ?? '',
+          descripcion: destino.description,
+          totalResenas: destino.totalReviews,
         ),
       ),
     );
@@ -266,14 +266,9 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
                               nombre: destino.name,
                               categoria: s('destino_turistico'),
                               calificacion: destino.averageRating,
-                              imageUrl: null,
+                              imageUrl: destino.imageUrl,
                               esFavorito: false,
-                              onTap: () {
-                                _openDestinoDetail(
-                                  nombre: destino.name,
-                                  calificacion: destino.averageRating,
-                                );
-                              },
+                              onTap: () => _openDestinoDetail(destino),
                             );
                           },
                         ),
