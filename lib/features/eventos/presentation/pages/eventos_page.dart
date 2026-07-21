@@ -9,6 +9,7 @@ import 'detalle_evento_page.dart';
 import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/providers/locale_provider.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/skeleton_loader.dart';
 
 class EventosPage extends StatefulWidget {
   const EventosPage({super.key});
@@ -24,6 +25,7 @@ class _EventosPageState extends State<EventosPage> {
 
   final _filtros = [
     'Todos',
+    'Este fin de semana',
     'Festivales',
     'Talleres',
     'Gastronomía',
@@ -81,10 +83,24 @@ class _EventosPageState extends State<EventosPage> {
     }
   }
 
+  bool _esEsteFinDeSemana(DateTime fecha) {
+    final hoy = DateTime.now();
+    final diasHastaSabado = (6 - hoy.weekday + 7) % 7;
+    final sabado = DateTime(
+      hoy.year,
+      hoy.month,
+      hoy.day + (diasHastaSabado == 0 ? 7 : diasHastaSabado),
+    );
+    final lunes = sabado.add(const Duration(days: 2));
+    return !fecha.isBefore(sabado) && fecha.isBefore(lunes);
+  }
+
   List<EventoEntity> _filtrar(List<Evento> eventos) {
     var lista = eventos.where((e) => e.activo).map(_mapEvento).toList();
 
-    if (_filtroActivo != 'Todos') {
+    if (_filtroActivo == 'Este fin de semana') {
+      lista = lista.where((e) => _esEsteFinDeSemana(e.fechaInicio)).toList();
+    } else if (_filtroActivo != 'Todos') {
       lista = lista.where((e) => e.categoria == _filtroActivo).toList();
     }
 
@@ -181,9 +197,7 @@ class _EventosPageState extends State<EventosPage> {
             child: Consumer<EventosProvider>(
               builder: (context, provider, _) {
                 if (provider.status == EventosStatus.loading) {
-                  return Center(
-                    child: CircularProgressIndicator(color: AppColors.primary(context)),
-                  );
+                  return const SkeletonList(count: 4);
                 }
 
                 if (provider.status == EventosStatus.error) {

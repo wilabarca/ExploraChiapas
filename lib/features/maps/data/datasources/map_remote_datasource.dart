@@ -10,7 +10,7 @@ abstract class IMapRemoteDatasource {
     required double lng,
     required double radioKm,
   });
-  Future<List<List<double>>> getRoute({
+  Future<List<List<List<double>>>> getRoutes({
     required double originLat,
     required double originLng,
     required double destLat,
@@ -162,7 +162,7 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
   }
 
   @override
-  Future<List<List<double>>> getRoute({
+  Future<List<List<List<double>>>> getRoutes({
     required double originLat,
     required double originLng,
     required double destLat,
@@ -173,15 +173,22 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
     final response = await dio.get<Map<String, dynamic>>(
       'https://router.project-osrm.org/route/v1/driving/'
       '$originLng,$originLat;$destLng,$destLat',
-      queryParameters: {'overview': 'full', 'geometries': 'geojson'},
+      queryParameters: {
+        'overview': 'full',
+        'geometries': 'geojson',
+        'alternatives': 'true',
+      },
     );
 
     final routes = response.data!['routes'] as List<dynamic>;
     if (routes.isEmpty) throw Exception('No se encontró ruta');
 
-    final coords = (routes[0]['geometry']['coordinates'] as List<dynamic>)
-        .cast<List<dynamic>>();
-
-    return coords.map((c) => [(c[1] as num).toDouble(), (c[0] as num).toDouble()]).toList();
+    return routes.map((route) {
+      final coords =
+          (route['geometry']['coordinates'] as List<dynamic>).cast<List<dynamic>>();
+      return coords
+          .map((c) => [(c[1] as num).toDouble(), (c[0] as num).toDouble()])
+          .toList();
+    }).toList();
   }
 }

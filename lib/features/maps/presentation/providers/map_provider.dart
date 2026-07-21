@@ -19,8 +19,18 @@ class MapProvider extends ChangeNotifier {
   List<DestinationEntity> _destinations = [];
   List<DestinationEntity> get destinations => _destinations;
 
-  List<List<double>> _routePoints = [];
-  List<List<double>> get routePoints => _routePoints;
+  // Todas las rutas disponibles (principal + alternativas)
+  List<List<List<double>>> _allRoutes = [];
+  List<List<List<double>>> get allRoutes => _allRoutes;
+
+  int _selectedRouteIndex = 0;
+  int get selectedRouteIndex => _selectedRouteIndex;
+
+  // Ruta actualmente visible en el mapa
+  List<List<double>> get routePoints =>
+      _allRoutes.isEmpty ? [] : _allRoutes[_selectedRouteIndex];
+
+  bool get hayAlternativas => _allRoutes.length > 1;
 
   DestinationEntity? _selected;
   DestinationEntity? get selected => _selected;
@@ -39,8 +49,9 @@ class MapProvider extends ChangeNotifier {
 
   Future<void> loadDestinations({String? tipo}) async {
     _status = MapStatus.loading;
-    _routePoints = [];
+    _allRoutes = [];
     _selected = null;
+    _selectedRouteIndex = 0;
     notifyListeners();
 
     try {
@@ -59,8 +70,15 @@ class MapProvider extends ChangeNotifier {
 
   void clearSelection() {
     _selected = null;
-    _routePoints = [];
+    _allRoutes = [];
+    _selectedRouteIndex = 0;
     _detenerNavegacion();
+    notifyListeners();
+  }
+
+  void selectRoute(int index) {
+    if (index < 0 || index >= _allRoutes.length) return;
+    _selectedRouteIndex = index;
     notifyListeners();
   }
 
@@ -88,13 +106,14 @@ class MapProvider extends ChangeNotifier {
     } catch (_) {}
 
     try {
-      final puntos = await _getRoute(
+      final rutas = await _getRoute(
         originLat: originLat,
         originLng: originLng,
         destLat: destino.lat,
         destLng: destino.lng,
       );
-      _routePoints = puntos;
+      _allRoutes = rutas;
+      _selectedRouteIndex = 0;
       notifyListeners();
     } catch (_) {}
 

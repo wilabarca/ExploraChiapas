@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/di/injector.dart';
+import '../../../../core/network/ml_api_client.dart';
 import '../providers/chat_provider.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/chat_input.dart';
@@ -18,6 +20,14 @@ class ChatRoutesPage extends StatefulWidget {
 class _ChatRoutesPageState extends State<ChatRoutesPage> {
   final _inputCtrl = TextEditingController();
   final _scrollCtrl = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Despierta el servidor NLP en segundo plano para que la primera
+    // respuesta sea más rápida (Render free-tier duerme tras 15 min).
+    getIt<MlApiClient>().warmup();
+  }
 
   @override
   void dispose() {

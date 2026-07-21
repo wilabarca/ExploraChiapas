@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../domain/entities/DestinoResenaEntity.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/skeleton_loader.dart';
 import '../widgets/destino_resena_card.dart';
 import '../../../home/presentation/widgets/home_app_bar.dart';
 import '../../../destinos/presentation/providers/destinos_provider.dart';
@@ -98,9 +99,7 @@ class _HomeResenasPageState extends State<HomeResenasPage> {
             child: Consumer<DestinoProvider>(
               builder: (context, destinoProvider, child) {
                 if (destinoProvider.listStatus == DestinoStatus.loading) {
-                  return Center(
-                    child: CircularProgressIndicator(color: AppColors.primary(context)),
-                  );
+                  return const SkeletonList(count: 4);
                 }
 
                 if (destinoProvider.listStatus == DestinoStatus.error) {

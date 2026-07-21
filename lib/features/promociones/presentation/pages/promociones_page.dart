@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../home/presentation/widgets/home_app_bar.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/skeleton_loader.dart';
 import '../../../home/presentation/widgets/custom_bottom_nav_bar.dart';
 import '../../domain/entities/promocion.dart';
 import '../providers/promociones_provider.dart';
@@ -111,11 +112,7 @@ class _PromocionesPageState extends State<PromocionesPage> {
                     return Consumer<PromocionesProvider>(
                       builder: (context, provider, _) {
                         if (provider.status == PromocionesStatus.loading) {
-                          return Center(
-                            child: CircularProgressIndicator(
-                              color: AppColors.primary(context),
-                            ),
-                          );
+                          return const SkeletonList(count: 4);
                         }
 
                         if (provider.status == PromocionesStatus.error) {

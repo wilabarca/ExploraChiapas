@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "600216508344",
+    "project_id": "explorachiapas-4551a",
+    "storage_bucket": "explorachiapas-4551a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:600216508344:android:3f7a182c72c7b7c269e14d",
+        "android_client_info": {
+          "package_name": "com.explorachiapas.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "600216508344-q10t6k75su2hti1sbp6pqfce69ttqqm4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.explorachiapas.app",
+            "certificate_hash": "cfcf745dd3316fa9dc0bcde93a9131734ab923c8"
+          }
+        },
+        {
+          "client_id": "600216508344-arr16mlnv5g9ieh38dfbg9qmh1htslat.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA9jmVShFZFxIEyTpjYTNM8Pderq8M7MrY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "600216508344-arr16mlnv5g9ieh38dfbg9qmh1htslat.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
