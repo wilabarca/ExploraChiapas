@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -356,74 +357,117 @@ class _RutaSheet extends StatefulWidget {
 
 class _RutaSheetState extends State<_RutaSheet> {
   _RutaInfo? _info;
-  String? _error;
-  bool _cargando = true;
+  String?    _error;
+  bool       _cargando  = true;
+  bool       _llegaste  = false;
+  bool       _enVivo    = false;
+
+  StreamSubscription<Position>? _posStream;
+  Timer?    _osrmTimer;
+  Position? _ultimaPos;
 
   @override
   void initState() {
     super.initState();
-    _calcularRuta();
+    _iniciar();
   }
 
-  Future<void> _calcularRuta() async {
-    try {
-      final pos = await _obtenerPosicion();
-      if (pos == null) {
-        setState(() {
-          _error = 'No se pudo obtener tu ubicación. Activa el GPS e intenta de nuevo.';
-          _cargando = false;
-        });
-        return;
-      }
+  @override
+  void dispose() {
+    _posStream?.cancel();
+    _osrmTimer?.cancel();
+    super.dispose();
+  }
 
-      // Llamar al OSRM público para obtener distancia y duración reales en ruta.
+  Future<void> _iniciar() async {
+    final pos = await _obtenerPosicion();
+    if (pos == null) {
+      if (mounted) setState(() {
+        _error = 'No se pudo obtener tu ubicación. Activa el GPS e intenta de nuevo.';
+        _cargando = false;
+      });
+      return;
+    }
+    _ultimaPos = pos;
+    await _calcularRuta(pos);
+    _iniciarTracking();
+  }
+
+  // Calcula la ruta desde [pos] usando OSRM; fallback Haversine si falla.
+  Future<void> _calcularRuta(Position pos) async {
+    try {
       final resp = await Dio().get(
         'https://router.project-osrm.org/route/v1/driving/'
         '${pos.longitude},${pos.latitude};${widget.destLng},${widget.destLat}',
         queryParameters: {'overview': 'false'},
         options: Options(receiveTimeout: const Duration(seconds: 10)),
       );
-
       final routes = resp.data['routes'] as List?;
-      if (routes == null || routes.isEmpty) throw Exception('Sin ruta');
-
-      final route = routes[0] as Map;
-      final distanciaM = (route['distance'] as num).toDouble();
-      final duracionS = (route['duration'] as num).toDouble();
-
-      setState(() {
-        _info = _RutaInfo(
-          distanciaKm: distanciaM / 1000,
-          duracionMin: duracionS / 60,
-          origenLat: pos.latitude,
-          origenLng: pos.longitude,
-        );
-        _cargando = false;
-      });
-    } catch (_) {
-      // Fallback: distancia en línea recta con factor de carretera 1.4
-      try {
-        final pos = await _obtenerPosicion();
-        if (pos == null) throw Exception('Sin GPS');
-        final distancia = _haversine(
-          pos.latitude, pos.longitude, widget.destLat, widget.destLng);
-        setState(() {
+      if (routes != null && routes.isNotEmpty) {
+        final route = routes[0] as Map;
+        if (mounted) setState(() {
           _info = _RutaInfo(
-            distanciaKm: distancia,
-            duracionMin: (distancia * 1.4 / 60) * 60,
+            distanciaKm: (route['distance'] as num).toDouble() / 1000,
+            duracionMin: (route['duration'] as num).toDouble() / 60,
             origenLat: pos.latitude,
             origenLng: pos.longitude,
-            esEstimado: true,
           );
           _cargando = false;
         });
-      } catch (e) {
-        setState(() {
-          _error = 'No se pudo calcular la ruta. Verifica tu conexión y GPS.';
-          _cargando = false;
-        });
+        return;
       }
-    }
+    } catch (_) {}
+
+    // Fallback Haversine con factor de carretera 1.4
+    final dist = _haversine(pos.latitude, pos.longitude, widget.destLat, widget.destLng);
+    if (mounted) setState(() {
+      _info = _RutaInfo(
+        distanciaKm: dist,
+        duracionMin: dist * 1.4,
+        origenLat: pos.latitude,
+        origenLng: pos.longitude,
+        esEstimado: true,
+      );
+      _cargando = false;
+    });
+  }
+
+  void _iniciarTracking() {
+    // Actualiza cada vez que el usuario se mueve ≥30 m
+    _posStream = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 30,
+      ),
+    ).listen((pos) {
+      _ultimaPos = pos;
+      final dist = _haversine(pos.latitude, pos.longitude, widget.destLat, widget.destLng);
+
+      if (dist < 0.1) {
+        // Llegó (dentro de 100 m)
+        if (mounted) setState(() => _llegaste = true);
+        _posStream?.cancel();
+        _osrmTimer?.cancel();
+        return;
+      }
+
+      // Actualización rápida con Haversine mientras el usuario se mueve
+      if (mounted) setState(() {
+        _enVivo = true;
+        _info = _RutaInfo(
+          distanciaKm: dist,
+          duracionMin: dist * 1.4,
+          origenLat: pos.latitude,
+          origenLng: pos.longitude,
+          esEstimado: _info?.esEstimado ?? true,
+        );
+      });
+    }, onError: (_) {});
+
+    // Cada 2 minutos recalcula con OSRM para obtener distancia real por carretera
+    _osrmTimer = Timer.periodic(const Duration(minutes: 2), (_) async {
+      if (_ultimaPos != null && mounted) await _calcularRuta(_ultimaPos!);
+    });
   }
 
   Future<Position?> _obtenerPosicion() async {
@@ -438,8 +482,8 @@ class _RutaSheetState extends State<_RutaSheet> {
           permiso == LocationPermission.deniedForever) return null;
       return await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.low,
-          timeLimit: Duration(seconds: 8),
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
         ),
       );
     } catch (_) {
@@ -469,6 +513,14 @@ class _RutaSheetState extends State<_RutaSheet> {
     launchUrl(url, mode: LaunchMode.externalApplication);
   }
 
+  String _formatDuracion(double minutos) {
+    final total = minutos.round();
+    if (total < 60) return '$total min';
+    final h = total ~/ 60;
+    final m = total % 60;
+    return m == 0 ? '${h}h' : '${h}h ${m}min';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -482,8 +534,7 @@ class _RutaSheetState extends State<_RutaSheet> {
         children: [
           // Handle
           Container(
-            width: 40,
-            height: 4,
+            width: 40, height: 4,
             margin: const EdgeInsets.only(bottom: 20),
             decoration: BoxDecoration(
               color: Colors.grey[300],
@@ -491,6 +542,7 @@ class _RutaSheetState extends State<_RutaSheet> {
             ),
           ),
 
+          // Título + badge EN VIVO
           Row(
             children: [
               const Icon(Icons.location_on, color: Color(0xFF1565C0), size: 22),
@@ -505,11 +557,49 @@ class _RutaSheetState extends State<_RutaSheet> {
                   ),
                 ),
               ),
+              if (_enVivo && !_llegaste)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.circle, color: Colors.white, size: 7),
+                      SizedBox(width: 4),
+                      Text('EN VIVO',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 20),
 
-          if (_cargando) ...[
+          if (_llegaste) ...[
+            // ── Pantalla de llegada ───────────────────────────────────────
+            const Icon(Icons.check_circle_outline,
+                color: Colors.green, size: 56),
+            const SizedBox(height: 10),
+            Text(
+              '¡Llegaste!',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary(context),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Estás en ${widget.nombre}',
+              style: TextStyle(color: AppColors.textSecondary(context)),
+            ),
+          ] else if (_cargando) ...[
             const CircularProgressIndicator(),
             const SizedBox(height: 12),
             Text('Calculando ruta...',
@@ -521,28 +611,42 @@ class _RutaSheetState extends State<_RutaSheet> {
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppColors.textSecondary(context))),
           ] else if (_info != null) ...[
-            // Info de ruta
+            // ── Métricas de ruta ──────────────────────────────────────────
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _InfoChip(
                   icon: Icons.access_time_outlined,
                   valor: _formatDuracion(_info!.duracionMin),
-                  etiqueta: 'Tiempo estimado',
+                  etiqueta: 'Tiempo restante',
                 ),
                 Container(width: 1, height: 50, color: Colors.grey[200]),
                 _InfoChip(
                   icon: Icons.straighten_outlined,
-                  valor: '${_info!.distanciaKm.toStringAsFixed(1)} km',
-                  etiqueta: 'Distancia',
+                  valor: _info!.distanciaKm >= 1
+                      ? '${_info!.distanciaKm.toStringAsFixed(1)} km'
+                      : '${(_info!.distanciaKm * 1000).round()} m',
+                  etiqueta: 'Distancia restante',
                 ),
               ],
             ),
             if (_info!.esEstimado)
               Padding(
-                padding: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.only(top: 6),
                 child: Text(
-                  '* Estimación en línea recta',
+                  _enVivo
+                      ? '* Distancia en línea recta · se actualiza al moverte'
+                      : '* Estimación en línea recta (sin conexión a servidor de rutas)',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontSize: 11, color: AppColors.textSecondary(context)),
+                ),
+              ),
+            if (!_enVivo && !_info!.esEstimado)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  'Se actualizará automáticamente al moverte',
                   style: TextStyle(
                       fontSize: 11, color: AppColors.textSecondary(context)),
                 ),
@@ -574,14 +678,6 @@ class _RutaSheetState extends State<_RutaSheet> {
         ],
       ),
     );
-  }
-
-  String _formatDuracion(double minutos) {
-    final total = minutos.round();
-    if (total < 60) return '$total min';
-    final h = total ~/ 60;
-    final m = total % 60;
-    return m == 0 ? '${h}h' : '${h}h ${m}min';
   }
 }
 
