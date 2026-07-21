@@ -16,6 +16,7 @@ class AppConstants {
 
   // Endpoints principales
   static const String destinationsEndpoint = '/destinations';
+  static const String businessesEndpoint = '/businesses';
   static const String eventsEndpoint = '/events';
   static const String favoritesEndpoint = '/favorites';
 

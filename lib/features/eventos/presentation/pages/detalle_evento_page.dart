@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../domain/entities/envento_entity.dart';
 import '../../../../core/theme/app_colors.dart';
 
@@ -59,6 +60,32 @@ class DetalleEventoPage extends StatelessWidget {
               ),
             ),
             actions: [
+              Container(
+                margin: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.surface(context),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                    ),
+                  ],
+                ),
+                child: IconButton(
+                  icon: Icon(
+                    Icons.share_outlined,
+                    color: AppColors.textPrimary(context),
+                    size: 20,
+                  ),
+                  tooltip: 'Compartir',
+                  onPressed: () {
+                    Share.share(
+                      '¡${evento.titulo} — ${evento.categoria}!\n${evento.descripcion}\n#ExploraChiapas',
+                    );
+                  },
+                ),
+              ),
               Container(
                 margin: const EdgeInsets.all(8),
                 decoration: BoxDecoration(

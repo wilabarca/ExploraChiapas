@@ -25,23 +25,41 @@ class NegocioModel extends Negocio {
   });
 
   factory NegocioModel.fromJson(Map<String, dynamic> json) {
+    // Backend uses English camelCase; mock uses Spanish — support both.
+    final nombre = (json['name'] ?? json['nombre'])?.toString() ?? '';
+    final descripcion =
+        (json['description'] ?? json['descripcion'])?.toString() ?? '';
+    final tipoNegocioId =
+        (json['businessTypeId'] ?? json['tipoNegocioId'])?.toString() ?? '';
+    final precioDesde =
+        ((json['priceFrom'] ?? json['precioDesde']) as num?)?.toDouble();
+    final imagenPrincipal =
+        (json['imageUrl'] ?? json['imagenPrincipal'])?.toString() ?? '';
+    final verificado =
+        (json['isVerified'] ?? json['verificado']) as bool? ?? false;
+    final calificacionPromedio =
+        ((json['averageRating'] ?? json['calificacionPromedio']) as num?)
+            ?.toDouble() ??
+        0.0;
+    final numeroResenas =
+        ((json['totalReviews'] ?? json['numeroResenas']) as num?)?.toInt() ?? 0;
+
     return NegocioModel(
-      id: json['id'] as String,
-      nombre: json['nombre'] as String,
-      descripcion: json['descripcion'] as String? ?? '',
-      direccion: json['direccion'] as String? ?? '',
-      tipoNegocioId: json['tipoNegocioId'] as String,
-      tipoNegocioNombre: json['tipoNegocioNombre'] as String? ?? '',
+      id: json['id'].toString(),
+      nombre: nombre,
+      descripcion: descripcion,
+      direccion: json['direccion']?.toString() ?? '',
+      tipoNegocioId: tipoNegocioId,
+      tipoNegocioNombre: json['tipoNegocioNombre']?.toString() ?? '',
       latitud: (json['latitud'] as num?)?.toDouble() ?? 0.0,
       longitud: (json['longitud'] as num?)?.toDouble() ?? 0.0,
-      precioDesde: (json['precioDesde'] as num?)?.toDouble(),
-      calificacionPromedio:
-          (json['calificacionPromedio'] as num?)?.toDouble() ?? 0.0,
-      numeroResenas: json['numeroResenas'] as int? ?? 0,
-      verificado: json['verificado'] as bool? ?? false,
-      imagenPrincipal: json['imagenPrincipal'] as String? ?? '',
+      precioDesde: precioDesde,
+      calificacionPromedio: calificacionPromedio,
+      numeroResenas: numeroResenas,
+      verificado: verificado,
+      imagenPrincipal: imagenPrincipal,
       imagenes: (json['imagenes'] as List<dynamic>? ?? [])
-          .map((e) => e as String)
+          .map((e) => e.toString())
           .toList(),
       servicios: (json['servicios'] as List<dynamic>? ?? [])
           .map((e) => NegocioServicioModel.fromJson(e as Map<String, dynamic>))
@@ -50,7 +68,7 @@ class NegocioModel extends Negocio {
           .map((e) => NegocioHorarioModel.fromJson(e as Map<String, dynamic>))
           .toList(),
       promocionesVigentes: (json['promocionesVigentes'] as List<dynamic>? ?? [])
-          .map((e) => e as String)
+          .map((e) => e.toString())
           .toList(),
       esFavorito: json['esFavorito'] as bool? ?? false,
     );

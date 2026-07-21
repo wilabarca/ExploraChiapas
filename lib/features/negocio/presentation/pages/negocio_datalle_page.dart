@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/negocio.dart';
 import '../../domain/usecases/obtener_negocio_por_id.dart';
@@ -55,6 +56,18 @@ class _NegocioDetallePageState extends State<NegocioDetallePage> {
             fontWeight: FontWeight.bold,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.share_outlined,
+                color: AppColors.textPrimary(context)),
+            tooltip: 'Compartir',
+            onPressed: () {
+              Share.share(
+                '¡Conoce este negocio en ExploraChiapas! ID: ${widget.negocioId}',
+              );
+            },
+          ),
+        ],
       ),
       body: FutureBuilder<Negocio>(
         future: _future,

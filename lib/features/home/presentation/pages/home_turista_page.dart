@@ -266,7 +266,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
                               nombre: destino.name,
                               categoria: s('destino_turistico'),
                               calificacion: destino.averageRating,
-                              imageUrl: null,
+                              imageUrl: destino.imageUrl,
                               esFavorito: false,
                               onTap: () {
                                 _openDestinoDetail(
