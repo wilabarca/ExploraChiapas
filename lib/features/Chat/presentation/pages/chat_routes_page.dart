@@ -11,6 +11,7 @@ import '../widgets/chat_destino_card.dart';
 import '../widgets/chat_restaurante_item.dart';
 import '../widgets/chat_place_card.dart';
 import '../../../home/presentation/widgets/home_app_bar.dart';
+import 'historial_chat_page.dart';
 
 class ChatRoutesPage extends StatefulWidget {
   const ChatRoutesPage({super.key});
@@ -151,7 +152,18 @@ class _ChatRoutesPageState extends State<ChatRoutesPage> {
 
     return Scaffold(
       backgroundColor: AppColors.background(context),
-      appBar: const HomeAppBar(),
+      appBar: HomeAppBar(
+        extraActions: [
+          IconButton(
+            tooltip: 'Historial de chats',
+            icon: Icon(Icons.history, color: AppColors.primary(context)),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const HistorialChatPage()),
+            ),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Expanded(

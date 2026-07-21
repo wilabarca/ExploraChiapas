@@ -5,7 +5,10 @@ import '../../../../core/error/exceptions.dart';
 import '../models/recomendacion_model.dart';
 
 abstract class IChatRemoteDatasource {
-  Future<RecomendacionModel> enviarMensaje(String texto);
+  Future<RecomendacionModel> enviarMensaje(
+    String texto, {
+    List<Map<String, String>> historial = const [],
+  });
 }
 
 @LazySingleton(as: IChatRemoteDatasource)
@@ -15,10 +18,13 @@ class ChatRemoteDatasourceImpl implements IChatRemoteDatasource {
   ChatRemoteDatasourceImpl(this._mlApiClient);
 
   @override
-  Future<RecomendacionModel> enviarMensaje(String texto) async {
+  Future<RecomendacionModel> enviarMensaje(
+    String texto, {
+    List<Map<String, String>> historial = const [],
+  }) async {
     final response = await _mlApiClient.post(
       AppConstants.planearEndpoint,
-      data: {'texto': texto},
+      data: {'texto': texto, 'historial': historial},
     );
 
     if (response.statusCode == 200) {

@@ -8,8 +8,13 @@ import '../../../profile/presentation/providers/profile_provider.dart';
 
 class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool mostrarFlecha;
+  final List<Widget> extraActions;
 
-  const HomeAppBar({super.key, this.mostrarFlecha = false});
+  const HomeAppBar({
+    super.key,
+    this.mostrarFlecha = false,
+    this.extraActions = const [],
+  });
 
   @override
   Size get preferredSize => const Size.fromHeight(64);
@@ -80,6 +85,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
         },
       ),
       actions: [
+        ...extraActions,
         Padding(
           padding: EdgeInsets.only(right: screenW * 0.04),
           child: GestureDetector(
