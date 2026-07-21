@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/register_field.dart';
 import '../providers/auth_provider.dart';
@@ -7,6 +8,8 @@ import '../../../../core/permissions/location_permission.dart';
 import '../../../../core/utils/app_constants.dart';
 import '../../../../core/services/google_auth_service.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/di/injector.dart';
+import '../../../../core/network/api_client.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -20,10 +23,30 @@ class _LoginPageState extends State<LoginPage> {
   final _passCtrl  = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    // Despierta el backend (Render duerme tras inactividad) mientras el
+    // usuario todavía está escribiendo/eligiendo cómo iniciar sesión, para
+    // que el login no se sienta lento por el cold start del servidor.
+    getIt<ApiClient>().warmup();
+  }
+
+  @override
   void dispose() {
     _emailCtrl.dispose();
     _passCtrl.dispose();
     super.dispose();
+  }
+
+  String _mensajeErrorGoogle(Object error) {
+    final texto = error.toString();
+    if (texto.contains('ApiException: 10')) {
+      return 'Error de configuración de Google Sign-In. Avisa a soporte.';
+    }
+    if (texto.contains('network_error') || texto.contains('ApiException: 7')) {
+      return 'Sin conexión a internet. Verifica tu red e intenta de nuevo.';
+    }
+    return 'No se pudo iniciar sesión con Google. Intenta de nuevo.';
   }
 
   // ── Abre URL en el navegador del sistema ──────────────────────────────────
@@ -35,7 +58,22 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _handleGoogleLogin() async {
-    final account = await GoogleAuthService.signIn();
+    GoogleSignInAccount? account;
+    try {
+      account = await GoogleAuthService.signIn();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_mensajeErrorGoogle(e)),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+      return;
+    }
+    // El usuario cerró el selector de cuentas sin elegir ninguna: no es error.
     if (account == null) return;
 
     final auth    = await account.authentication;

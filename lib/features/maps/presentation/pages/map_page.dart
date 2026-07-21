@@ -2,12 +2,12 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../../domain/entities/destination_entity.dart';
 import '../providers/map_provider.dart';
-import '../../domain/entities/destination_entity.dart';
 import '../widgets/destination_bottom_sheet.dart';
 import '../widgets/map_filter_bar.dart';
 import '../../../favoritos/presentation/providers/favoritos_provider.dart';
@@ -254,31 +254,61 @@ class _MapPageState extends State<MapPage> {
                       ),
                     ),
 
-                  MarkerLayer(
-                    markers: [
-                      // Destinos — always visible, icon varies by type
-                      ...destinos.map(
-                        (d) => Marker(
-                          point: LatLng(d.lat, d.lng),
-                          width: 36,
-                          height: 36,
-                          child: GestureDetector(
-                            onTap: () {
-                              provider.selectDestination(d);
-                              _moverCamaraA(d.lat, d.lng);
-                            },
-                            child: Icon(
-                              _iconoPorTipo(d.tipo),
-                              color: _colorPorTipo(d.tipo),
-                              size: 34,
-                              shadows: const [
-                                Shadow(color: Colors.black26, blurRadius: 4),
-                              ],
+                  // Destinos agrupados: evita que se encimen cuando están
+                  // muy cerca entre sí (p. ej. dos lugares en la misma ciudad).
+                  MarkerClusterLayerWidget(
+                    options: MarkerClusterLayerOptions(
+                      maxClusterRadius: 45,
+                      size: const Size(40, 40),
+                      markers: destinos
+                          .map(
+                            (d) => Marker(
+                              point: LatLng(d.lat, d.lng),
+                              width: 36,
+                              height: 36,
+                              child: GestureDetector(
+                                onTap: () {
+                                  provider.selectDestination(d);
+                                  _moverCamaraA(d.lat, d.lng);
+                                },
+                                child: Icon(
+                                  _iconoPorTipo(d.tipo),
+                                  color: _colorPorTipo(d.tipo),
+                                  size: 34,
+                                  shadows: const [
+                                    Shadow(color: Colors.black26, blurRadius: 4),
+                                  ],
+                                ),
+                              ),
                             ),
+                          )
+                          .toList(),
+                      builder: (context, markers) => Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.primary(context),
+                          border: Border.all(color: Colors.white, width: 2),
+                          boxShadow: const [
+                            BoxShadow(color: Colors.black38, blurRadius: 4),
+                          ],
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          '${markers.length}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
                           ),
                         ),
                       ),
+                      // zoomToBoundsOnClick (activado por defecto) ya centra
+                      // y hace zoom automáticamente al tocar un cluster.
+                    ),
+                  ),
 
+                  MarkerLayer(
+                    markers: [
                       // Negocios — appear only when zoomed in (city level)
                       if (mostrarNegocios)
                         ..._negociosConCoordenadas.map(
@@ -603,6 +633,22 @@ class _MapPageState extends State<MapPage> {
                   destino: selected,
                   onCerrar: provider.clearSelection,
                   onGuardar: () {
+                    if (selected.esMock) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Este destino es de muestra y aún no está '
+                            'disponible en el servidor, no se puede guardar.',
+                          ),
+                          backgroundColor: Colors.orange,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(12)),
+                          ),
+                        ),
+                      );
+                      return;
+                    }
                     context
                         .read<FavoritosProvider>()
                         .agregarFavorito(

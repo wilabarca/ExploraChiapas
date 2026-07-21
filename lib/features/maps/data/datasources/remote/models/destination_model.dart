@@ -11,9 +11,13 @@ class DestinationModel extends DestinationEntity {
     required super.calificacion,
     required super.afluencia,
     required super.esSostenible,
+    super.esMock,
   });
 
-  factory DestinationModel.fromJson(Map<String, dynamic> json) =>
+  factory DestinationModel.fromJson(
+    Map<String, dynamic> json, {
+    bool esMock = false,
+  }) =>
       DestinationModel(
         id: json['id'],
         nombre: json['nombre'],
@@ -24,5 +28,6 @@ class DestinationModel extends DestinationEntity {
         calificacion: (json['calificacion'] as num).toDouble(),
         afluencia: json['afluencia'],
         esSostenible: json['es_sostenible'] ?? false,
+        esMock: esMock,
       );
 }

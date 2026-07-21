@@ -64,6 +64,18 @@ class ApiClient {
 
   Dio get dio => _dio;
 
+  // Despierta el servidor de Render (free tier duerme tras 15 min inactivo).
+  // Llamar esto en pantallas donde el usuario tardará unos segundos antes
+  // de disparar la petición real (ej. login), para esconder el cold start.
+  Future<void> warmup() async {
+    try {
+      await _dio.get('/health').timeout(const Duration(seconds: 10));
+    } catch (_) {
+      // No importa si falla: lo único que se busca es mandar tráfico
+      // para que Render despierte la instancia a tiempo.
+    }
+  }
+
   // ✅ 'data' ahora acepta dynamic (Map o FormData), no solo
   // Map<String, dynamic>?. Esto permite subir archivos con multipart
   // sin romper las llamadas existentes que pasan un Map normal.
