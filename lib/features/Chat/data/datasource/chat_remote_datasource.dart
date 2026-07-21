@@ -25,9 +25,25 @@ class ChatRemoteDatasourceImpl implements IChatRemoteDatasource {
       return RecomendacionModel.fromJson(response.data as Map<String, dynamic>);
     }
 
+    final rawError = (response.data['error'] as String?) ?? '';
     throw ServerException(
-      message: response.data['error'] ?? 'Error al generar la recomendacion',
+      message: _mensajeAmigable(rawError),
       statusCode: response.statusCode,
     );
+  }
+
+  static String _mensajeAmigable(String raw) {
+    if (raw.contains('Capa 1') || raw.contains('esquema esperado') || raw.contains('enum')) {
+      return 'No pude entender bien tu solicitud. '
+          'Intenta describir: ¿a dónde quieres ir, cuántas personas viajan, '
+          'cuál es tu presupuesto y cuánto tiempo tienes?';
+    }
+    if (raw.contains('Capa 2') || raw.contains('motor ML') || raw.contains('ML Engine')) {
+      return 'El motor de recomendaciones está tardando. Intenta de nuevo en unos segundos.';
+    }
+    if (raw.isEmpty) {
+      return 'No pude generar tu itinerario. Intenta de nuevo.';
+    }
+    return raw;
   }
 }
