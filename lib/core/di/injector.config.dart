@@ -28,6 +28,8 @@ import '../../features/auth/presentation/providers/auth_provider.dart'
     as _i1054;
 import '../../features/Chat/data/datasource/chat_remote_datasource.dart'
     as _i730;
+import '../../features/Chat/data/datasource/conversacion_remote_datasource.dart'
+    as _i887;
 import '../../features/Chat/data/repositories/chat_repository_impl.dart'
     as _i1018;
 import '../../features/Chat/domain/repositories/i_chat_repository.dart'
@@ -151,6 +153,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i730.IChatRemoteDatasource>(
       () => _i730.ChatRemoteDatasourceImpl(gh<_i322.MlApiClient>()),
     );
+    gh.lazySingleton<_i887.ConversacionRemoteDatasource>(
+      () => _i887.ConversacionRemoteDatasource(gh<_i557.ApiClient>()),
+    );
     gh.factory<_i820.BuscarNegocios>(
       () => _i820.BuscarNegocios(gh<_i252.NegocioRepository>()),
     );
@@ -223,7 +228,10 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i488.ListDestinosUseCase(gh<_i991.DestinoRepository>()),
     );
     gh.factory<_i116.ChatProvider>(
-      () => _i116.ChatProvider(gh<_i301.EnviarMensajeUseCase>()),
+      () => _i116.ChatProvider(
+        gh<_i301.EnviarMensajeUseCase>(),
+        gh<_i887.ConversacionRemoteDatasource>(),
+      ),
     );
     gh.factory<_i309.PromocionesProvider>(
       () => _i309.PromocionesProvider(gh<_i905.GetPromocionesUseCase>()),

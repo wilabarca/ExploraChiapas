@@ -1,11 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../destinos/presentation/pages/lugar_detail_page.dart';
 
 class ChatPlaceCard extends StatelessWidget {
   final Map<String, dynamic> data;
 
   const ChatPlaceCard({super.key, required this.data});
+
+  void _abrirDetalle(BuildContext context) {
+    final nombre       = data['nombre']   as String? ?? 'Lugar';
+    final categoria    = data['categoria'] as String? ?? '';
+    final descripcion  = data['descripcion_corta'] as String? ?? '';
+    final calificacion = (data['calificacion'] as num?)?.toDouble() ?? 0.0;
+    final fotoUrl      = data['foto_principal'] as String? ?? '';
+    final idRaw        = data['id'];
+    final id           = idRaw?.toString() ?? '';
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LugarDetailPage(
+          id:          id,
+          nombre:      nombre,
+          categoria:   categoria,
+          calificacion: calificacion,
+          imageUrl:    fotoUrl,
+          descripcion: descripcion.isNotEmpty ? descripcion : null,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -153,7 +178,7 @@ class ChatPlaceCard extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    onPressed: () {},
+                    onPressed: () => _abrirDetalle(context),
                     icon: Icon(
                       esRestaurante
                           ? Icons.restaurant_outlined
