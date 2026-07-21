@@ -178,8 +178,6 @@ class ProfanityFilter {
     'pitote','pitotes',
 
     // ── MARICON ──────────────────────────────────────────────────────────────
-    'maricon','maricona','maricones',
-    'marica','maricas','maricada','maricadas',
 
     // ── COGER ────────────────────────────────────────────────────────────────
     'cojo','coges','coge','cogemos','cogeis','cogen',
