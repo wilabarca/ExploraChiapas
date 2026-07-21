@@ -9,6 +9,7 @@ import 'detalle_evento_page.dart';
 import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/providers/locale_provider.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/skeleton_loader.dart';
 
 class EventosPage extends StatefulWidget {
   const EventosPage({super.key});
@@ -196,9 +197,7 @@ class _EventosPageState extends State<EventosPage> {
             child: Consumer<EventosProvider>(
               builder: (context, provider, _) {
                 if (provider.status == EventosStatus.loading) {
-                  return Center(
-                    child: CircularProgressIndicator(color: AppColors.primary(context)),
-                  );
+                  return const SkeletonList(count: 4);
                 }
 
                 if (provider.status == EventosStatus.error) {
