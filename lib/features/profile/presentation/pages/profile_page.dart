@@ -96,7 +96,7 @@ class _ProfilePageState extends State<ProfilePage> {
     String s(String key) => AppStrings.tr(key, lang);
 
     return Scaffold(
-      backgroundColor: AppColors.background(context),
+      backgroundColor: const Color(0xFFF2F7F2),
       appBar: const HomeAppBar(),
       bottomNavigationBar: AppBottomNav(
         navItems:   AppBottomNav.items,
