@@ -239,8 +239,8 @@ class _ProfilePageState extends State<ProfilePage> {
                       _PreferenciaTile(
                         icon:  Icons.language_outlined,
                         label: s('idioma'),
-                        valor: prefs.idioma,
-                        onTap: () => _mostrarSelectorIdioma(context, prefs),
+                        valor: _nombreDeIdioma(lang),
+                        onTap: () => _mostrarSelectorIdioma(context, prefs, lang),
                       ),
                       const SizedBox(height: 8),
                       _PreferenciaTile(
@@ -341,13 +341,33 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  void _mostrarSelectorIdioma(BuildContext context, PreferencesProvider prefs) {
+  static String _nombreDeIdioma(String code) {
+    const map = {
+      'es': 'Español',          'en': 'English',
+      'fr': 'Français',         'de': 'Deutsch',
+      'it': 'Italiano',         'pt': 'Português',
+      'zh': '中文',              'ja': '日本語',
+      'ko': '한국어',            'ru': 'Русский',
+      'ar': 'العربية',          'nl': 'Nederlands',
+      'pl': 'Polski',           'tr': 'Türkçe',
+      'vi': 'Tiếng Việt',       'th': 'ภาษาไทย',
+      'id': 'Bahasa Indonesia', 'hi': 'हिन्दी',
+      'sv': 'Svenska',          'da': 'Dansk',
+      'fi': 'Suomi',            'nb': 'Norsk',
+      'cs': 'Čeština',          'hu': 'Magyar',
+      'ro': 'Română',           'uk': 'Українська',
+      'el': 'Ελληνικά',         'ca': 'Català',
+    };
+    return map[code] ?? code.toUpperCase();
+  }
+
+  void _mostrarSelectorIdioma(BuildContext context, PreferencesProvider prefs, String currentCode) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => _LanguagePickerSheet(
-        current: prefs.idioma,
+        currentCode: currentCode,
         onSelected: (nombre, code) {
           prefs.setIdioma(nombre);
           context.read<LocaleProvider>().setLocale(Locale(code));
@@ -652,10 +672,10 @@ class _PreferenciaTile extends StatelessWidget {
 }
 
 class _LanguagePickerSheet extends StatefulWidget {
-  final String current;
+  final String currentCode;
   final void Function(String nombre, String code) onSelected;
 
-  const _LanguagePickerSheet({required this.current, required this.onSelected});
+  const _LanguagePickerSheet({required this.currentCode, required this.onSelected});
 
   @override
   State<_LanguagePickerSheet> createState() => _LanguagePickerSheetState();
@@ -777,7 +797,7 @@ class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
               itemCount: _filtrados.length,
               itemBuilder: (_, i) {
                 final lang       = _filtrados[i];
-                final isSelected = lang[1] == widget.current;
+                final isSelected = lang[0] == widget.currentCode;
                 return ListTile(
                   leading: Text(lang[2], style: const TextStyle(fontSize: 24)),
                   title: Text(
