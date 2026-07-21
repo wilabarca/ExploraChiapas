@@ -16,6 +16,7 @@ import '../../data/home_api_service.dart';
 import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/providers/locale_provider.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/skeleton_loader.dart';
 
 class HomeTuristaPage extends StatefulWidget {
   const HomeTuristaPage({super.key});
@@ -196,13 +197,10 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
                   return Consumer<DestinoProvider>(
                     builder: (context, destinoProvider, child) {
                       if (destinoProvider.listStatus == DestinoStatus.loading) {
-                        return SizedBox(
-                          height: cardHeight,
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              color: AppColors.primary(context),
-                            ),
-                          ),
+                        return SkeletonCardRow(
+                          count: 3,
+                          cardHeight: cardHeight,
+                          cardWidth: 180,
                         );
                       }
 
@@ -322,13 +320,12 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
               Consumer<EventosProvider>(
                 builder: (context, eventosProvider, child) {
                   if (eventosProvider.status == EventosStatus.loading) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 20),
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: Color(0xFF2E7D32),
-                        ),
-                      ),
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        SkeletonEventoItem(),
+                        SkeletonEventoItem(),
+                      ],
                     );
                   }
 
