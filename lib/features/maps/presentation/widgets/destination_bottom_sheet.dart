@@ -217,7 +217,7 @@ class DestinationBottomSheet extends StatelessWidget {
                 tooltip: 'Compartir',
                 onPressed: () {
                   Share.share(
-                    '¡Visita ${destino.name} en ExploraChiapas!\n${destino.description ?? ''}',
+                    '¡Visita ${destino.nombre} en ExploraChiapas!\n${destino.descripcion}',
                   );
                 },
               ),

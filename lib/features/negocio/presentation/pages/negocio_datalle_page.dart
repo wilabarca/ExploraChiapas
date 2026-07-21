@@ -4,6 +4,8 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../favoritos/domain/entities/favorito.dart';
 import '../../../favoritos/presentation/providers/favoritos_provider.dart';
+import '../../../resena/domain/entities/DestinoResenaEntity.dart';
+import '../../../resena/presentation/pages/escribir_resena_page.dart';
 import '../../domain/entities/negocio.dart';
 import '../../domain/usecases/obtener_negocio_por_id.dart';
 import '../../../../core/di/injector.dart';
@@ -129,9 +131,21 @@ class _NegocioDetallePageState extends State<NegocioDetallePage> {
                     widthFactor: 1.0,
                     child: OutlinedButton.icon(
                       onPressed: () {
-                        // TODO: navegar a pantalla de nueva reseña con
-                        // negocioId, o reutilizar '/resenas' con argumento.
-                        Navigator.pushNamed(context, '/resenas');
+                        final entity = DestinoResenaEntity(
+                          id: negocio.id,
+                          nombre: negocio.nombre,
+                          ubicacion: negocio.direccion,
+                          imageUrl: negocio.imagenPrincipal,
+                          calificacion: negocio.calificacionPromedio,
+                          totalResenas: negocio.numeroResenas,
+                          tipo: 'Restaurante',
+                        );
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => EscribirResenaPage(destino: entity),
+                          ),
+                        );
                       },
                       icon: Icon(
                         Icons.rate_review_outlined,
