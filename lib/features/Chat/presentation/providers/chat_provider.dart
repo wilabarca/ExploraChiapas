@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:injectable/injectable.dart';
+import '../../../../../core/error/failures.dart';
 import '../../../../../core/utils/profanity_filter.dart';
 import '../../domain/entities/actividad_entity.dart';
 import '../../domain/usecases/enviar_mensaje_usecase.dart';
@@ -78,9 +79,11 @@ class ChatProvider extends ChangeNotifier {
       (failure) {
         _status = ChatStatus.error;
         _errorMessage = failure.message;
+        final mensaje = failure is NetworkFailure
+            ? 'Sin conexión a internet. Verifica tu red e intenta de nuevo.'
+            : failure.message;
         _mensajes.add(ChatMensaje(
-          contenido: 'No pude generar tu itinerario (${failure.message}). '
-              'Intenta de nuevo.',
+          contenido: mensaje,
           hora: _horaActual(),
           tipo: BubbleType.bot,
         ));
