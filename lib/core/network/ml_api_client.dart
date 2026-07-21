@@ -35,6 +35,18 @@ class MlApiClient {
     }
   }
 
+  Future<List<Map<String, dynamic>>> fetchDestacados({int limite = 10}) async {
+    try {
+      final resp = await _dio
+          .get('/destacados', queryParameters: {'limite': limite})
+          .timeout(const Duration(seconds: 20));
+      final list = (resp.data['destacados'] as List?) ?? [];
+      return list.cast<Map<String, dynamic>>();
+    } catch (_) {
+      return [];
+    }
+  }
+
   Future<Response> post(String path, {Map<String, dynamic>? data}) async {
     try {
       return await _dio.post(path, data: data);
