@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
+
+export 'chat_bubble.dart' show BubbleType;
 
 enum BubbleType { bot, user }
 
@@ -31,8 +34,8 @@ class ChatBubble extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               color: esUsuario
-                  ? const Color(0xFF2E7D32)
-                  : Colors.white,
+                  ? AppColors.primary(context)
+                  : AppColors.surface(context),
               borderRadius: BorderRadius.only(
                 topLeft: const Radius.circular(18),
                 topRight: const Radius.circular(18),
@@ -41,7 +44,7 @@ class ChatBubble extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
+                  color: Colors.black.withValues(alpha: 0.06),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -52,16 +55,18 @@ class ChatBubble extends StatelessWidget {
               style: TextStyle(
                 fontSize: 15,
                 height: 1.5,
-                color: esUsuario ? Colors.white : const Color(0xFF1B1B1B),
+                color: esUsuario
+                    ? AppColors.onPrimary(context)
+                    : AppColors.textPrimary(context),
               ),
             ),
           ),
           const SizedBox(height: 4),
           Text(
             hora,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
-              color: Color(0xFF999999),
+              color: AppColors.textHint(context),
             ),
           ),
         ],

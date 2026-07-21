@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -8,6 +9,7 @@ import '../widgets/chat_bubble.dart';
 import '../widgets/chat_input.dart';
 import '../widgets/chat_destino_card.dart';
 import '../widgets/chat_restaurante_item.dart';
+import '../widgets/chat_place_card.dart';
 import '../../../home/presentation/widgets/home_app_bar.dart';
 
 class ChatRoutesPage extends StatefulWidget {
@@ -60,35 +62,77 @@ class _ChatRoutesPageState extends State<ChatRoutesPage> {
     _scrollToBottom();
   }
 
+  // Separa un texto en segmentos de texto plano y bloques ```card```.
+  // Devuelve widgets listos para insertarse en el ListView.
+  List<Widget> _parsearConCards(String texto, String hora) {
+    final widgets = <Widget>[];
+    final regex   = RegExp(r'```card\s*([\s\S]*?)```');
+    int lastEnd   = 0;
+
+    for (final match in regex.allMatches(texto)) {
+      final antes = texto.substring(lastEnd, match.start).trim();
+      if (antes.isNotEmpty) {
+        widgets.add(ChatBubble(mensaje: antes, hora: hora, tipo: BubbleType.bot));
+      }
+
+      try {
+        final data = jsonDecode(match.group(1)!.trim()) as Map<String, dynamic>;
+        widgets.add(ChatPlaceCard(data: data));
+      } catch (_) {
+        // JSON inválido: mostrar como texto normal
+        widgets.add(ChatBubble(mensaje: match.group(0)!, hora: hora, tipo: BubbleType.bot));
+      }
+
+      lastEnd = match.end;
+    }
+
+    final despues = texto.substring(lastEnd).trim();
+    if (despues.isNotEmpty) {
+      widgets.add(ChatBubble(mensaje: despues, hora: hora, tipo: BubbleType.bot));
+    }
+
+    if (widgets.isEmpty) {
+      widgets.add(ChatBubble(mensaje: texto, hora: hora, tipo: BubbleType.bot));
+    }
+
+    return widgets;
+  }
+
   List<Widget> _construirItems(ChatProvider provider) {
     final items = <Widget>[];
 
     for (final mensaje in provider.mensajes) {
-      items.add(
-        ChatBubble(
+      if (mensaje.tipo == BubbleType.user) {
+        items.add(ChatBubble(
           mensaje: mensaje.contenido,
-          hora: mensaje.hora,
-          tipo: mensaje.tipo,
-        ),
-      );
+          hora:    mensaje.hora,
+          tipo:    BubbleType.user,
+        ));
+        continue;
+      }
 
-      for (final actividad in mensaje.itinerario) {
-        if (actividad.esDestino) {
-          items.add(
-            ChatDestinoCard(
-              nombre: actividad.nombre,
+      // Mensaje del bot: intentar parsear cards embebidas
+      final cardBlocks = _parsearConCards(mensaje.contenido, mensaje.hora);
+      final tieneCards = cardBlocks.any((w) => w is ChatPlaceCard);
+
+      items.addAll(cardBlocks);
+
+      // Fallback: si no hay cards en el texto, renderizar itinerario separado
+      if (!tieneCards) {
+        for (final actividad in mensaje.itinerario) {
+          if (actividad.esDestino) {
+            items.add(ChatDestinoCard(
+              nombre:   actividad.nombre,
               duracion: '${actividad.tiempoHoras.toStringAsFixed(0)} h',
-              precio: '\$${actividad.costoTotalGrupo.toStringAsFixed(0)} MXN',
-            ),
-          );
-        } else if (actividad.esRestaurante) {
-          items.add(
-            ChatRestauranteItem(
+              precio:   '\$${actividad.costoTotalGrupo.toStringAsFixed(0)} MXN',
+            ));
+          } else if (actividad.esRestaurante) {
+            items.add(ChatRestauranteItem(
               nombre: actividad.nombre,
-              tipo: actividad.tipoComida ?? 'Restaurante',
+              tipo:   actividad.tipoComida ?? 'Restaurante',
               precio: '\$${actividad.costoEstimado.toStringAsFixed(0)} MXN pp',
-            ),
-          );
+            ));
+          }
         }
       }
     }
