@@ -9,6 +9,7 @@ class Destino {
   final double averageRating;
   final int totalReviews;
   final bool isSaturated;
+  final String? imageUrl;
 
   const Destino({
     required this.id,
@@ -21,5 +22,6 @@ class Destino {
     required this.averageRating,
     required this.totalReviews,
     required this.isSaturated,
+    this.imageUrl,
   });
 }

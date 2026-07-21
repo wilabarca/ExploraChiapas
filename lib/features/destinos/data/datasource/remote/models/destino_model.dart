@@ -12,6 +12,7 @@ class DestinoModel extends Destino {
     required super.averageRating,
     required super.totalReviews,
     required super.isSaturated,
+    super.imageUrl,
   });
 
   factory DestinoModel.fromJson(Map<String, dynamic> json) {
@@ -26,6 +27,7 @@ class DestinoModel extends Destino {
       averageRating: _parseDouble(json['averageRating']),
       totalReviews: _parseInt(json['totalReviews']),
       isSaturated: _parseBool(json['isSaturated']),
+      imageUrl: json['imageUrl']?.toString(),
     );
   }
 

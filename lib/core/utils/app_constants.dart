@@ -16,6 +16,7 @@ class AppConstants {
 
   // Endpoints principales
   static const String destinationsEndpoint = '/destinations';
+  static const String businessesEndpoint = '/businesses';
   static const String eventsEndpoint = '/events';
   static const String favoritesEndpoint = '/favorites';
 
@@ -86,4 +87,7 @@ static const String uploadPerfilFotoEndpoint = '/uploads/usuarios/perfil';
   // Configuración de red
   static const Duration connectTimeout = Duration(seconds: 15);
   static const Duration receiveTimeout = Duration(seconds: 60);
+  // El ML Engine en Render free tier puede tardar ~50 s en arrancar en frío.
+  // Groq + ML Engine + Groq redactor = hasta ~110 s en worst case.
+  static const Duration mlReceiveTimeout = Duration(seconds: 120);
 }
