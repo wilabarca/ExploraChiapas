@@ -22,6 +22,7 @@ import 'features/eventos/presentation/providers/eventos_provider.dart';
 import 'features/promociones/presentation/providers/promociones_provider.dart';
 import 'features/resena/presentation/providers/ResenasProvider.dart';
 import 'features/favoritos/presentation/providers/favoritos_provider.dart';
+import 'features/categorias/presentation/providers/categorias_provider.dart';
 
 import 'features/home/presentation/pages/home_page.dart';
 import 'features/profile/presentation/pages/profile_page.dart';
@@ -88,6 +89,9 @@ class _ExploraChiapasAppState extends State<ExploraChiapasApp> {
         ),
         ChangeNotifierProvider<FavoritosProvider>(
           create: (_) => getIt<FavoritosProvider>(),
+        ),
+        ChangeNotifierProvider<CategoriasProvider>(
+          create: (_) => getIt<CategoriasProvider>(),
         ),
         ChangeNotifierProvider<PreferencesProvider>.value(
           value: _prefsProvider,
