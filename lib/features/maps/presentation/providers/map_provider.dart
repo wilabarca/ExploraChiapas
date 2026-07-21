@@ -32,6 +32,9 @@ class MapProvider extends ChangeNotifier {
 
   bool get hayAlternativas => _allRoutes.length > 1;
 
+  String? _routeError;
+  String? get routeError => _routeError;
+
   DestinationEntity? _selected;
   DestinationEntity? get selected => _selected;
 
@@ -82,7 +85,10 @@ class MapProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> loadRouteTo(DestinationEntity destino) async {
+  /// Devuelve true si logró calcular al menos una ruta. Si falla, deja el
+  /// motivo en [routeError] y NO entra en modo navegación — antes el error
+  /// se tragaba en silencio y la app "navegaba" sin ninguna ruta dibujada.
+  Future<bool> loadRouteTo(DestinationEntity destino) async {
     double originLat = 16.7521;
     double originLng = -93.1152;
 
@@ -103,7 +109,9 @@ class MapProvider extends ChangeNotifier {
         _userPosition = pos;
         _userHeading = pos.heading;
       }
-    } catch (_) {}
+    } catch (_) {
+      // Sin GPS disponible: se sigue con el origen por defecto (Tuxtla).
+    }
 
     try {
       final rutas = await _getRoute(
@@ -114,10 +122,17 @@ class MapProvider extends ChangeNotifier {
       );
       _allRoutes = rutas;
       _selectedRouteIndex = 0;
+      _routeError = null;
       notifyListeners();
-    } catch (_) {}
+    } catch (e) {
+      _allRoutes = [];
+      _routeError = e.toString().replaceFirst('Exception: ', '');
+      notifyListeners();
+      return false;
+    }
 
     _iniciarNavegacion();
+    return true;
   }
 
   void _iniciarNavegacion() {

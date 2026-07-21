@@ -12,7 +12,14 @@ class EnviarMensajeUseCase {
   Future<Either<Failure, RecomendacionEntity>> call(
     String texto, {
     List<Map<String, String>> historial = const [],
+    double? userLat,
+    double? userLng,
   }) {
-    return _repository.enviarMensaje(texto, historial: historial);
+    return _repository.enviarMensaje(
+      texto,
+      historial: historial,
+      userLat: userLat,
+      userLng: userLng,
+    );
   }
 }

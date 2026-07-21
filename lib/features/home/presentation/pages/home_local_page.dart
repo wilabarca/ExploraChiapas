@@ -372,7 +372,7 @@ class _HomeLocalPageState extends State<HomeLocalPage> {
           const SizedBox(height: 14),
 
           SizedBox(
-            height: 200,
+            height: 212,
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 20),

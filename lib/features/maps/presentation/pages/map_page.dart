@@ -82,20 +82,23 @@ class _MapPageState extends State<MapPage> {
       if (!await Geolocator.isLocationServiceEnabled()) return;
 
       final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
       if (!mounted) return;
       setState(() => _liveUserPosition = pos);
 
-      _liveLocationSub = Geolocator.getPositionStream(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: 5,
-        ),
-      ).listen((pos) {
-        if (!mounted) return;
-        setState(() => _liveUserPosition = pos);
-      });
+      _liveLocationSub =
+          Geolocator.getPositionStream(
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.high,
+              distanceFilter: 5,
+            ),
+          ).listen((pos) {
+            if (!mounted) return;
+            setState(() => _liveUserPosition = pos);
+          });
     } catch (_) {
       // Sin permiso o GPS no disponible: simplemente no se muestra el punto.
     }
@@ -103,13 +106,10 @@ class _MapPageState extends State<MapPage> {
 
   Future<void> _cargarNegocios() async {
     final result = await getIt<ObtenerNegocios>().call();
-    result.fold(
-      (_) {},
-      (lista) {
-        if (!mounted) return;
-        setState(() => _negocios = lista);
-      },
-    );
+    result.fold((_) {}, (lista) {
+      if (!mounted) return;
+      setState(() => _negocios = lista);
+    });
   }
 
   @override
@@ -163,22 +163,33 @@ class _MapPageState extends State<MapPage> {
   // Softer, less saturated versions of the original colors
   Color _colorPorTipo(String tipo) {
     switch (tipo) {
-      case 'naturaleza':  return const Color(0xFF43A047);
-      case 'cultura':     return const Color(0xFF1976D2);
-      case 'gastronomia': return const Color(0xFFEF6C00);
-      case 'aventura':    return const Color(0xFF7B1FA2);
-      default:            return const Color(0xFF00ACC1);
+      case 'naturaleza':
+        return const Color(0xFF43A047);
+      case 'cultura':
+        return const Color(0xFF1976D2);
+      case 'gastronomia':
+        return const Color(0xFFEF6C00);
+      case 'aventura':
+        return const Color(0xFF7B1FA2);
+      default:
+        return const Color(0xFF00ACC1);
     }
   }
 
   IconData _iconoPorTipo(String tipo) {
     switch (tipo) {
-      case 'naturaleza':  return Icons.park_outlined;
-      case 'cultura':     return Icons.account_balance_outlined;
-      case 'gastronomia': return Icons.restaurant_outlined;
-      case 'aventura':    return Icons.terrain_outlined;
-      case 'descanso':    return Icons.spa_outlined;
-      default:            return Icons.place_outlined;
+      case 'naturaleza':
+        return Icons.park_outlined;
+      case 'cultura':
+        return Icons.account_balance_outlined;
+      case 'gastronomia':
+        return Icons.restaurant_outlined;
+      case 'aventura':
+        return Icons.terrain_outlined;
+      case 'descanso':
+        return Icons.spa_outlined;
+      default:
+        return Icons.place_outlined;
     }
   }
 
@@ -201,9 +212,11 @@ class _MapPageState extends State<MapPage> {
   @override
   Widget build(BuildContext context) {
     final mostrarNegocios = _currentZoom >= _zoomNegocios && _busqueda.isEmpty;
-    final _negociosConCoordenadas =
-        _negocios.where((n) => n.latitud != 0.0 && n.longitud != 0.0).toList();
-    final mostrarHintNegocios = _currentZoom >= 10 &&
+    final _negociosConCoordenadas = _negocios
+        .where((n) => n.latitud != 0.0 && n.longitud != 0.0)
+        .toList();
+    final mostrarHintNegocios =
+        _currentZoom >= 10 &&
         _currentZoom < _zoomNegocios &&
         _busqueda.isEmpty &&
         _negociosConCoordenadas.isNotEmpty;
@@ -221,16 +234,30 @@ class _MapPageState extends State<MapPage> {
                 options: MapOptions(
                   initialCenter: _chiapasCenter,
                   initialZoom: 7.5,
+                  minZoom: 6,
+                  // A partir de zoom ~17 el tile de OSM empieza a mostrar
+                  // senderos/detalle crudo sin curar (ver captura: caminos
+                  // de excursionismo, etiquetas en otros idiomas). Limitarlo
+                  // mantiene una vista más "app turística", no de mapa crudo.
+                  maxZoom: 17,
                   onTap: (_, __) {
                     provider.clearSelection();
                     if (_mostrandoBusqueda) _cerrarBusqueda();
                   },
                 ),
                 children: [
+                  // En modo oscuro se usa el basemap oscuro de CARTO en vez
+                  // del tile claro estándar de OSM — de otra forma el mapa
+                  // queda deslumbrante/blanco en medio de una UI oscura.
                   TileLayer(
-                    urlTemplate:
-                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    urlTemplate: AppColors.isDark(context)
+                        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
+                        : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    subdomains: AppColors.isDark(context)
+                        ? const ['a', 'b', 'c', 'd']
+                        : const [],
                     userAgentPackageName: 'com.explorachiapas.app',
+                    maxZoom: 17,
                   ),
 
                   // Routes — blue so they don't blend with green nature markers
@@ -245,8 +272,7 @@ class _MapPageState extends State<MapPage> {
                           color: i == provider.selectedRouteIndex
                               ? const Color(0xFF0277BD)
                               : const Color(0xFF0277BD).withValues(alpha: 0.35),
-                          strokeWidth:
-                              i == provider.selectedRouteIndex ? 5 : 3,
+                          strokeWidth: i == provider.selectedRouteIndex ? 5 : 3,
                           pattern: i == provider.selectedRouteIndex
                               ? const StrokePattern.solid()
                               : const StrokePattern.dotted(),
@@ -276,7 +302,10 @@ class _MapPageState extends State<MapPage> {
                                   color: _colorPorTipo(d.tipo),
                                   size: 34,
                                   shadows: const [
-                                    Shadow(color: Colors.black26, blurRadius: 4),
+                                    Shadow(
+                                      color: Colors.black26,
+                                      blurRadius: 4,
+                                    ),
                                   ],
                                 ),
                               ),
@@ -337,7 +366,8 @@ class _MapPageState extends State<MapPage> {
                         ),
 
                       // User navigation arrow
-                      if (provider.enNavegacion && provider.userPosition != null)
+                      if (provider.enNavegacion &&
+                          provider.userPosition != null)
                         Marker(
                           point: LatLng(
                             provider.userPosition!.latitude,
@@ -353,8 +383,9 @@ class _MapPageState extends State<MapPage> {
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFF1976D2)
-                                        .withValues(alpha: 0.35),
+                                    color: const Color(
+                                      0xFF1976D2,
+                                    ).withValues(alpha: 0.35),
                                     blurRadius: 10,
                                     spreadRadius: 2,
                                   ),
@@ -391,6 +422,18 @@ class _MapPageState extends State<MapPage> {
                         ),
                     ],
                   ),
+
+                  RichAttributionWidget(
+                    alignment: AttributionAlignment.bottomLeft,
+                    popupInitialDisplayDuration: const Duration(seconds: 3),
+                    attributions: [
+                      const TextSourceAttribution(
+                        '© OpenStreetMap contributors',
+                      ),
+                      if (AppColors.isDark(context))
+                        const TextSourceAttribution('© CARTO'),
+                    ],
+                  ),
                 ],
               );
             },
@@ -423,7 +466,10 @@ class _MapPageState extends State<MapPage> {
                   margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                   padding: _mostrandoBusqueda
                       ? const EdgeInsets.symmetric(horizontal: 4, vertical: 4)
-                      : const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      : const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
                   decoration: BoxDecoration(
                     color: AppColors.surface(context),
                     borderRadius: BorderRadius.circular(16),
@@ -439,8 +485,10 @@ class _MapPageState extends State<MapPage> {
                       ? Row(
                           children: [
                             IconButton(
-                              icon: Icon(Icons.arrow_back,
-                                  color: AppColors.textPrimary(context)),
+                              icon: Icon(
+                                Icons.arrow_back,
+                                color: AppColors.textPrimary(context),
+                              ),
                               onPressed: _cerrarBusqueda,
                             ),
                             Expanded(
@@ -450,20 +498,23 @@ class _MapPageState extends State<MapPage> {
                                 decoration: InputDecoration(
                                   hintText: 'Buscar destino...',
                                   hintStyle: TextStyle(
-                                      color: AppColors.textHint(context)),
+                                    color: AppColors.textHint(context),
+                                  ),
                                   border: InputBorder.none,
                                 ),
                                 style: TextStyle(
-                                    color: AppColors.textPrimary(context),
-                                    fontSize: 15),
-                                onChanged: (v) =>
-                                    setState(() => _busqueda = v),
+                                  color: AppColors.textPrimary(context),
+                                  fontSize: 15,
+                                ),
+                                onChanged: (v) => setState(() => _busqueda = v),
                               ),
                             ),
                             if (_busqueda.isNotEmpty)
                               IconButton(
-                                icon: Icon(Icons.clear,
-                                    color: AppColors.textSecondary(context)),
+                                icon: Icon(
+                                  Icons.clear,
+                                  color: AppColors.textSecondary(context),
+                                ),
                                 onPressed: () => setState(() {
                                   _busqueda = '';
                                   _busquedaCtrl.clear();
@@ -473,8 +524,10 @@ class _MapPageState extends State<MapPage> {
                         )
                       : Row(
                           children: [
-                            Icon(Icons.explore_outlined,
-                                color: AppColors.primary(context)),
+                            Icon(
+                              Icons.explore_outlined,
+                              color: AppColors.primary(context),
+                            ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Column(
@@ -502,8 +555,10 @@ class _MapPageState extends State<MapPage> {
                               ),
                             ),
                             IconButton(
-                              icon: Icon(Icons.search,
-                                  color: AppColors.primary(context)),
+                              icon: Icon(
+                                Icons.search,
+                                color: AppColors.primary(context),
+                              ),
                               tooltip: 'Buscar destino',
                               onPressed: () =>
                                   setState(() => _mostrandoBusqueda = true),
@@ -529,8 +584,10 @@ class _MapPageState extends State<MapPage> {
               right: 0,
               child: Center(
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.surface(context).withValues(alpha: 0.93),
                     borderRadius: BorderRadius.circular(20),
@@ -544,8 +601,11 @@ class _MapPageState extends State<MapPage> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.storefront,
-                          size: 14, color: Color(0xFFF57C00)),
+                      const Icon(
+                        Icons.storefront,
+                        size: 14,
+                        color: Color(0xFFF57C00),
+                      ),
                       const SizedBox(width: 6),
                       Text(
                         'Acerca el mapa para ver negocios cercanos',
@@ -560,68 +620,12 @@ class _MapPageState extends State<MapPage> {
               ),
             ),
 
-          // ── Route alternative selector ───────────────────────────────────────
-          Consumer<MapProvider>(
-            builder: (_, provider, __) {
-              if (!provider.hayAlternativas) return const SizedBox.shrink();
-              return Positioned(
-                bottom: 260,
-                left: 16,
-                right: 16,
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface(context),
-                      borderRadius: BorderRadius.circular(30),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 8,
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children:
-                          List.generate(provider.allRoutes.length, (i) {
-                        final isActive = provider.selectedRouteIndex == i;
-                        return GestureDetector(
-                          onTap: () => provider.selectRoute(i),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            margin:
-                                const EdgeInsets.symmetric(horizontal: 4),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: isActive
-                                  ? AppColors.primary(context)
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              i == 0 ? 'Ruta principal' : 'Alternativa $i',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: isActive
-                                    ? Colors.white
-                                    : AppColors.textPrimary(context),
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-
-          // ── Destination bottom sheet ─────────────────────────────────────────
+          // ── Destination bottom sheet (+ selector de rutas, si hay) ───────────
+          // Antes el selector de rutas vivía en un Positioned con offset fijo
+          // (bottom: 260) independiente de la ficha, y como la ficha tiene
+          // alto variable (según descripción/insignias), a veces terminaban
+          // encimados. Ahora van juntos en la misma columna: el selector se
+          // apila arriba de la ficha de forma natural, sin coordenadas fijas.
           Consumer<MapProvider>(
             builder: (_, provider, __) {
               final selected = provider.selected;
@@ -629,96 +633,192 @@ class _MapPageState extends State<MapPage> {
 
               return Align(
                 alignment: Alignment.bottomCenter,
-                child: DestinationBottomSheet(
-                  destino: selected,
-                  onCerrar: provider.clearSelection,
-                  onGuardar: () {
-                    if (selected.esMock) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Este destino es de muestra y aún no está '
-                            'disponible en el servidor, no se puede guardar.',
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (provider.hayAlternativas)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 6,
                           ),
-                          backgroundColor: Colors.orange,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(12)),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface(context),
+                            borderRadius: BorderRadius.circular(30),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 8,
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: List.generate(provider.allRoutes.length, (
+                              i,
+                            ) {
+                              final isActive = provider.selectedRouteIndex == i;
+                              return GestureDetector(
+                                onTap: () => provider.selectRoute(i),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isActive
+                                        ? AppColors.primary(context)
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    i == 0
+                                        ? 'Ruta principal'
+                                        : 'Alternativa $i',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: isActive
+                                          ? Colors.white
+                                          : AppColors.textPrimary(context),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }),
                           ),
                         ),
-                      );
-                      return;
-                    }
-                    context
-                        .read<FavoritosProvider>()
-                        .agregarFavorito(
-                          targetType: FavoritoTargetType.destination,
-                          targetId: selected.id,
-                        )
-                        .then((ok) {
-                      if (!mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            ok
-                                ? '${selected.nombre} guardado en favoritos'
-                                : 'No se pudo guardar en favoritos',
-                          ),
-                          backgroundColor:
-                              ok ? const Color(0xFF388E3C) : Colors.red,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      );
-                    });
-                  },
-                  onVerRuta: () async {
-                    await provider.loadRouteTo(selected);
-                    _moverCamaraA(selected.lat, selected.lng);
-                  },
+                      ),
+                    DestinationBottomSheet(
+                      destino: selected,
+                      onCerrar: provider.clearSelection,
+                      onGuardar: () {
+                        if (selected.esMock) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Este destino es de muestra y aún no está '
+                                'disponible en el servidor, no se puede guardar.',
+                              ),
+                              backgroundColor: Colors.orange,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.all(
+                                  Radius.circular(12),
+                                ),
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+                        context
+                            .read<FavoritosProvider>()
+                            .agregarFavorito(
+                              targetType: FavoritoTargetType.destination,
+                              targetId: selected.id,
+                            )
+                            .then((ok) {
+                              if (!mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    ok
+                                        ? '${selected.nombre} guardado en favoritos'
+                                        : 'No se pudo guardar en favoritos',
+                                  ),
+                                  backgroundColor: ok
+                                      ? const Color(0xFF388E3C)
+                                      : Colors.red,
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              );
+                            });
+                      },
+                      onVerRuta: () async {
+                        final ok = await provider.loadRouteTo(selected);
+                        if (!mounted) return;
+                        if (ok) {
+                          _moverCamaraA(selected.lat, selected.lng);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                provider.routeError ??
+                                    'No se pudo calcular la ruta. Intenta de nuevo.',
+                              ),
+                              backgroundColor: Colors.red,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ],
                 ),
               );
             },
           ),
 
           // ── Recenter button ─────────────────────────────────────────────────
-          Positioned(
-            right: 16,
-            bottom: 200,
-            child: Consumer<MapProvider>(
-              builder: (ctx, provider, __) => FloatingActionButton.small(
-                onPressed: () {
-                  if (provider.enNavegacion && provider.userPosition != null) {
-                    _mapController.move(
-                      LatLng(
-                        provider.userPosition!.latitude,
-                        provider.userPosition!.longitude,
-                      ),
-                      17,
-                    );
-                  } else {
-                    _mapController.move(_chiapasCenter, 7.5);
-                  }
-                },
-                backgroundColor: Colors.white,
-                elevation: 4,
-                child: Icon(
-                  // Different icons: follow user vs. see full state
-                  provider.enNavegacion
-                      ? Icons.my_location
-                      : Icons.zoom_out_map,
-                  color: AppColors.primary(ctx),
+          // Oculto mientras la ficha del destino está abierta: su alto
+          // varía (badges, descripción larga, etc.) y este botón de
+          // posición fija terminaba encimado sobre el título.
+          Consumer<MapProvider>(
+            builder: (ctx, provider, __) {
+              if (provider.selected != null) return const SizedBox.shrink();
+              return Positioned(
+                right: 16,
+                bottom: 200,
+                child: FloatingActionButton.small(
+                  onPressed: () {
+                    if (provider.enNavegacion &&
+                        provider.userPosition != null) {
+                      _mapController.move(
+                        LatLng(
+                          provider.userPosition!.latitude,
+                          provider.userPosition!.longitude,
+                        ),
+                        17,
+                      );
+                    } else {
+                      _mapController.move(_chiapasCenter, 7.5);
+                    }
+                  },
+                  backgroundColor: AppColors.surface(context),
+                  elevation: 4,
+                  child: Icon(
+                    // Different icons: follow user vs. see full state
+                    provider.enNavegacion
+                        ? Icons.my_location
+                        : Icons.zoom_out_map,
+                    color: AppColors.primary(ctx),
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
 
           // ── Stop navigation button ──────────────────────────────────────────
+          // Se oculta si la ficha del destino ya está abierta: su propia "X"
+          // hace lo mismo (provider.clearSelection) y, al tener alto
+          // variable, chocaba con este botón de posición fija.
           Consumer<MapProvider>(
             builder: (_, provider, __) {
-              if (!provider.enNavegacion) return const SizedBox.shrink();
+              if (!provider.enNavegacion || provider.selected != null) {
+                return const SizedBox.shrink();
+              }
               return Positioned(
                 left: 16,
                 bottom: 200,

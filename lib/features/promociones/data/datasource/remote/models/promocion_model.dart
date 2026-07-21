@@ -1,3 +1,4 @@
+import '../../../../../../core/utils/media_url_resolver.dart';
 import '../../../../domain/entities/promocion.dart';
 
 class PromocionModel extends PromocionEntity {
@@ -20,7 +21,7 @@ class PromocionModel extends PromocionEntity {
       id: json['id'] as String,
       titulo: json['titulo'] as String,
       descripcion: json['descripcion'] as String?,
-      imagenUrl: json['imagenUrl'] as String?,
+      imagenUrl: resolveMediaUrl(json['imagenUrl'] as String?),
       precio: (json['precio'] as num?)?.toDouble(),
       negocioId: json['negocioId'] as String,
       negocioNombre: json['negocioNombre'] as String?,

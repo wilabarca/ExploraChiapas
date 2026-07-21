@@ -6,10 +6,14 @@ import '../providers/eventos_provider.dart';
 import '../widgets/evento_card.dart';
 import '../widgets/evento_filtro_chip.dart';
 import 'detalle_evento_page.dart';
+import '../../../categorias/presentation/providers/categorias_provider.dart';
 import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/providers/locale_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/skeleton_loader.dart';
+
+const String _filtroTodos = 'Todos';
+const String _filtroFinDeSemana = 'Este fin de semana';
 
 class EventosPage extends StatefulWidget {
   const EventosPage({super.key});
@@ -19,18 +23,9 @@ class EventosPage extends StatefulWidget {
 }
 
 class _EventosPageState extends State<EventosPage> {
-  String _filtroActivo = 'Todos';
+  String _filtroActivo = _filtroTodos;
   String _busqueda = '';
   final _searchCtrl = TextEditingController();
-
-  final _filtros = [
-    'Todos',
-    'Este fin de semana',
-    'Festivales',
-    'Talleres',
-    'Gastronomía',
-    'Cultura',
-  ];
 
   @override
   void initState() {
@@ -41,6 +36,7 @@ class _EventosPageState extends State<EventosPage> {
       if (provider.status == EventosStatus.idle) {
         provider.cargarEventos();
       }
+      context.read<CategoriasProvider>().cargarSiHaceFalta();
     });
   }
 
@@ -98,9 +94,9 @@ class _EventosPageState extends State<EventosPage> {
   List<EventoEntity> _filtrar(List<Evento> eventos) {
     var lista = eventos.where((e) => e.activo).map(_mapEvento).toList();
 
-    if (_filtroActivo == 'Este fin de semana') {
+    if (_filtroActivo == _filtroFinDeSemana) {
       lista = lista.where((e) => _esEsteFinDeSemana(e.fechaInicio)).toList();
-    } else if (_filtroActivo != 'Todos') {
+    } else if (_filtroActivo != _filtroTodos) {
       lista = lista.where((e) => e.categoria == _filtroActivo).toList();
     }
 
@@ -179,15 +175,33 @@ class _EventosPageState extends State<EventosPage> {
 
           SizedBox(
             height: 42,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: _filtros.length,
-              itemBuilder: (context, i) => EventoFiltroChip(
-                label: _filtros[i],
-                activo: _filtros[i] == _filtroActivo,
-                onTap: () => setState(() => _filtroActivo = _filtros[i]),
-              ),
+            child: Consumer<CategoriasProvider>(
+              builder: (context, categoriasProvider, _) {
+                // Solo categorías que el backend marca como aplicables a
+                // eventos (GET /categories -> aplicaAEventos: true), no
+                // una lista inventada a mano.
+                final categorias = categoriasProvider.categorias
+                    .where((c) => c.aplicaAEventos)
+                    .map((c) => c.nombre)
+                    .toList();
+
+                final filtros = [
+                  _filtroTodos,
+                  _filtroFinDeSemana,
+                  ...categorias,
+                ];
+
+                return ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: filtros.length,
+                  itemBuilder: (context, i) => EventoFiltroChip(
+                    label: filtros[i],
+                    activo: filtros[i] == _filtroActivo,
+                    onTap: () => setState(() => _filtroActivo = filtros[i]),
+                  ),
+                );
+              },
             ),
           ),
 

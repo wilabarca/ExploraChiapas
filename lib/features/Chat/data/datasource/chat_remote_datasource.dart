@@ -8,6 +8,8 @@ abstract class IChatRemoteDatasource {
   Future<RecomendacionModel> enviarMensaje(
     String texto, {
     List<Map<String, String>> historial = const [],
+    double? userLat,
+    double? userLng,
   });
 }
 
@@ -21,10 +23,18 @@ class ChatRemoteDatasourceImpl implements IChatRemoteDatasource {
   Future<RecomendacionModel> enviarMensaje(
     String texto, {
     List<Map<String, String>> historial = const [],
+    double? userLat,
+    double? userLng,
   }) async {
+    final body = <String, dynamic>{
+      'texto': texto,
+      'historial': historial,
+      if (userLat != null) 'user_lat': userLat,
+      if (userLng != null) 'user_lng': userLng,
+    };
     final response = await _mlApiClient.post(
       AppConstants.planearEndpoint,
-      data: {'texto': texto, 'historial': historial},
+      data: body,
     );
 
     if (response.statusCode == 200) {

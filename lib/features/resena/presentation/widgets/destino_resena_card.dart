@@ -1,7 +1,6 @@
 import 'package:explorachiapas/features/resena/domain/entities/DestinoResenaEntity.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../domain/entities/resena_entity.dart';
 import 'star_rating.dart';
 
 class DestinoResenaCard extends StatelessWidget {
@@ -10,18 +9,19 @@ class DestinoResenaCard extends StatelessWidget {
 
   const DestinoResenaCard({super.key, required this.destino, this.onTap});
 
-  Color get _tipoColor {
-    switch (destino.tipo) {
-      case 'Restaurante':
-        return const Color(0xFFFF6F00);
-      case 'Hotel':
-        return const Color(0xFF1565C0);
-      case 'Cultura':
-        return const Color(0xFF6A1B9A);
-      default:
-        return const Color(0xFF2E7D32);
-    }
-  }
+  static const _coloresPorCategoria = {
+    'Naturaleza': Color(0xFF43A047),
+    'Cultura': Color(0xFF1976D2),
+    'Gastronomía': Color(0xFFEF6C00),
+    'Aventura': Color(0xFF7B1FA2),
+    'Arqueología': Color(0xFF8D6E63),
+    'Pueblos Mágicos': Color(0xFFC2185B),
+    'Restaurante': Color(0xFFFF6F00),
+    'Hotel': Color(0xFF1565C0),
+  };
+
+  Color get _tipoColor =>
+      _coloresPorCategoria[destino.tipo] ?? const Color(0xFF2E7D32);
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +36,7 @@ class DestinoResenaCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.07),
+                  color: Colors.black.withValues(alpha: 0.07),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -113,7 +113,7 @@ class DestinoResenaCard extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: _tipoColor.withOpacity(0.1),
+                            color: _tipoColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(

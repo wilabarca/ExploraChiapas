@@ -34,13 +34,14 @@ class ChatPlaceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final nombre        = data['nombre']          as String? ?? 'Lugar';
-    final categoria     = data['categoria']       as String? ?? '';
-    final direccion     = data['direccion']       as String? ?? '';
-    final descripcion   = data['descripcion_corta'] as String? ?? '';
-    final fotoUrl       = data['foto_principal']  as String?;
-    final calificacion  = (data['calificacion']   as num?)?.toDouble() ?? 0.0;
-    final esRestaurante = categoria.toLowerCase().contains('restaurante');
+    final nombre              = data['nombre']                   as String? ?? 'Lugar';
+    final categoria           = data['categoria']                as String? ?? '';
+    final direccion           = data['direccion']                as String? ?? '';
+    final descripcion         = data['descripcion_corta']        as String? ?? '';
+    final fotoUrl             = data['foto_principal']           as String?;
+    final calificacion        = (data['calificacion']            as num?)?.toDouble() ?? 0.0;
+    final tiempoTraslado      = data['tiempo_traslado_minutos']  as int?;
+    final esRestaurante       = categoria.toLowerCase().contains('restaurante');
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -97,6 +98,37 @@ class ChatPlaceCard extends StatelessWidget {
                   ),
                 ),
               ),
+              // Tiempo de traslado (solo si viene del servidor)
+              if (tiempoTraslado != null)
+                Positioned(
+                  bottom: 12, left: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.directions_car_outlined,
+                            color: Colors.white, size: 13),
+                        const SizedBox(width: 4),
+                        Text(
+                          tiempoTraslado < 60
+                              ? '$tiempoTraslado min'
+                              : '${(tiempoTraslado / 60).floor()} h ${tiempoTraslado % 60} min',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
               // Calificación (solo si > 0)
               if (calificacion > 0)
                 Positioned(

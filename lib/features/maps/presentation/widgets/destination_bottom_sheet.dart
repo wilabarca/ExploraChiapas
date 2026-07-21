@@ -57,30 +57,38 @@ class DestinationBottomSheet extends StatelessWidget {
                   children: [
                     Text(
                       destino.nombre,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary(context),
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Row(
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        const Icon(Icons.star_rounded,
-                            color: Color(0xFFFFC107), size: 16),
-                        const SizedBox(width: 4),
-                        Text(
-                          destino.calificacion.toStringAsFixed(1),
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary(context),
-                          ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.star_rounded,
+                                color: Color(0xFFFFC107), size: 16),
+                            const SizedBox(width: 4),
+                            Text(
+                              destino.calificacion.toStringAsFixed(1),
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary(context),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 8),
                         _TipoBadge(tipo: destino.tipo),
-                        if (destino.esMock) ...[
-                          const SizedBox(width: 8),
+                        if (destino.esMock)
                           Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 3),
@@ -97,7 +105,6 @@ class DestinationBottomSheet extends StatelessWidget {
                               ),
                             ),
                           ),
-                        ],
                       ],
                     ),
                   ],
@@ -274,6 +281,13 @@ class _TipoBadge extends StatelessWidget {
     'aventura':    Color(0xFF7B1FA2),
     'descanso':    Color(0xFF00ACC1),
   };
+  static const _iconos = {
+    'naturaleza':  Icons.park_outlined,
+    'cultura':     Icons.account_balance_outlined,
+    'gastronomia': Icons.restaurant_outlined,
+    'aventura':    Icons.terrain_outlined,
+    'descanso':    Icons.spa_outlined,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -282,6 +296,7 @@ class _TipoBadge extends StatelessWidget {
         ? (_fondosDark[tipo] ?? const Color(0xFF1B3A1C))
         : (_fondos[tipo] ?? const Color(0xFFE8F5E9));
     final texto = _textos[tipo] ?? const Color(0xFF43A047);
+    final icono = _iconos[tipo] ?? Icons.place_outlined;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
@@ -289,13 +304,20 @@ class _TipoBadge extends StatelessWidget {
         color: fondo,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(
-        tipo[0].toUpperCase() + tipo.substring(1),
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: texto,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icono, size: 12, color: texto),
+          const SizedBox(width: 4),
+          Text(
+            tipo[0].toUpperCase() + tipo.substring(1),
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: texto,
+            ),
+          ),
+        ],
       ),
     );
   }
