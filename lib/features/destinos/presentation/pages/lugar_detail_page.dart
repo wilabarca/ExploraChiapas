@@ -46,9 +46,9 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ResenasProvider>().cargarResenas(
-            targetType: 'destination',
-            targetId: widget.id,
-          );
+        targetType: 'destination',
+        targetId: widget.id,
+      );
     });
   }
 
@@ -64,9 +64,7 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
     );
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => EscribirResenaPage(destino: destino),
-      ),
+      MaterialPageRoute(builder: (_) => EscribirResenaPage(destino: destino)),
     );
   }
 
@@ -78,7 +76,7 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
       context,
       MaterialPageRoute(
         builder: (_) => MapaRutaPage(
-          nombre:  widget.nombre,
+          nombre: widget.nombre,
           destLat: widget.lat!,
           destLng: widget.lng!,
         ),
@@ -97,8 +95,10 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
             pinned: true,
             backgroundColor: AppColors.surface(context),
             leading: IconButton(
-              icon: Icon(Icons.arrow_back,
-                  color: AppColors.textPrimary(context)),
+              icon: Icon(
+                Icons.arrow_back,
+                color: AppColors.textPrimary(context),
+              ),
               onPressed: () => Navigator.pop(context),
             ),
             title: Text(
@@ -114,9 +114,8 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
                     background: Image.network(
                       widget.imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: AppColors.primaryContainer(context),
-                      ),
+                      errorBuilder: (_, __, ___) =>
+                          Container(color: AppColors.primaryContainer(context)),
                     ),
                   )
                 : null,
@@ -132,7 +131,9 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.primaryContainer(context),
                           borderRadius: BorderRadius.circular(20),
@@ -147,8 +148,11 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Icon(Icons.star,
-                          size: 16, color: Color(0xFFFFC107)),
+                      const Icon(
+                        Icons.star,
+                        size: 16,
+                        color: Color(0xFFFFC107),
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         widget.calificacion.toStringAsFixed(1),
@@ -157,8 +161,9 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
                       Text(
                         '  (${widget.totalResenas} reseñas)',
                         style: TextStyle(
-                            color: AppColors.textSecondary(context),
-                            fontSize: 13),
+                          color: AppColors.textSecondary(context),
+                          fontSize: 13,
+                        ),
                       ),
                     ],
                   ),
@@ -204,8 +209,11 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
                       ),
                       TextButton.icon(
                         onPressed: _irAEscribirResena,
-                        icon: Icon(Icons.rate_review_outlined,
-                            size: 18, color: AppColors.primary(context)),
+                        icon: Icon(
+                          Icons.rate_review_outlined,
+                          size: 18,
+                          color: AppColors.primary(context),
+                        ),
                         label: Text(
                           'Escribir reseña',
                           style: TextStyle(color: AppColors.primary(context)),
@@ -232,7 +240,8 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
                             child: Text(
                               'Aún no hay reseñas. ¡Sé el primero!',
                               style: TextStyle(
-                                  color: AppColors.textSecondary(context)),
+                                color: AppColors.textSecondary(context),
+                              ),
                             ),
                           ),
                         );
@@ -271,21 +280,25 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: _trazarRuta,
-                        icon: const Icon(Icons.directions_outlined,
-                            color: Colors.white),
+                        icon: const Icon(
+                          Icons.directions_outlined,
+                          color: Colors.white,
+                        ),
                         label: const Text(
                           'Trazar ruta',
                           style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600),
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF1565C0),
                           elevation: 0,
                           minimumSize: const Size(0, 52),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30)),
+                            borderRadius: BorderRadius.circular(30),
+                          ),
                         ),
                       ),
                     ),
@@ -293,21 +306,25 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: _irAEscribirResena,
-                        icon: const Icon(Icons.rate_review_outlined,
-                            color: Colors.white),
+                        icon: const Icon(
+                          Icons.rate_review_outlined,
+                          color: Colors.white,
+                        ),
                         label: const Text(
                           'Dejar reseña',
                           style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600),
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary(context),
                           elevation: 0,
                           minimumSize: const Size(0, 52),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30)),
+                            borderRadius: BorderRadius.circular(30),
+                          ),
                         ),
                       ),
                     ),
@@ -315,21 +332,25 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
                 )
               : ElevatedButton.icon(
                   onPressed: _irAEscribirResena,
-                  icon: const Icon(Icons.rate_review_outlined,
-                      color: Colors.white),
+                  icon: const Icon(
+                    Icons.rate_review_outlined,
+                    color: Colors.white,
+                  ),
                   label: const Text(
                     'Dejar reseña',
                     style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600),
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary(context),
                     elevation: 0,
                     minimumSize: const Size(double.infinity, 52),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30)),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
                   ),
                 ),
         ),
@@ -357,13 +378,13 @@ class _RutaSheet extends StatefulWidget {
 
 class _RutaSheetState extends State<_RutaSheet> {
   _RutaInfo? _info;
-  String?    _error;
-  bool       _cargando  = true;
-  bool       _llegaste  = false;
-  bool       _enVivo    = false;
+  String? _error;
+  bool _cargando = true;
+  bool _llegaste = false;
+  bool _enVivo = false;
 
   StreamSubscription<Position>? _posStream;
-  Timer?    _osrmTimer;
+  Timer? _osrmTimer;
   Position? _ultimaPos;
 
   @override
@@ -382,10 +403,12 @@ class _RutaSheetState extends State<_RutaSheet> {
   Future<void> _iniciar() async {
     final pos = await _obtenerPosicion();
     if (pos == null) {
-      if (mounted) setState(() {
-        _error = 'No se pudo obtener tu ubicación. Activa el GPS e intenta de nuevo.';
-        _cargando = false;
-      });
+      if (mounted)
+        setState(() {
+          _error =
+              'No se pudo obtener tu ubicación. Activa el GPS e intenta de nuevo.';
+          _cargando = false;
+        });
       return;
     }
     _ultimaPos = pos;
@@ -405,64 +428,78 @@ class _RutaSheetState extends State<_RutaSheet> {
       final routes = resp.data['routes'] as List?;
       if (routes != null && routes.isNotEmpty) {
         final route = routes[0] as Map;
-        if (mounted) setState(() {
-          _info = _RutaInfo(
-            distanciaKm: (route['distance'] as num).toDouble() / 1000,
-            duracionMin: (route['duration'] as num).toDouble() / 60,
-            origenLat: pos.latitude,
-            origenLng: pos.longitude,
-          );
-          _cargando = false;
-        });
+        if (mounted)
+          setState(() {
+            _info = _RutaInfo(
+              distanciaKm: (route['distance'] as num).toDouble() / 1000,
+              duracionMin: (route['duration'] as num).toDouble() / 60,
+              origenLat: pos.latitude,
+              origenLng: pos.longitude,
+            );
+            _cargando = false;
+          });
         return;
       }
     } catch (_) {}
 
     // Fallback Haversine con factor de carretera 1.4
-    final dist = _haversine(pos.latitude, pos.longitude, widget.destLat, widget.destLng);
-    if (mounted) setState(() {
-      _info = _RutaInfo(
-        distanciaKm: dist,
-        duracionMin: dist * 1.4,
-        origenLat: pos.latitude,
-        origenLng: pos.longitude,
-        esEstimado: true,
-      );
-      _cargando = false;
-    });
-  }
-
-  void _iniciarTracking() {
-    // Actualiza cada vez que el usuario se mueve ≥30 m
-    _posStream = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 30,
-      ),
-    ).listen((pos) {
-      _ultimaPos = pos;
-      final dist = _haversine(pos.latitude, pos.longitude, widget.destLat, widget.destLng);
-
-      if (dist < 0.1) {
-        // Llegó (dentro de 100 m)
-        if (mounted) setState(() => _llegaste = true);
-        _posStream?.cancel();
-        _osrmTimer?.cancel();
-        return;
-      }
-
-      // Actualización rápida con Haversine mientras el usuario se mueve
-      if (mounted) setState(() {
-        _enVivo = true;
+    final dist = _haversine(
+      pos.latitude,
+      pos.longitude,
+      widget.destLat,
+      widget.destLng,
+    );
+    if (mounted)
+      setState(() {
         _info = _RutaInfo(
           distanciaKm: dist,
           duracionMin: dist * 1.4,
           origenLat: pos.latitude,
           origenLng: pos.longitude,
-          esEstimado: _info?.esEstimado ?? true,
+          esEstimado: true,
         );
+        _cargando = false;
       });
-    }, onError: (_) {});
+  }
+
+  void _iniciarTracking() {
+    // Actualiza cada vez que el usuario se mueve ≥30 m
+    _posStream =
+        Geolocator.getPositionStream(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 30,
+          ),
+        ).listen((pos) {
+          _ultimaPos = pos;
+          final dist = _haversine(
+            pos.latitude,
+            pos.longitude,
+            widget.destLat,
+            widget.destLng,
+          );
+
+          if (dist < 0.1) {
+            // Llegó (dentro de 100 m)
+            if (mounted) setState(() => _llegaste = true);
+            _posStream?.cancel();
+            _osrmTimer?.cancel();
+            return;
+          }
+
+          // Actualización rápida con Haversine mientras el usuario se mueve
+          if (mounted)
+            setState(() {
+              _enVivo = true;
+              _info = _RutaInfo(
+                distanciaKm: dist,
+                duracionMin: dist * 1.4,
+                origenLat: pos.latitude,
+                origenLng: pos.longitude,
+                esEstimado: _info?.esEstimado ?? true,
+              );
+            });
+        }, onError: (_) {});
 
     // Cada 2 minutos recalcula con OSRM para obtener distancia real por carretera
     _osrmTimer = Timer.periodic(const Duration(minutes: 2), (_) async {
@@ -479,7 +516,8 @@ class _RutaSheetState extends State<_RutaSheet> {
         permiso = await Geolocator.requestPermission();
       }
       if (permiso == LocationPermission.denied ||
-          permiso == LocationPermission.deniedForever) return null;
+          permiso == LocationPermission.deniedForever)
+        return null;
       return await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
@@ -495,7 +533,8 @@ class _RutaSheetState extends State<_RutaSheet> {
     const r = 6371.0;
     final dLat = _rad(lat2 - lat1);
     final dLon = _rad(lon2 - lon1);
-    final a = sin(dLat / 2) * sin(dLat / 2) +
+    final a =
+        sin(dLat / 2) * sin(dLat / 2) +
         cos(_rad(lat1)) * cos(_rad(lat2)) * sin(dLon / 2) * sin(dLon / 2);
     return r * 2 * atan2(sqrt(a), sqrt(1 - a));
   }
@@ -534,10 +573,11 @@ class _RutaSheetState extends State<_RutaSheet> {
         children: [
           // Handle
           Container(
-            width: 40, height: 4,
+            width: 40,
+            height: 4,
             margin: const EdgeInsets.only(bottom: 20),
             decoration: BoxDecoration(
-              color: Colors.grey[300],
+              color: AppColors.borderSubtle(context),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -545,7 +585,11 @@ class _RutaSheetState extends State<_RutaSheet> {
           // Título + badge EN VIVO
           Row(
             children: [
-              const Icon(Icons.location_on, color: Color(0xFF1565C0), size: 22),
+              Icon(
+                Icons.location_on,
+                color: AppColors.primary(context),
+                size: 22,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -559,7 +603,10 @@ class _RutaSheetState extends State<_RutaSheet> {
               ),
               if (_enVivo && !_llegaste)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.green,
                     borderRadius: BorderRadius.circular(20),
@@ -569,11 +616,14 @@ class _RutaSheetState extends State<_RutaSheet> {
                     children: [
                       Icon(Icons.circle, color: Colors.white, size: 7),
                       SizedBox(width: 4),
-                      Text('EN VIVO',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold)),
+                      Text(
+                        'EN VIVO',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -583,8 +633,11 @@ class _RutaSheetState extends State<_RutaSheet> {
 
           if (_llegaste) ...[
             // ── Pantalla de llegada ───────────────────────────────────────
-            const Icon(Icons.check_circle_outline,
-                color: Colors.green, size: 56),
+            const Icon(
+              Icons.check_circle_outline,
+              color: Colors.green,
+              size: 56,
+            ),
             const SizedBox(height: 10),
             Text(
               '¡Llegaste!',
@@ -602,14 +655,22 @@ class _RutaSheetState extends State<_RutaSheet> {
           ] else if (_cargando) ...[
             const CircularProgressIndicator(),
             const SizedBox(height: 12),
-            Text('Calculando ruta...',
-                style: TextStyle(color: AppColors.textSecondary(context))),
+            Text(
+              'Calculando ruta...',
+              style: TextStyle(color: AppColors.textSecondary(context)),
+            ),
           ] else if (_error != null) ...[
-            Icon(Icons.error_outline, color: Colors.red[400], size: 40),
+            Icon(
+              Icons.error_outline,
+              color: AppColors.error(context),
+              size: 40,
+            ),
             const SizedBox(height: 8),
-            Text(_error!,
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textSecondary(context))),
+            Text(
+              _error!,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textSecondary(context)),
+            ),
           ] else if (_info != null) ...[
             // ── Métricas de ruta ──────────────────────────────────────────
             Row(
@@ -620,7 +681,11 @@ class _RutaSheetState extends State<_RutaSheet> {
                   valor: _formatDuracion(_info!.duracionMin),
                   etiqueta: 'Tiempo restante',
                 ),
-                Container(width: 1, height: 50, color: Colors.grey[200]),
+                Container(
+                  width: 1,
+                  height: 50,
+                  color: AppColors.borderSubtle(context),
+                ),
                 _InfoChip(
                   icon: Icons.straighten_outlined,
                   valor: _info!.distanciaKm >= 1
@@ -639,7 +704,9 @@ class _RutaSheetState extends State<_RutaSheet> {
                       : '* Estimación en línea recta (sin conexión a servidor de rutas)',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      fontSize: 11, color: AppColors.textSecondary(context)),
+                    fontSize: 11,
+                    color: AppColors.textSecondary(context),
+                  ),
                 ),
               ),
             if (!_enVivo && !_info!.esEstimado)
@@ -648,7 +715,9 @@ class _RutaSheetState extends State<_RutaSheet> {
                 child: Text(
                   'Se actualizará automáticamente al moverte',
                   style: TextStyle(
-                      fontSize: 11, color: AppColors.textSecondary(context)),
+                    fontSize: 11,
+                    color: AppColors.textSecondary(context),
+                  ),
                 ),
               ),
             const SizedBox(height: 24),
@@ -656,20 +725,26 @@ class _RutaSheetState extends State<_RutaSheet> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: _abrirEnMaps,
-                icon: const Icon(Icons.open_in_new, color: Colors.white, size: 18),
+                icon: const Icon(
+                  Icons.open_in_new,
+                  color: Colors.white,
+                  size: 18,
+                ),
                 label: const Text(
                   'Abrir en Google Maps',
                   style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600),
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1565C0),
                   elevation: 0,
                   minimumSize: const Size(double.infinity, 52),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30)),
+                    borderRadius: BorderRadius.circular(30),
+                  ),
                 ),
               ),
             ),
@@ -712,7 +787,7 @@ class _InfoChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Icon(icon, color: const Color(0xFF1565C0), size: 28),
+        Icon(icon, color: AppColors.primary(context), size: 28),
         const SizedBox(height: 6),
         Text(
           valor,
@@ -725,7 +800,9 @@ class _InfoChip extends StatelessWidget {
         Text(
           etiqueta,
           style: TextStyle(
-              fontSize: 12, color: AppColors.textSecondary(context)),
+            fontSize: 12,
+            color: AppColors.textSecondary(context),
+          ),
         ),
       ],
     );

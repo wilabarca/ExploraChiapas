@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/negocio.dart';
 
 class NegocioInfo extends StatelessWidget {
@@ -8,23 +9,30 @@ class NegocioInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorPromo = AppColors.isDark(context)
+        ? const Color(0xFFFFCC80)
+        : const Color(0xFFE65100);
+    final fondoPromo = AppColors.isDark(context)
+        ? const Color(0xFF4A2E00)
+        : const Color(0xFFFFF3E0);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Descripción',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF1B1B1B),
+            color: AppColors.textPrimary(context),
           ),
         ),
         const SizedBox(height: 8),
         Text(
           negocio.descripcion,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
-            color: Color(0xFF555555),
+            color: AppColors.textSecondary(context),
             height: 1.5,
           ),
         ),
@@ -32,13 +40,19 @@ class NegocioInfo extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.location_on_outlined,
-                size: 18, color: Color(0xFF2E7D32)),
+            Icon(
+              Icons.location_on_outlined,
+              size: 18,
+              color: AppColors.primary(context),
+            ),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 negocio.direccion,
-                style: const TextStyle(fontSize: 13.5, color: Color(0xFF444444)),
+                style: TextStyle(
+                  fontSize: 13.5,
+                  color: AppColors.textSecondary(context),
+                ),
               ),
             ),
           ],
@@ -50,11 +64,15 @@ class NegocioInfo extends StatelessWidget {
           aspectRatio: 16 / 8,
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFE8F5E9),
+              color: AppColors.primaryContainer(context),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Center(
-              child: Icon(Icons.map_outlined, size: 36, color: Color(0xFF2E7D32)),
+            child: Center(
+              child: Icon(
+                Icons.map_outlined,
+                size: 36,
+                color: AppColors.primary(context),
+              ),
             ),
           ),
         ),
@@ -62,14 +80,18 @@ class NegocioInfo extends StatelessWidget {
           const SizedBox(height: 18),
           Row(
             children: [
-              const Icon(Icons.sell_outlined, size: 18, color: Color(0xFF2E7D32)),
+              Icon(
+                Icons.sell_outlined,
+                size: 18,
+                color: AppColors.primary(context),
+              ),
               const SizedBox(width: 8),
               Text(
                 'Desde \$${negocio.precioDesde!.toStringAsFixed(0)}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF2E7D32),
+                  color: AppColors.primary(context),
                 ),
               ),
             ],
@@ -77,12 +99,12 @@ class NegocioInfo extends StatelessWidget {
         ],
         if (negocio.promocionesVigentes.isNotEmpty) ...[
           const SizedBox(height: 18),
-          const Text(
+          Text(
             'Promociones vigentes',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1B1B1B),
+              color: AppColors.textPrimary(context),
             ),
           ),
           const SizedBox(height: 8),
@@ -91,18 +113,17 @@ class NegocioInfo extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF3E0),
+                color: fondoPromo,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.local_offer_outlined,
-                      size: 15, color: Color(0xFFE65100)),
+                  Icon(Icons.local_offer_outlined, size: 15, color: colorPromo),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       promo,
-                      style: const TextStyle(fontSize: 13, color: Color(0xFFE65100)),
+                      style: TextStyle(fontSize: 13, color: colorPromo),
                     ),
                   ),
                 ],

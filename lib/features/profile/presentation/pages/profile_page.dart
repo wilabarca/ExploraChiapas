@@ -9,6 +9,7 @@ import '../widgets/profile_avatar.dart';
 import '../widgets/profile_interests.dart';
 import '../widgets/profile_stats.dart';
 import '../widgets/profile_menu_item.dart';
+import '../widgets/eliminar_cuenta_dialogs.dart';
 import 'edit_profile_page.dart';
 import '../../../home/presentation/widgets/custom_bottom_nav_bar.dart';
 import '../../../home/presentation/widgets/home_app_bar.dart';
@@ -22,6 +23,10 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  // Evita que un doble tap dispare dos eliminaciones/solicitudes en
+  // paralelo mientras el flujo de eliminar cuenta está en curso.
+  bool _eliminandoCuenta = false;
+
   @override
   void initState() {
     super.initState();
@@ -58,7 +63,10 @@ class _ProfilePageState extends State<ProfilePage> {
     showDialog(
       context: context,
       builder: (ctx) => SimpleDialog(
-        title: Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          titulo,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         children: opciones.map((op) {
           return SimpleDialogOption(
@@ -69,8 +77,12 @@ class _ProfilePageState extends State<ProfilePage> {
             child: Row(
               children: [
                 Icon(
-                  op == actual ? Icons.check_circle : Icons.radio_button_unchecked,
-                  color: op == actual ? AppColors.primary(context) : Colors.grey,
+                  op == actual
+                      ? Icons.check_circle
+                      : Icons.radio_button_unchecked,
+                  color: op == actual
+                      ? AppColors.primary(context)
+                      : AppColors.textHint(context),
                   size: 20,
                 ),
                 const SizedBox(width: 12),
@@ -85,13 +97,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    final mq           = MediaQuery.of(context);
-    final screenW      = mq.size.width;
-    final screenH      = mq.size.height;
-    final isSmall      = screenW < 360;
+    final mq = MediaQuery.of(context);
+    final screenW = mq.size.width;
+    final screenH = mq.size.height;
+    final isSmall = screenW < 360;
     final avatarRadius = screenW * 0.135;
-    final lang         = context.watch<LocaleProvider>().langCode;
-    final prefs        = context.watch<PreferencesProvider>();
+    final lang = context.watch<LocaleProvider>().langCode;
+    final prefs = context.watch<PreferencesProvider>();
 
     String s(String key) => AppStrings.tr(key, lang);
 
@@ -99,9 +111,9 @@ class _ProfilePageState extends State<ProfilePage> {
       backgroundColor: AppColors.background(context),
       appBar: const HomeAppBar(),
       bottomNavigationBar: AppBottomNav(
-        navItems:   AppBottomNav.items,
+        navItems: AppBottomNav.items,
         currentTab: BottomNavTab.perfil,
-        onTap:      _onNavTap,
+        onTap: _onNavTap,
       ),
       body: Consumer<ProfileProvider>(
         builder: (context, provider, _) {
@@ -109,7 +121,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
           if (provider.status == ProfileStatus.loading && perfil == null) {
             return Center(
-              child: CircularProgressIndicator(color: AppColors.primary(context)),
+              child: CircularProgressIndicator(
+                color: AppColors.primary(context),
+              ),
             );
           }
 
@@ -127,7 +141,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     child: Text(
                       s('reintentar'),
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: AppColors.onPrimary(context)),
                     ),
                   ),
                 ],
@@ -147,10 +161,10 @@ class _ProfilePageState extends State<ProfilePage> {
                     child: Column(
                       children: [
                         SizedBox(
-                          width:  avatarRadius * 2,
+                          width: avatarRadius * 2,
                           height: avatarRadius * 2,
                           child: ProfileAvatar(
-                            radius:         avatarRadius,
+                            radius: avatarRadius,
                             showEditButton: true,
                             onTap: () => _irAEditarPerfil(context),
                           ),
@@ -159,9 +173,9 @@ class _ProfilePageState extends State<ProfilePage> {
                         Text(
                           perfil.nombre,
                           style: TextStyle(
-                            fontSize:   isSmall ? 18 : 22,
+                            fontSize: isSmall ? 18 : 22,
                             fontWeight: FontWeight.bold,
-                            color:      AppColors.textPrimary(context),
+                            color: AppColors.textPrimary(context),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -169,7 +183,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           perfil.email,
                           style: TextStyle(
                             fontSize: 13,
-                            color:    AppColors.textSecondary(context),
+                            color: AppColors.textSecondary(context),
                           ),
                         ),
                       ],
@@ -180,27 +194,30 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   const ProfileStats(
                     rutasCreadas: '0',
-                    favoritos:    '0',
-                    resenas:      '0',
+                    favoritos: '0',
+                    resenas: '0',
                   ),
 
                   SizedBox(height: screenH * 0.016),
 
                   _Acordeon(
                     titulo: s('mis_intereses'),
-                    icono:  Icons.favorite_outline,
+                    icono: Icons.favorite_outline,
                     accion: GestureDetector(
                       onTap: () => Navigator.pushNamed(context, '/intereses'),
                       child: Row(
                         children: [
-                          Icon(Icons.edit_outlined,
-                              size: 14, color: AppColors.primary(context)),
+                          Icon(
+                            Icons.edit_outlined,
+                            size: 14,
+                            color: AppColors.primary(context),
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             s('editar'),
                             style: TextStyle(
-                              fontSize:   13,
-                              color:      AppColors.primary(context),
+                              fontSize: 13,
+                              color: AppColors.primary(context),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -214,16 +231,16 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   _Acordeon(
                     titulo: s('menu'),
-                    icono:  Icons.menu_outlined,
+                    icono: Icons.menu_outlined,
                     children: [
                       ProfileMenuItem(
-                        icon:  Icons.manage_accounts_outlined,
+                        icon: Icons.manage_accounts_outlined,
                         label: s('editar_perfil'),
                         onTap: () => _irAEditarPerfil(context),
                       ),
                       const SizedBox(height: 8),
                       ProfileMenuItem(
-                        icon:  Icons.logout_outlined,
+                        icon: Icons.logout_outlined,
                         label: s('cerrar_sesion'),
                         onTap: () => _confirmarCerrarSesion(context, lang),
                       ),
@@ -234,17 +251,18 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   _Acordeon(
                     titulo: s('preferencias'),
-                    icono:  Icons.settings_outlined,
+                    icono: Icons.settings_outlined,
                     children: [
                       _PreferenciaTile(
-                        icon:  Icons.language_outlined,
+                        icon: Icons.language_outlined,
                         label: s('idioma'),
                         valor: _nombreDeIdioma(lang),
-                        onTap: () => _mostrarSelectorIdioma(context, prefs, lang),
+                        onTap: () =>
+                            _mostrarSelectorIdioma(context, prefs, lang),
                       ),
                       const SizedBox(height: 8),
                       _PreferenciaTile(
-                        icon:  Icons.straighten_outlined,
+                        icon: Icons.straighten_outlined,
                         label: s('unidades'),
                         valor: prefs.unidades,
                         onTap: () => _seleccionarOpcion(
@@ -256,7 +274,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       const SizedBox(height: 8),
                       _PreferenciaTile(
-                        icon:  Icons.brightness_6_outlined,
+                        icon: Icons.brightness_6_outlined,
                         label: s('tema'),
                         valor: s(prefs.tema == 'Claro' ? 'claro' : 'oscuro'),
                         onTap: () => _seleccionarOpcion(
@@ -270,7 +288,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       const SizedBox(height: 8),
                       _PreferenciaTile(
-                        icon:  Icons.attach_money_outlined,
+                        icon: Icons.attach_money_outlined,
                         label: s('moneda'),
                         valor: prefs.moneda,
                         onTap: () => _seleccionarOpcion(
@@ -287,31 +305,31 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   _Acordeon(
                     titulo: s('privacidad'),
-                    icono:  Icons.shield_outlined,
+                    icono: Icons.shield_outlined,
                     children: [
                       _ToggleTile(
-                        icon:      Icons.location_on_outlined,
-                        label:     s('compartir_ubicacion'),
-                        valor:     prefs.compartirUbicacion,
+                        icon: Icons.location_on_outlined,
+                        label: s('compartir_ubicacion'),
+                        valor: prefs.compartirUbicacion,
                         onChanged: (v) => prefs.setCompartirUbicacion(v),
                       ),
                       const SizedBox(height: 8),
                       _ToggleTile(
-                        icon:      Icons.history_outlined,
-                        label:     s('compartir_historial'),
-                        valor:     prefs.compartirHistorial,
+                        icon: Icons.history_outlined,
+                        label: s('compartir_historial'),
+                        valor: prefs.compartirHistorial,
                         onChanged: (v) => prefs.setCompartirHistorial(v),
                       ),
                       const SizedBox(height: 8),
                       _ToggleTile(
-                        icon:      Icons.public_outlined,
-                        label:     s('mostrar_perfil_publico'),
-                        valor:     prefs.mostrarPerfilPublico,
+                        icon: Icons.public_outlined,
+                        label: s('mostrar_perfil_publico'),
+                        valor: prefs.mostrarPerfilPublico,
                         onChanged: (v) => prefs.setMostrarPerfilPublico(v),
                       ),
                       const SizedBox(height: 8),
                       ProfileMenuItem(
-                        icon:  Icons.download_outlined,
+                        icon: Icons.download_outlined,
                         label: s('descargar_datos'),
                         onTap: () => ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -322,10 +340,10 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       const SizedBox(height: 8),
                       ProfileMenuItem(
-                        icon:        Icons.delete_outline,
-                        label:       s('eliminar_cuenta'),
+                        icon: Icons.delete_outline,
+                        label: s('eliminar_cuenta'),
                         dangerColor: AppColors.error(context),
-                        onTap:       () =>
+                        onTap: () =>
                             _confirmarEliminarCuenta(context, provider, lang),
                       ),
                     ],
@@ -343,25 +361,43 @@ class _ProfilePageState extends State<ProfilePage> {
 
   static String _nombreDeIdioma(String code) {
     const map = {
-      'es': 'Español',          'en': 'English',
-      'fr': 'Français',         'de': 'Deutsch',
-      'it': 'Italiano',         'pt': 'Português',
-      'zh': '中文',              'ja': '日本語',
-      'ko': '한국어',            'ru': 'Русский',
-      'ar': 'العربية',          'nl': 'Nederlands',
-      'pl': 'Polski',           'tr': 'Türkçe',
-      'vi': 'Tiếng Việt',       'th': 'ภาษาไทย',
-      'id': 'Bahasa Indonesia', 'hi': 'हिन्दी',
-      'sv': 'Svenska',          'da': 'Dansk',
-      'fi': 'Suomi',            'nb': 'Norsk',
-      'cs': 'Čeština',          'hu': 'Magyar',
-      'ro': 'Română',           'uk': 'Українська',
-      'el': 'Ελληνικά',         'ca': 'Català',
+      'es': 'Español',
+      'en': 'English',
+      'fr': 'Français',
+      'de': 'Deutsch',
+      'it': 'Italiano',
+      'pt': 'Português',
+      'zh': '中文',
+      'ja': '日本語',
+      'ko': '한국어',
+      'ru': 'Русский',
+      'ar': 'العربية',
+      'nl': 'Nederlands',
+      'pl': 'Polski',
+      'tr': 'Türkçe',
+      'vi': 'Tiếng Việt',
+      'th': 'ภาษาไทย',
+      'id': 'Bahasa Indonesia',
+      'hi': 'हिन्दी',
+      'sv': 'Svenska',
+      'da': 'Dansk',
+      'fi': 'Suomi',
+      'nb': 'Norsk',
+      'cs': 'Čeština',
+      'hu': 'Magyar',
+      'ro': 'Română',
+      'uk': 'Українська',
+      'el': 'Ελληνικά',
+      'ca': 'Català',
     };
     return map[code] ?? code.toUpperCase();
   }
 
-  void _mostrarSelectorIdioma(BuildContext context, PreferencesProvider prefs, String currentCode) {
+  void _mostrarSelectorIdioma(
+    BuildContext context,
+    PreferencesProvider prefs,
+    String currentCode,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -385,72 +421,54 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
-  void _confirmarCerrarSesion(
-  BuildContext context,
-  String lang,
-) {
-  String s(String key) =>
-      AppStrings.tr(key, lang);
+  void _confirmarCerrarSesion(BuildContext context, String lang) {
+    String s(String key) => AppStrings.tr(key, lang);
 
-  showDialog(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
-      title: Text(
-        s('cerrar_sesion_titulo'),
-      ),
-      content: Text(
-        s('cerrar_sesion_msg'),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () =>
-              Navigator.pop(ctx),
-          child: Text(
-            s('cancelar'),
-            style: const TextStyle(
-              color: Colors.grey,
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(s('cerrar_sesion_titulo')),
+        content: Text(s('cerrar_sesion_msg')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              s('cancelar'),
+              style: TextStyle(color: AppColors.textSecondary(context)),
             ),
           ),
-        ),
 
-        ElevatedButton(
-          onPressed: () async {
-            Navigator.pop(ctx);
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
 
-            await context
-                .read<AuthProvider>()
-                .logout();
+              await context.read<AuthProvider>().logout();
 
-            if (!context.mounted) return;
+              if (!context.mounted) return;
 
-            Navigator.pushNamedAndRemoveUntil(
-              context,
-              '/',
-              (route) => false,
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor:
-                AppColors.primary(context),
-            shape: RoundedRectangleBorder(
-              borderRadius:
-                  BorderRadius.circular(10),
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/login',
+                (route) => false,
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary(context),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: Text(
+              s('cerrar_sesion'),
+              style: TextStyle(color: AppColors.onPrimary(context)),
             ),
           ),
-          child: Text(
-            s('cerrar_sesion'),
-            style: const TextStyle(
-              color: Colors.white,
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
+
   void _confirmarEliminarCuenta(
     BuildContext context,
     ProfileProvider provider,
@@ -461,39 +479,125 @@ class _ProfilePageState extends State<ProfilePage> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title:   Text(s('eliminar_cuenta_titulo')),
+        title: Text(s('eliminar_cuenta_titulo')),
         content: Text(s('eliminar_cuenta_msg')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(s('cancelar'),
-                style: const TextStyle(color: Colors.grey)),
+            child: Text(
+              s('cancelar'),
+              style: TextStyle(color: AppColors.textSecondary(context)),
+            ),
           ),
           ElevatedButton(
-            onPressed: () async {
+            onPressed: () {
               Navigator.pop(ctx);
-              final success = await provider.deletePerfil();
-              if (!context.mounted) return;
-              if (success) Navigator.pushReplacementNamed(context, '/');
+              _eliminarCuenta(context, provider, lang);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.error(context),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
-            child: Text(s('eliminar'),
-                style: const TextStyle(color: Colors.white)),
+            child: Text(
+              s('eliminar'),
+              style: TextStyle(color: AppColors.onError(context)),
+            ),
           ),
         ],
       ),
     );
   }
+
+  /// Orquesta el flujo completo tras confirmar "Eliminar cuenta". Se
+  /// repite mientras el usuario elija "Reintentar" ante un error; el
+  /// `bool _eliminandoCuenta` evita que dos flujos corran en paralelo.
+  Future<void> _eliminarCuenta(
+    BuildContext context,
+    ProfileProvider provider,
+    String lang,
+  ) async {
+    if (_eliminandoCuenta) return;
+    setState(() => _eliminandoCuenta = true);
+
+    try {
+      var reintentar = true;
+      while (reintentar) {
+        reintentar = await _intentarEliminarCuenta(context, provider, lang);
+      }
+    } finally {
+      if (mounted) setState(() => _eliminandoCuenta = false);
+    }
+  }
+
+  /// Un solo intento de eliminación. Devuelve `true` cuando el usuario
+  /// pide reintentar tras un error; en cualquier otro desenlace (éxito,
+  /// cancelación o contexto ya desmontado) devuelve `false`.
+  ///
+  /// 1) Llama al backend a través de [ProfileProvider.deletePerfil].
+  /// 2) Si tiene éxito (o el backend responde 404: la cuenta ya no
+  ///    existía), cierra la sesión por completo con [AuthProvider.logout]
+  ///    y vacía todo el stack de navegación hacia Login — nunca queda una
+  ///    ruta protegida atrás a la que se pueda volver.
+  /// 3) Si falla, muestra un error claro sin tocar la sesión actual: la
+  ///    cuenta y la sesión solo se limpian cuando el backend confirma la
+  ///    eliminación.
+  Future<bool> _intentarEliminarCuenta(
+    BuildContext context,
+    ProfileProvider provider,
+    String lang,
+  ) async {
+    // No se espera este Future: solo muestra el overlay de carga y
+    // retorna de inmediato para poder seguir con la petición al backend.
+    // Se cierra explícitamente más abajo con Navigator.pop.
+    mostrarEliminandoCuentaDialog(context);
+
+    final eliminada = await provider.deletePerfil();
+    final cuentaYaNoExistia = provider.errorStatusCode == 404;
+
+    if (!context.mounted) return false;
+    Navigator.of(context, rootNavigator: true).pop(); // cierra el loading
+    if (!context.mounted) return false;
+
+    if (eliminada || cuentaYaNoExistia) {
+      await context.read<AuthProvider>().logout();
+      if (!context.mounted) return false;
+
+      await mostrarCuentaEliminadaSheet(context);
+      if (!context.mounted) return false;
+
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+      return false;
+    }
+
+    final mensaje = _mensajeErrorEliminarCuenta(provider, lang);
+    final reintentar = await mostrarErrorEliminarCuentaDialog(
+      context,
+      mensaje: mensaje,
+    );
+    return context.mounted && reintentar;
+  }
+
+  String _mensajeErrorEliminarCuenta(ProfileProvider provider, String lang) {
+    final statusCode = provider.errorStatusCode;
+    if (statusCode == 401) {
+      return AppStrings.tr('error_eliminar_cuenta_sesion', lang);
+    }
+    if (statusCode != null && statusCode >= 500) {
+      return AppStrings.tr('error_eliminar_cuenta_servidor', lang);
+    }
+    final mensaje = provider.errorMessage;
+    return (mensaje != null && mensaje.isNotEmpty)
+        ? mensaje
+        : AppStrings.tr('error_eliminar_cuenta', lang);
+  }
 }
 
 class _Acordeon extends StatefulWidget {
-  final String    titulo;
-  final IconData  icono;
-  final Widget?   accion;
+  final String titulo;
+  final IconData icono;
+  final Widget? accion;
   final List<Widget> children;
 
   const _Acordeon({
@@ -517,12 +621,13 @@ class _AcordeonState extends State<_Acordeon>
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-      vsync:    this,
+      vsync: this,
       duration: const Duration(milliseconds: 250),
     );
-    _rotacion = Tween<double>(begin: 0, end: 0.5).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
+    _rotacion = Tween<double>(
+      begin: 0,
+      end: 0.5,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -545,13 +650,13 @@ class _AcordeonState extends State<_Acordeon>
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       decoration: BoxDecoration(
-        color:        AppColors.surface(context),
+        color: AppColors.surface(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color:      Colors.black.withValues(alpha: 0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 4,
-            offset:     const Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -567,20 +672,23 @@ class _AcordeonState extends State<_Acordeon>
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color:        AppColors.primaryContainer(context),
+                      color: AppColors.primaryContainer(context),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(widget.icono,
-                        color: AppColors.primary(context), size: 20),
+                    child: Icon(
+                      widget.icono,
+                      color: AppColors.primary(context),
+                      size: 20,
+                    ),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Text(
                       widget.titulo,
                       style: TextStyle(
-                        fontSize:   15,
+                        fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color:      AppColors.textPrimary(context),
+                        color: AppColors.textPrimary(context),
                       ),
                     ),
                   ),
@@ -601,9 +709,9 @@ class _AcordeonState extends State<_Acordeon>
             ),
           ),
           AnimatedCrossFade(
-            duration:      const Duration(milliseconds: 250),
-            firstChild:    const SizedBox(width: double.infinity),
-            secondChild:   Padding(
+            duration: const Duration(milliseconds: 250),
+            firstChild: const SizedBox(width: double.infinity),
+            secondChild: Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -621,9 +729,9 @@ class _AcordeonState extends State<_Acordeon>
 }
 
 class _PreferenciaTile extends StatelessWidget {
-  final IconData     icon;
-  final String       label;
-  final String       valor;
+  final IconData icon;
+  final String label;
+  final String valor;
   final VoidCallback onTap;
 
   const _PreferenciaTile({
@@ -640,9 +748,9 @@ class _PreferenciaTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color:        AppColors.background(context),
+          color: AppColors.background(context),
           borderRadius: BorderRadius.circular(12),
-          border:       Border.all(color: AppColors.border(context)),
+          border: Border.all(color: AppColors.border(context)),
         ),
         child: Row(
           children: [
@@ -652,18 +760,25 @@ class _PreferenciaTile extends StatelessWidget {
               child: Text(
                 label,
                 style: TextStyle(
-                  fontSize:   14,
+                  fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color:      AppColors.textPrimary(context),
+                  color: AppColors.textPrimary(context),
                 ),
               ),
             ),
             Text(
               valor,
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary(context)),
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary(context),
+              ),
             ),
             const SizedBox(width: 6),
-            Icon(Icons.chevron_right, color: AppColors.textHint(context), size: 18),
+            Icon(
+              Icons.chevron_right,
+              color: AppColors.textHint(context),
+              size: 18,
+            ),
           ],
         ),
       ),
@@ -675,7 +790,10 @@ class _LanguagePickerSheet extends StatefulWidget {
   final String currentCode;
   final void Function(String nombre, String code) onSelected;
 
-  const _LanguagePickerSheet({required this.currentCode, required this.onSelected});
+  const _LanguagePickerSheet({
+    required this.currentCode,
+    required this.onSelected,
+  });
 
   @override
   State<_LanguagePickerSheet> createState() => _LanguagePickerSheetState();
@@ -683,34 +801,34 @@ class _LanguagePickerSheet extends StatefulWidget {
 
 class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
   static const _todos = [
-    ['es', 'Español',          '🇪🇸'],
-    ['en', 'English',          '🇬🇧'],
-    ['fr', 'Français',         '🇫🇷'],
-    ['de', 'Deutsch',          '🇩🇪'],
-    ['it', 'Italiano',         '🇮🇹'],
-    ['pt', 'Português',        '🇧🇷'],
-    ['zh', '中文',              '🇨🇳'],
-    ['ja', '日本語',            '🇯🇵'],
-    ['ko', '한국어',            '🇰🇷'],
-    ['ru', 'Русский',          '🇷🇺'],
-    ['ar', 'العربية',          '🇸🇦'],
-    ['nl', 'Nederlands',       '🇳🇱'],
-    ['pl', 'Polski',           '🇵🇱'],
-    ['tr', 'Türkçe',           '🇹🇷'],
-    ['vi', 'Tiếng Việt',       '🇻🇳'],
-    ['th', 'ภาษาไทย',          '🇹🇭'],
+    ['es', 'Español', '🇪🇸'],
+    ['en', 'English', '🇬🇧'],
+    ['fr', 'Français', '🇫🇷'],
+    ['de', 'Deutsch', '🇩🇪'],
+    ['it', 'Italiano', '🇮🇹'],
+    ['pt', 'Português', '🇧🇷'],
+    ['zh', '中文', '🇨🇳'],
+    ['ja', '日本語', '🇯🇵'],
+    ['ko', '한국어', '🇰🇷'],
+    ['ru', 'Русский', '🇷🇺'],
+    ['ar', 'العربية', '🇸🇦'],
+    ['nl', 'Nederlands', '🇳🇱'],
+    ['pl', 'Polski', '🇵🇱'],
+    ['tr', 'Türkçe', '🇹🇷'],
+    ['vi', 'Tiếng Việt', '🇻🇳'],
+    ['th', 'ภาษาไทย', '🇹🇭'],
     ['id', 'Bahasa Indonesia', '🇮🇩'],
-    ['hi', 'हिन्दी',            '🇮🇳'],
-    ['sv', 'Svenska',          '🇸🇪'],
-    ['da', 'Dansk',            '🇩🇰'],
-    ['fi', 'Suomi',            '🇫🇮'],
-    ['nb', 'Norsk',            '🇳🇴'],
-    ['cs', 'Čeština',          '🇨🇿'],
-    ['hu', 'Magyar',           '🇭🇺'],
-    ['ro', 'Română',           '🇷🇴'],
-    ['uk', 'Українська',       '🇺🇦'],
-    ['el', 'Ελληνικά',         '🇬🇷'],
-    ['ca', 'Català',           '🏳️'],
+    ['hi', 'हिन्दी', '🇮🇳'],
+    ['sv', 'Svenska', '🇸🇪'],
+    ['da', 'Dansk', '🇩🇰'],
+    ['fi', 'Suomi', '🇫🇮'],
+    ['nb', 'Norsk', '🇳🇴'],
+    ['cs', 'Čeština', '🇨🇿'],
+    ['hu', 'Magyar', '🇭🇺'],
+    ['ro', 'Română', '🇷🇴'],
+    ['uk', 'Українська', '🇺🇦'],
+    ['el', 'Ελληνικά', '🇬🇷'],
+    ['ca', 'Català', '🏳️'],
   ];
 
   final _ctrl = TextEditingController();
@@ -740,16 +858,17 @@ class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
     return Container(
       height: MediaQuery.of(context).size.height * 0.75,
       decoration: BoxDecoration(
-        color:        AppColors.surface(context),
+        color: AppColors.surface(context),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         children: [
           const SizedBox(height: 12),
           Container(
-            width: 40, height: 4,
+            width: 40,
+            height: 4,
             decoration: BoxDecoration(
-              color:        AppColors.borderSubtle(context),
+              color: AppColors.borderSubtle(context),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -758,14 +877,17 @@ class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               children: [
-                Icon(Icons.language_outlined, color: AppColors.primary(context)),
+                Icon(
+                  Icons.language_outlined,
+                  color: AppColors.primary(context),
+                ),
                 const SizedBox(width: 10),
                 Text(
                   'Idioma / Language',
                   style: TextStyle(
-                    fontSize:   17,
+                    fontSize: 17,
                     fontWeight: FontWeight.bold,
-                    color:      AppColors.textPrimary(context),
+                    color: AppColors.textPrimary(context),
                   ),
                 ),
               ],
@@ -778,15 +900,18 @@ class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
               controller: _ctrl,
               style: TextStyle(color: AppColors.textPrimary(context)),
               decoration: InputDecoration(
-                prefixIcon: Icon(Icons.search, color: AppColors.textHint(context)),
-                hintText:   'Buscar idioma...',
-                hintStyle:  TextStyle(color: AppColors.textHint(context)),
-                filled:     true,
-                fillColor:  AppColors.background(context),
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: AppColors.textHint(context),
+                ),
+                hintText: 'Buscar idioma...',
+                hintStyle: TextStyle(color: AppColors.textHint(context)),
+                filled: true,
+                fillColor: AppColors.background(context),
                 contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide:   BorderSide.none,
+                  borderSide: BorderSide.none,
                 ),
               ),
             ),
@@ -796,22 +921,28 @@ class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
             child: ListView.builder(
               itemCount: _filtrados.length,
               itemBuilder: (_, i) {
-                final lang       = _filtrados[i];
+                final lang = _filtrados[i];
                 final isSelected = lang[0] == widget.currentCode;
                 return ListTile(
                   leading: Text(lang[2], style: const TextStyle(fontSize: 24)),
                   title: Text(
                     lang[1],
                     style: TextStyle(
-                      fontSize:   15,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                      color:      isSelected
+                      fontSize: 15,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                      color: isSelected
                           ? AppColors.primary(context)
                           : AppColors.textPrimary(context),
                     ),
                   ),
                   trailing: isSelected
-                      ? Icon(Icons.check_circle, color: AppColors.primary(context), size: 20)
+                      ? Icon(
+                          Icons.check_circle,
+                          color: AppColors.primary(context),
+                          size: 20,
+                        )
                       : null,
                   onTap: () {
                     Navigator.pop(context);
@@ -829,9 +960,9 @@ class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
 }
 
 class _ToggleTile extends StatelessWidget {
-  final IconData            icon;
-  final String              label;
-  final bool                valor;
+  final IconData icon;
+  final String label;
+  final bool valor;
   final void Function(bool) onChanged;
 
   const _ToggleTile({
@@ -846,9 +977,9 @@ class _ToggleTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color:        AppColors.background(context),
+        color: AppColors.background(context),
         borderRadius: BorderRadius.circular(12),
-        border:       Border.all(color: AppColors.border(context)),
+        border: Border.all(color: AppColors.border(context)),
       ),
       child: Row(
         children: [
@@ -858,16 +989,16 @@ class _ToggleTile extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                fontSize:   14,
+                fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color:      AppColors.textPrimary(context),
+                color: AppColors.textPrimary(context),
               ),
             ),
           ),
           Switch(
-            value:                 valor,
-            onChanged:             onChanged,
-            activeThumbColor:      AppColors.primary(context),
+            value: valor,
+            onChanged: onChanged,
+            activeThumbColor: AppColors.primary(context),
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
         ],

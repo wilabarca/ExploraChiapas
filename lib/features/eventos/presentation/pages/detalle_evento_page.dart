@@ -137,9 +137,9 @@ class DetalleEventoPage extends StatelessWidget {
                     imageUrl: evento.imageUrl,
                     fit: BoxFit.cover,
                     placeholder: (_, __) =>
-                        Container(color: const Color(0xFFD8F5D8)),
+                        Container(color: AppColors.primaryContainer(context)),
                     errorWidget: (_, __, ___) => Container(
-                      color: const Color(0xFFD8F5D8),
+                      color: AppColors.primaryContainer(context),
                       child: const Icon(
                         Icons.image_not_supported,
                         color: Colors.white54,
@@ -233,7 +233,7 @@ class DetalleEventoPage extends StatelessWidget {
 
                   const SizedBox(height: 24),
 
-                  const Divider(color: Color(0xFFEEEEEE)),
+                  Divider(color: AppColors.borderSubtle(context)),
 
                   const SizedBox(height: 20),
 
@@ -262,7 +262,7 @@ class DetalleEventoPage extends StatelessWidget {
 
                   const SizedBox(height: 24),
 
-                  const Divider(color: Color(0xFFEEEEEE)),
+                  Divider(color: AppColors.borderSubtle(context)),
 
                   const SizedBox(height: 20),
 
@@ -352,14 +352,14 @@ class DetalleEventoPage extends StatelessWidget {
                 onPressed: () {
                   // TODO: registrarse al evento
                 },
-                icon: const Icon(
+                icon: Icon(
                   Icons.confirmation_number_outlined,
-                  color: Colors.white,
+                  color: AppColors.onPrimary(context),
                 ),
-                label: const Text(
+                label: Text(
                   'Asistir al evento',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.onPrimary(context),
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
@@ -391,32 +391,32 @@ class _InfoChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Builder(
       builder: (context) => Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.background(context),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 15, color: AppColors.primary(context)),
-          const SizedBox(width: 6),
-          // ✓ ConstrainedBox limita el ancho del label
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 160),
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                color: AppColors.textSecondary(context),
-                fontWeight: FontWeight.w500,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.background(context),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 15, color: AppColors.primary(context)),
+            const SizedBox(width: 6),
+            // ✓ ConstrainedBox limita el ancho del label
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 160),
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textSecondary(context),
+                  fontWeight: FontWeight.w500,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
-              overflow: TextOverflow.ellipsis,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
     );
   }
 }

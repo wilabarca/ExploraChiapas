@@ -500,6 +500,9 @@ class _MapPageState extends State<MapPage> {
                                   hintStyle: TextStyle(
                                     color: AppColors.textHint(context),
                                   ),
+                                  // Evita heredar el "filled: true" del tema
+                                  // global (rectángulo cuadrado de fondo).
+                                  filled: false,
                                   border: InputBorder.none,
                                 ),
                                 style: TextStyle(
@@ -685,7 +688,7 @@ class _MapPageState extends State<MapPage> {
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
                                       color: isActive
-                                          ? Colors.white
+                                          ? AppColors.onPrimary(context)
                                           : AppColors.textPrimary(context),
                                     ),
                                   ),
@@ -733,8 +736,8 @@ class _MapPageState extends State<MapPage> {
                                         : 'No se pudo guardar en favoritos',
                                   ),
                                   backgroundColor: ok
-                                      ? const Color(0xFF388E3C)
-                                      : Colors.red,
+                                      ? AppColors.primary(context)
+                                      : AppColors.error(context),
                                   behavior: SnackBarBehavior.floating,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -755,7 +758,7 @@ class _MapPageState extends State<MapPage> {
                                 provider.routeError ??
                                     'No se pudo calcular la ruta. Intenta de nuevo.',
                               ),
-                              backgroundColor: Colors.red,
+                              backgroundColor: AppColors.error(context),
                               behavior: SnackBarBehavior.floating,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -824,9 +827,9 @@ class _MapPageState extends State<MapPage> {
                 bottom: 200,
                 child: FloatingActionButton.small(
                   onPressed: provider.clearSelection,
-                  backgroundColor: Colors.red,
+                  backgroundColor: AppColors.error(context),
                   elevation: 4,
-                  child: const Icon(Icons.close, color: Colors.white),
+                  child: Icon(Icons.close, color: AppColors.onError(context)),
                 ),
               );
             },

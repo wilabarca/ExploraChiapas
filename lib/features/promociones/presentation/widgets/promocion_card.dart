@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../domain/entities/promocion.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class PromocionCard extends StatelessWidget {
   final PromocionEntity promocion;
@@ -42,11 +43,13 @@ class PromocionCard extends StatelessWidget {
           onTap: onTap,
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface(context),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(
+                    alpha: AppColors.isDark(context) ? 0.3 : 0.05,
+                  ),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),
@@ -147,10 +150,10 @@ class PromocionCard extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.storefront_outlined,
                             size: 13,
-                            color: Color(0xFF999999),
+                            color: AppColors.textHint(context),
                           ),
                           const SizedBox(width: 4),
                           // Expanded: el nombre del negocio no desborda.
@@ -159,9 +162,9 @@ class PromocionCard extends StatelessWidget {
                               promocion.negocioMostrable,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: Color(0xFF999999),
+                                color: AppColors.textHint(context),
                               ),
                             ),
                           ),
@@ -172,10 +175,10 @@ class PromocionCard extends StatelessWidget {
                         promocion.titulo,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1B1B1B),
+                          color: AppColors.textPrimary(context),
                         ),
                       ),
                       if (promocion.descripcionMostrable.isNotEmpty) ...[
@@ -186,9 +189,9 @@ class PromocionCard extends StatelessWidget {
                             promocion.descripcionMostrable,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12.5,
-                              color: Color(0xFF666666),
+                              color: AppColors.textSecondary(context),
                               height: 1.35,
                             ),
                           ),
@@ -205,17 +208,17 @@ class PromocionCard extends StatelessWidget {
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.calendar_today_outlined,
                                 size: 12,
-                                color: Color(0xFF888888),
+                                color: AppColors.textHint(context),
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 promocion.rangoFechasFormateado,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11.5,
-                                  color: Color(0xFF888888),
+                                  color: AppColors.textHint(context),
                                 ),
                               ),
                             ],
@@ -227,8 +230,8 @@ class PromocionCard extends StatelessWidget {
                             ),
                             decoration: BoxDecoration(
                               color: promocion.tienePrecio
-                                  ? const Color(0xFFE8F5E9)
-                                  : const Color(0xFFEDE7F6),
+                                  ? AppColors.primaryContainer(context)
+                                  : AppColors.accentPurpleContainer(context),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -237,8 +240,8 @@ class PromocionCard extends StatelessWidget {
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
                                 color: promocion.tienePrecio
-                                    ? const Color(0xFF2E7D32)
-                                    : const Color(0xFF6A1B9A),
+                                    ? AppColors.primary(context)
+                                    : AppColors.accentPurple(context),
                               ),
                             ),
                           ),

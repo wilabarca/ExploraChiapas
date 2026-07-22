@@ -22,21 +22,32 @@ class SectionHeader extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Icon(icon, size: 20, color: AppColors.primary(context)),
-              const SizedBox(width: 6),
-              Text(
-                titulo,
-                style: TextStyle(
-                  fontSize: 19,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary(context),
+          // Expanded: el título nunca empuja "Ver todos" fuera de la
+          // pantalla en títulos largos o teléfonos angostos — se recorta
+          // con ellipsis en vez de desbordar (evita el "tarjetazo
+          // amarillo" de RenderFlex overflow).
+          Expanded(
+            child: Row(
+              children: [
+                Icon(icon, size: 20, color: AppColors.primary(context)),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    titulo,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary(context),
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          if (mostrarVerTodos)
+          if (mostrarVerTodos) ...[
+            const SizedBox(width: 8),
             GestureDetector(
               onTap: onVerTodos,
               child: Text(
@@ -48,6 +59,7 @@ class SectionHeader extends StatelessWidget {
                 ),
               ),
             ),
+          ],
         ],
       ),
     );

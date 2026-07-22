@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/negocio_servicio.dart';
 
 class NegocioServicios extends StatelessWidget {
@@ -13,12 +14,12 @@ class NegocioServicios extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Servicios',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF1B1B1B),
+            color: AppColors.textPrimary(context),
           ),
         ),
         const SizedBox(height: 10),
@@ -30,18 +31,24 @@ class NegocioServicios extends StatelessWidget {
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFFF0F0F0),
+                color: AppColors.borderSubtle(context),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.check_circle_outline,
-                      size: 14, color: Color(0xFF2E7D32)),
+                  Icon(
+                    Icons.check_circle_outline,
+                    size: 14,
+                    color: AppColors.primary(context),
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     s.nombre,
-                    style: const TextStyle(fontSize: 12.5, color: Color(0xFF444444)),
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      color: AppColors.textSecondary(context),
+                    ),
                   ),
                 ],
               ),

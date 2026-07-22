@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../services/location_service.dart';
+import '../theme/app_colors.dart';
 
 class LocationPermissionHelper {
   final LocationService _service = LocationService();
@@ -34,35 +35,42 @@ class LocationPermissionHelper {
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
+        title: Row(
           children: [
             Icon(
               Icons.location_off_outlined,
-              color: Color(0xFF2E7D32),
+              color: AppColors.primary(ctx),
               size: 26,
             ),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             Text(
               'Ubicación bloqueada',
               style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1B5E20),
+                color: AppColors.primary(ctx),
               ),
             ),
           ],
         ),
-        content: const Text(
+        content: Text(
           'Bloqueaste el permiso de ubicación.\n\n'
           'Para activarlo ve a:\n'
           'Ajustes → Aplicaciones → ExploraChiapas '
           '→ Permisos → Ubicación',
-          style: TextStyle(fontSize: 14, color: Color(0xFF555555), height: 1.6),
+          style: TextStyle(
+            fontSize: 14,
+            color: AppColors.textSecondary(ctx),
+            height: 1.6,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Ahora no', style: TextStyle(color: Colors.grey)),
+            child: Text(
+              'Ahora no',
+              style: TextStyle(color: AppColors.textSecondary(ctx)),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -70,14 +78,14 @@ class LocationPermissionHelper {
               LocationService().openSettings();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2E7D32),
+              backgroundColor: AppColors.primary(ctx),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: const Text(
+            child: Text(
               'Ir a Ajustes',
-              style: TextStyle(color: Colors.white),
+              style: TextStyle(color: AppColors.onPrimary(ctx)),
             ),
           ),
         ],

@@ -90,7 +90,10 @@ class _NegocioListaPageState extends State<NegocioListaPage> {
               decoration: InputDecoration(
                 hintText: 'Buscar ${widget.tituloTipo.toLowerCase()}...',
                 hintStyle: TextStyle(color: AppColors.textHint(context)),
-                prefixIcon: Icon(Icons.search, color: AppColors.primary(context)),
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: AppColors.primary(context),
+                ),
                 filled: true,
                 fillColor: AppColors.background(context),
                 contentPadding: const EdgeInsets.symmetric(vertical: 0),
@@ -104,102 +107,111 @@ class _NegocioListaPageState extends State<NegocioListaPage> {
           Expanded(
             child: RefreshIndicator(
               color: AppColors.primary(context),
-              onRefresh: () async => _cargar(busqueda: _busquedaCtrl.text.trim().isEmpty
-                  ? null
-                  : _busquedaCtrl.text.trim()),
+              onRefresh: () async => _cargar(
+                busqueda: _busquedaCtrl.text.trim().isEmpty
+                    ? null
+                    : _busquedaCtrl.text.trim(),
+              ),
               child: FutureBuilder<List<Negocio>>(
-              future: _future,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const SkeletonList(count: 5);
-                }
+                future: _future,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const SkeletonList(count: 5);
+                  }
 
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.wifi_off_outlined,
+                              size: 48,
+                              color: AppColors.textHint(context),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'No se pudo cargar la información.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: AppColors.textSecondary(context),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              onPressed: () => _cargar(),
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Reintentar'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary(context),
+                                foregroundColor: AppColors.onPrimary(context),
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  final negocios = snapshot.data ?? [];
+
+                  if (negocios.isEmpty) {
+                    return Center(
                       child: Column(
-                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.wifi_off_outlined,
-                              size: 48, color: Colors.grey.shade400),
-                          const SizedBox(height: 12),
-                          Text(
-                            'No se pudo cargar la información.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                                color: AppColors.textSecondary(context)),
+                          Icon(
+                            Icons.storefront_outlined,
+                            size: 64,
+                            color: AppColors.textHint(context),
                           ),
                           const SizedBox(height: 16),
-                          ElevatedButton.icon(
-                            onPressed: () => _cargar(),
-                            icon: const Icon(Icons.refresh),
-                            label: const Text('Reintentar'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary(context),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20)),
+                          Text(
+                            'Sin resultados por ahora',
+                            style: TextStyle(
+                              color: AppColors.textSecondary(context),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  );
-                }
+                    );
+                  }
 
-                final negocios = snapshot.data ?? [];
+                  // Tablet: GridView 2 columnas. Móvil: lista vertical.
+                  if (isTablet) {
+                    return GridView.builder(
+                      padding: const EdgeInsets.all(16),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 14,
+                            mainAxisSpacing: 14,
+                            childAspectRatio: 2.6,
+                          ),
+                      itemCount: negocios.length,
+                      itemBuilder: (context, i) => NegocioCard(
+                        negocio: negocios[i],
+                        onTap: () => _irADetalle(negocios[i].id),
+                      ),
+                    );
+                  }
 
-                if (negocios.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.storefront_outlined,
-                          size: 64,
-                          color: Colors.grey.shade300,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Sin resultados por ahora',
-                          style: TextStyle(color: AppColors.textSecondary(context)),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                // Tablet: GridView 2 columnas. Móvil: lista vertical.
-                if (isTablet) {
-                  return GridView.builder(
+                  return ListView.builder(
                     padding: const EdgeInsets.all(16),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 14,
-                          mainAxisSpacing: 14,
-                          childAspectRatio: 2.6,
-                        ),
                     itemCount: negocios.length,
                     itemBuilder: (context, i) => NegocioCard(
                       negocio: negocios[i],
                       onTap: () => _irADetalle(negocios[i].id),
                     ),
                   );
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: negocios.length,
-                  itemBuilder: (context, i) => NegocioCard(
-                    negocio: negocios[i],
-                    onTap: () => _irADetalle(negocios[i].id),
-                  ),
-                );
-              },
-            ),
+                },
+              ),
             ),
           ),
         ],

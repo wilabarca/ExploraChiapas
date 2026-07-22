@@ -92,7 +92,10 @@ class _PromocionesPageState extends State<PromocionesPage> {
                     const SizedBox(height: 4),
                     Text(
                       'Descuentos y ofertas activas en Chiapas',
-                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary(context)),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary(context),
+                      ),
                     ),
                     const SizedBox(height: 14),
                     Consumer<PromocionesProvider>(
@@ -141,12 +144,14 @@ class _PromocionesPageState extends State<PromocionesPage> {
                                 Icon(
                                   Icons.local_offer_outlined,
                                   size: 64,
-                                  color: Colors.grey.shade300,
+                                  color: AppColors.textHint(context),
                                 ),
                                 const SizedBox(height: 16),
                                 Text(
                                   'Sin promociones en esta categoría',
-                                  style: TextStyle(color: AppColors.textSecondary(context)),
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary(context),
+                                  ),
                                 ),
                               ],
                             ),
@@ -215,7 +220,10 @@ class _ErrorPromociones extends StatelessWidget {
         Text(
           message,
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 13, color: AppColors.textSecondary(context)),
+          style: TextStyle(
+            fontSize: 13,
+            color: AppColors.textSecondary(context),
+          ),
         ),
         const SizedBox(height: 14),
         OutlinedButton.icon(

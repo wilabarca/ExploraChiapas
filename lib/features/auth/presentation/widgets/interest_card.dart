@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
+import '../../../../core/theme/app_colors.dart';
+
 class InterestCard extends StatelessWidget {
   final String nombre;
   final IconData icono;
@@ -27,7 +29,7 @@ class InterestCard extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           border: isSelected
-              ? Border.all(color: const Color(0xFF4CAF50), width: 3)
+              ? Border.all(color: AppColors.primary(context), width: 3)
               : null,
         ),
         // LayoutBuilder adapta el contenido al espacio real disponible
@@ -43,12 +45,12 @@ class InterestCard extends StatelessWidget {
                     imageUrl: imageUrl,
                     fit: BoxFit.cover,
                     placeholder: (_, __) =>
-                        Container(color: const Color(0xFF2E7D32)),
+                        Container(color: AppColors.primaryContainer(context)),
                     errorWidget: (_, __, ___) => Container(
-                      color: const Color(0xFF2E7D32),
-                      child: const Icon(
+                      color: AppColors.primaryContainer(context),
+                      child: Icon(
                         Icons.image_not_supported,
-                        color: Colors.white54,
+                        color: AppColors.primary(context),
                       ),
                     ),
                   ),
@@ -61,7 +63,7 @@ class InterestCard extends StatelessWidget {
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          Colors.black.withOpacity(0.65),
+                          Colors.black.withValues(alpha: 0.65),
                         ],
                         stops: const [0.4, 1.0],
                       ),
@@ -70,7 +72,9 @@ class InterestCard extends StatelessWidget {
 
                   // Overlay verde si seleccionado
                   if (isSelected)
-                    Container(color: const Color(0xFF2E7D32).withOpacity(0.30)),
+                    Container(
+                      color: AppColors.primary(context).withValues(alpha: 0.30),
+                    ),
 
                   // Ícono + nombre
                   Positioned(
@@ -96,13 +100,17 @@ class InterestCard extends StatelessWidget {
 
                   // Check si seleccionado
                   if (isSelected)
-                    const Positioned(
+                    Positioned(
                       top: 10,
                       right: 10,
                       child: CircleAvatar(
                         radius: 12,
-                        backgroundColor: Color(0xFF4CAF50),
-                        child: Icon(Icons.check, color: Colors.white, size: 14),
+                        backgroundColor: AppColors.primary(context),
+                        child: Icon(
+                          Icons.check,
+                          color: AppColors.onPrimary(context),
+                          size: 14,
+                        ),
                       ),
                     ),
                 ],

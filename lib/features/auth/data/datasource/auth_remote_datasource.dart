@@ -22,11 +22,12 @@ abstract class AuthRemoteDataSource {
 
   Future<UsuarioModel> updateProfile({String? name, String? phone});
 
-  Future<void> deleteProfile();
   Future<UserInterestsModel> getUserInterests();
-  Future<List<UserInterestModel>>getInterestCategories();
+  Future<List<UserInterestModel>> getInterestCategories();
 
-  Future<UserInterestsModel> updateUserInterests({required List<String> categoryIds,});
+  Future<UserInterestsModel> updateUserInterests({
+    required List<String> categoryIds,
+  });
 }
 
 @LazySingleton(as: AuthRemoteDataSource)
@@ -36,31 +37,22 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   AuthRemoteDataSourceImpl(this._apiClient);
 
   @override
-Future<UserInterestsModel>
-    getUserInterests() async {
-  final response = await _apiClient.get(
-    AppConstants.userInterestsEndpoint,
-  );
+  Future<UserInterestsModel> getUserInterests() async {
+    final response = await _apiClient.get(AppConstants.userInterestsEndpoint);
 
-  if (response.statusCode == 200) {
-    final body =
-        response.data as Map<String, dynamic>;
+    if (response.statusCode == 200) {
+      final body = response.data as Map<String, dynamic>;
 
-    final data =
-        body['data'] as Map<String, dynamic>;
+      final data = body['data'] as Map<String, dynamic>;
 
-    return UserInterestsModel.fromJson(
-      data,
+      return UserInterestsModel.fromJson(data);
+    }
+
+    throw ServerException(
+      message: response.data['message'] ?? 'Error al obtener intereses',
+      statusCode: response.statusCode,
     );
   }
-
-  throw ServerException(
-    message:
-        response.data['message'] ??
-        'Error al obtener intereses',
-    statusCode: response.statusCode,
-  );
-}
 
   @override
   Future<Map<String, dynamic>> register({
@@ -94,75 +86,56 @@ Future<UserInterestsModel>
   }
 
   @override
-  Future<List<UserInterestModel>>
-      getInterestCategories() async {
+  Future<List<UserInterestModel>> getInterestCategories() async {
     final response = await _apiClient.get(
       AppConstants.categoriesEndpoint,
-      queryParameters: {
-        'scope': 'destinos',
-      },
+      queryParameters: {'scope': 'destinos'},
     );
 
-  if (response.statusCode == 200) {
-    final body =
-        response.data as Map<String, dynamic>;
+    if (response.statusCode == 200) {
+      final body = response.data as Map<String, dynamic>;
 
-    final rawCategories =
-        body['data'] as List<dynamic>? ?? [];
+      final rawCategories = body['data'] as List<dynamic>? ?? [];
 
-    return rawCategories.map((item) {
-      final json =
-          Map<String, dynamic>.from(
-        item as Map,
-      );
+      return rawCategories.map((item) {
+        final json = Map<String, dynamic>.from(item as Map);
 
-      return UserInterestModel(
-        id: json['id'].toString(),
-        name: json['nombre']?.toString() ?? '',
-        icon: json['icono']?.toString(),
-      );
-    }).toList();
+        return UserInterestModel(
+          id: json['id'].toString(),
+          name: json['nombre']?.toString() ?? '',
+          icon: json['icono']?.toString(),
+        );
+      }).toList();
+    }
+
+    throw ServerException(
+      message: response.data['message'] ?? 'Error al obtener categorías',
+      statusCode: response.statusCode,
+    );
   }
 
-  throw ServerException(
-    message:
-        response.data['message'] ??
-        'Error al obtener categorías',
-    statusCode: response.statusCode,
-  );
-}
-
   @override
-  Future<UserInterestsModel>
-    updateUserInterests({
-  required List<String> categoryIds,
+  Future<UserInterestsModel> updateUserInterests({
+    required List<String> categoryIds,
   }) async {
     final response = await _apiClient.put(
       AppConstants.userInterestsEndpoint,
-      data: {
-        'categoryIds': categoryIds,
-      },
+      data: {'categoryIds': categoryIds},
     );
 
-  if (response.statusCode == 200) {
-    final body =
-        response.data as Map<String, dynamic>;
+    if (response.statusCode == 200) {
+      final body = response.data as Map<String, dynamic>;
 
-    final data =
-        body['data'] as Map<String, dynamic>;
+      final data = body['data'] as Map<String, dynamic>;
 
-    return UserInterestsModel.fromJson(
-      data,
+      return UserInterestsModel.fromJson(data);
+    }
+
+    throw ServerException(
+      message: response.data['message'] ?? 'Error al actualizar intereses',
+      statusCode: response.statusCode,
     );
   }
-
-  throw ServerException(
-    message:
-        response.data['message'] ??
-        'Error al actualizar intereses',
-    statusCode: response.statusCode,
-  );
-}
 
   @override
   Future<String> login({
@@ -197,7 +170,7 @@ Future<UserInterestsModel>
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
-      final body  = response.data as Map<String, dynamic>;
+      final body = response.data as Map<String, dynamic>;
       final token = (body['data']?['token'] ?? body['token']) as String?;
       if (token == null) {
         throw const ServerException(message: 'Token no recibido del servidor');
@@ -206,7 +179,7 @@ Future<UserInterestsModel>
     }
 
     throw ServerException(
-      message:    response.data['message'] ?? 'Error al autenticar con Google',
+      message: response.data['message'] ?? 'Error al autenticar con Google',
       statusCode: response.statusCode,
     );
   }
@@ -246,17 +219,5 @@ Future<UserInterestsModel>
       message: response.data['message'] ?? 'Error al actualizar perfil',
       statusCode: response.statusCode,
     );
-  }
-
-  @override
-  Future<void> deleteProfile() async {
-    final response = await _apiClient.delete(AppConstants.profileEndpoint);
-
-    if (response.statusCode != 200 && response.statusCode != 204) {
-      throw ServerException(
-        message: response.data['message'] ?? 'Error al eliminar cuenta',
-        statusCode: response.statusCode,
-      );
-    }
   }
 }

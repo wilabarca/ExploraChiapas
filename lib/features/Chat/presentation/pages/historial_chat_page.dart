@@ -88,7 +88,9 @@ class _HistorialChatPageState extends State<HistorialChatPage> {
         builder: (context, snap) {
           if (snap.connectionState == ConnectionState.waiting) {
             return Center(
-              child: CircularProgressIndicator(color: AppColors.primary(context)),
+              child: CircularProgressIndicator(
+                color: AppColors.primary(context),
+              ),
             );
           }
           if (snap.hasError) {
@@ -145,15 +147,23 @@ class _ConversacionTile extends StatelessWidget {
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
-        color: Colors.red.shade400,
-        child: const Icon(Icons.delete_outline, color: Colors.white, size: 24),
+        color: AppColors.error(context),
+        child: Icon(
+          Icons.delete_outline,
+          color: AppColors.onError(context),
+          size: 24,
+        ),
       ),
       onDismissed: (_) => onDelete(),
       child: ListTile(
         onTap: onTap,
         leading: CircleAvatar(
-          backgroundColor: AppColors.primary(context).withOpacity(0.12),
-          child: Icon(Icons.chat_bubble_outline, color: AppColors.primary(context), size: 20),
+          backgroundColor: AppColors.primary(context).withValues(alpha: 0.12),
+          child: Icon(
+            Icons.chat_bubble_outline,
+            color: AppColors.primary(context),
+            size: 20,
+          ),
         ),
         title: Text(
           conversacion.titulo,
@@ -203,12 +213,18 @@ class _EmptyView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.chat_bubble_outline,
-              size: 64, color: AppColors.textHint(context)),
+          Icon(
+            Icons.chat_bubble_outline,
+            size: 64,
+            color: AppColors.textHint(context),
+          ),
           const SizedBox(height: 16),
           Text(
             'No tienes conversaciones guardadas',
-            style: TextStyle(color: AppColors.textSecondary(context), fontSize: 15),
+            style: TextStyle(
+              color: AppColors.textSecondary(context),
+              fontSize: 15,
+            ),
           ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
@@ -218,7 +234,9 @@ class _EmptyView extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary(context),
               foregroundColor: AppColors.onPrimary(context),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
         ],
@@ -246,7 +264,10 @@ class _ErrorView extends StatelessWidget {
           const SizedBox(height: 12),
           TextButton(
             onPressed: onRetry,
-            child: Text('Reintentar', style: TextStyle(color: AppColors.primary(context))),
+            child: Text(
+              'Reintentar',
+              style: TextStyle(color: AppColors.primary(context)),
+            ),
           ),
         ],
       ),

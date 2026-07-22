@@ -225,9 +225,7 @@ class _PlanificarRutaPageState extends State<PlanificarRutaPage> {
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                         color: isSelected
-                            ? (AppColors.isDark(context)
-                                ? Colors.black
-                                : Colors.white)
+                            ? AppColors.onPrimary(context)
                             : AppColors.textPrimary(context),
                       ),
                     ),
@@ -241,34 +239,32 @@ class _PlanificarRutaPageState extends State<PlanificarRutaPage> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed:
-                    (_tiposSeleccionados.isEmpty || _generando)
-                        ? null
-                        : _generarRuta,
+                onPressed: (_tiposSeleccionados.isEmpty || _generando)
+                    ? null
+                    : _generarRuta,
                 icon: _generando
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
-                          color: Colors.white,
+                          color: AppColors.onPrimary(context),
                           strokeWidth: 2.5,
                         ),
                       )
-                    : const Icon(
+                    : Icon(
                         Icons.smart_toy_outlined,
-                        color: Colors.white,
+                        color: AppColors.onPrimary(context),
                       ),
                 label: Text(
                   _generando ? 'Generando ruta...' : 'Generar mi ruta',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: AppColors.onPrimary(context),
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary(context),
-                  disabledBackgroundColor: const Color(0xFFB0BEC5),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -361,7 +357,7 @@ class _SelectChip extends StatelessWidget {
               icon,
               size: 16,
               color: isSelected
-                  ? (AppColors.isDark(context) ? Colors.black : Colors.white)
+                  ? AppColors.onPrimary(context)
                   : AppColors.primary(context),
             ),
             const SizedBox(width: 6),
@@ -371,7 +367,7 @@ class _SelectChip extends StatelessWidget {
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: isSelected
-                    ? (AppColors.isDark(context) ? Colors.black : Colors.white)
+                    ? AppColors.onPrimary(context)
                     : AppColors.textPrimary(context),
               ),
             ),

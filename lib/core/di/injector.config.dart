@@ -26,6 +26,18 @@ import '../../features/auth/domain/usecases/update_user_interests_usecase.dart'
     as _i70;
 import '../../features/auth/presentation/providers/auth_provider.dart'
     as _i1054;
+import '../../features/biometric_auth/data/datasource/biometric_local_datasource.dart'
+    as _i638;
+import '../../features/biometric_auth/data/repositories/biometric_repository_impl.dart'
+    as _i931;
+import '../../features/biometric_auth/domain/repositories/i_biometric_repository.dart'
+    as _i177;
+import '../../features/biometric_auth/domain/usecases/authenticate_with_biometrics_usecase.dart'
+    as _i1024;
+import '../../features/biometric_auth/domain/usecases/check_biometric_availability_usecase.dart'
+    as _i992;
+import '../../features/biometric_auth/presentation/providers/biometric_auth_provider.dart'
+    as _i1047;
 import '../../features/categorias/data/datasource/categorias_remote_datasource.dart'
     as _i150;
 import '../../features/categorias/data/repositories_impl/categorias_repository_impl.dart'
@@ -129,6 +141,16 @@ import '../../features/promociones/domain/usecases/get_promociones_usecase.dart'
     as _i905;
 import '../../features/promociones/presentation/providers/promociones_provider.dart'
     as _i309;
+import '../../features/recomendar/data/datasource/recomendar_remote_datasource.dart'
+    as _i650;
+import '../../features/recomendar/data/repositories/recomendar_repository_impl.dart'
+    as _i1012;
+import '../../features/recomendar/domain/repositories/i_recomendar_repository.dart'
+    as _i302;
+import '../../features/recomendar/domain/usecases/sugerir_lugar_usecase.dart'
+    as _i731;
+import '../../features/recomendar/presentation/providers/recomendar_provider.dart'
+    as _i243;
 import '../../features/resena/data/datasource/ResenasRemoteDataSource.dart'
     as _i402;
 import '../../features/resena/data/repositories/ResenasRepositoryImpl.dart'
@@ -154,6 +176,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i557.ApiClient>(() => _i557.ApiClient());
     gh.lazySingleton<_i322.MlApiClient>(() => _i322.MlApiClient());
     gh.lazySingleton<_i45.AvatarService>(() => _i149.AvatarServiceImpl());
+    gh.lazySingleton<_i638.IBiometricLocalDatasource>(
+      () => _i638.BiometricLocalDatasourceImpl(),
+    );
     gh.lazySingleton<_i498.ConversacionRemoteDatasource>(
       () => _i498.ConversacionRemoteDatasource(gh<_i557.ApiClient>()),
     );
@@ -204,8 +229,15 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i1031.IProfileRemoteDatasource>(
       () => _i1031.ProfileRemoteDatasourceImpl(gh<_i557.ApiClient>()),
     );
+    gh.factory<_i177.IBiometricRepository>(
+      () =>
+          _i931.BiometricRepositoryImpl(gh<_i638.IBiometricLocalDatasource>()),
+    );
     gh.lazySingleton<_i1.PromocionesRemoteDataSource>(
       () => _i1.PromocionesRemoteDataSourceImpl(gh<_i557.ApiClient>()),
+    );
+    gh.lazySingleton<_i650.IRecomendarRemoteDatasource>(
+      () => _i650.RecomendarRemoteDatasourceImpl(gh<_i557.ApiClient>()),
     );
     gh.factory<_i426.CategoriasProvider>(
       () => _i426.CategoriasProvider(gh<_i90.GetCategoriasUseCase>()),
@@ -222,6 +254,22 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i301.EnviarMensajeUseCase>(
       () => _i301.EnviarMensajeUseCase(gh<_i124.IChatRepository>()),
+    );
+    gh.factory<_i1024.AuthenticateWithBiometricsUseCase>(
+      () => _i1024.AuthenticateWithBiometricsUseCase(
+        gh<_i177.IBiometricRepository>(),
+      ),
+    );
+    gh.factory<_i992.CheckBiometricAvailabilityUseCase>(
+      () => _i992.CheckBiometricAvailabilityUseCase(
+        gh<_i177.IBiometricRepository>(),
+      ),
+    );
+    gh.factory<_i1047.BiometricAuthProvider>(
+      () => _i1047.BiometricAuthProvider(
+        gh<_i992.CheckBiometricAvailabilityUseCase>(),
+        gh<_i1024.AuthenticateWithBiometricsUseCase>(),
+      ),
     );
     gh.lazySingleton<_i252.NegocioRepository>(
       () => _i722.NegocioRepositoryImpl(gh<_i907.NegocioRemoteDataSource>()),
@@ -250,6 +298,11 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i743.FavoritosRepository>(
       () =>
           _i857.FavoritosRepositoryImpl(gh<_i768.FavoritosRemoteDataSource>()),
+    );
+    gh.factory<_i302.IRecomendarRepository>(
+      () => _i1012.RecomendarRepositoryImpl(
+        gh<_i650.IRecomendarRemoteDatasource>(),
+      ),
     );
     gh.factory<_i429.GetDestinoByIdUseCase>(
       () => _i429.GetDestinoByIdUseCase(gh<_i991.DestinoRepository>()),
@@ -309,6 +362,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i703.GetEventosUseCase>(
       () => _i703.GetEventosUseCase(gh<_i683.EventosRepository>()),
     );
+    gh.factory<_i731.SugerirLugarUseCase>(
+      () => _i731.SugerirLugarUseCase(gh<_i302.IRecomendarRepository>()),
+    );
     gh.factory<_i331.DeletePerfilUseCase>(
       () => _i331.DeletePerfilUseCase(gh<_i879.IProfileRepository>()),
     );
@@ -353,6 +409,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i331.DeletePerfilUseCase>(),
         gh<_i453.UploadFotoPerfilUseCase>(),
       ),
+    );
+    gh.factory<_i243.RecomendarProvider>(
+      () => _i243.RecomendarProvider(gh<_i731.SugerirLugarUseCase>()),
     );
     gh.factory<_i112.ResenasProvider>(
       () => _i112.ResenasProvider(

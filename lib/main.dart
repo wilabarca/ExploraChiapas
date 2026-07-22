@@ -10,10 +10,7 @@ void main() async {
   runApp(const _AppSplash());
 
   // Inicializa en paralelo (más rápido que secuencial)
-  await Future.wait([
-    configureDependencies(),
-    OneSignalService.initialize(),
-  ]);
+  await Future.wait([configureDependencies(), OneSignalService.initialize()]);
 
   runApp(const ExploraChiapasApp());
 }
@@ -53,10 +50,7 @@ class _AppSplash extends StatelessWidget {
                     const SizedBox(height: 8),
                     const Text(
                       'Descubre la magia de Chiapas',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 13,
-                      ),
+                      style: TextStyle(color: Colors.white70, fontSize: 13),
                     ),
                   ],
                 ),

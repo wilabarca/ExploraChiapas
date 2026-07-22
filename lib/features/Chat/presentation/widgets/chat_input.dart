@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_colors.dart';
+
 class ChatInput extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onSend;
 
-  const ChatInput({
-    super.key,
-    required this.controller,
-    required this.onSend,
-  });
+  const ChatInput({super.key, required this.controller, required this.onSend});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface(context),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(
+              alpha: AppColors.isDark(context) ? 0.3 : 0.06,
+            ),
             blurRadius: 10,
             offset: const Offset(0, -3),
           ),
@@ -31,26 +31,36 @@ class ChatInput extends StatelessWidget {
             Expanded(
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 18, vertical: 4),
+                  horizontal: 18,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF5F5F5),
+                  color: AppColors.surfaceContainer(context),
                   borderRadius: BorderRadius.circular(30),
                 ),
                 child: TextField(
                   controller: controller,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
-                    color: Color(0xFF1B1B1B),
+                    color: AppColors.textPrimary(context),
                   ),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'Escribe tu consulta aquí...',
                     hintStyle: TextStyle(
-                      color: Color(0xFFAAAAAA),
+                      color: AppColors.textHint(context),
                       fontSize: 15,
                     ),
+                    // Sin esto, el TextField hereda "filled: true" del
+                    // InputDecorationTheme global y pinta su propio
+                    // rectángulo de fondo (de esquinas cuadradas, sin
+                    // redondear) por debajo del texto — se ve como un
+                    // cuadro extra asomando dentro de esta píldora
+                    // redondeada. El único fondo debe ser el de este
+                    // Container (AppColors.surfaceContainer).
+                    filled: false,
                     border: InputBorder.none,
                     isDense: true,
-                    contentPadding: EdgeInsets.symmetric(vertical: 10),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
                   ),
                   maxLines: null,
                   textInputAction: TextInputAction.send,
@@ -64,13 +74,13 @@ class ChatInput extends StatelessWidget {
               child: Container(
                 width: 46,
                 height: 46,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF2E7D32),
+                decoration: BoxDecoration(
+                  color: AppColors.primary(context),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.send_rounded,
-                  color: Colors.white,
+                  color: AppColors.onPrimary(context),
                   size: 20,
                 ),
               ),

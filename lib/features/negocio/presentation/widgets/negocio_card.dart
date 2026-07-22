@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/negocio.dart';
 
 class NegocioCard extends StatelessWidget {
@@ -14,11 +15,13 @@ class NegocioCard extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface(context),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(
+                alpha: AppColors.isDark(context) ? 0.3 : 0.05,
+              ),
               blurRadius: 8,
               offset: const Offset(0, 3),
             ),
@@ -37,14 +40,17 @@ class NegocioCard extends StatelessWidget {
                   negocio.imagenPrincipal,
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) =>
-                      Container(color: const Color(0xFFD8F5D8)),
+                      Container(color: AppColors.primaryContainer(context)),
                 ),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 4,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -56,20 +62,20 @@ class NegocioCard extends StatelessWidget {
                             negocio.nombre,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF1B1B1B),
+                              color: AppColors.textPrimary(context),
                             ),
                           ),
                         ),
                         if (negocio.verificado)
-                          const Padding(
-                            padding: EdgeInsets.only(left: 4),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 4),
                             child: Icon(
                               Icons.verified,
                               size: 15,
-                              color: Color(0xFF2E7D32),
+                              color: AppColors.primary(context),
                             ),
                           ),
                       ],
@@ -81,17 +87,17 @@ class NegocioCard extends StatelessWidget {
                         const SizedBox(width: 3),
                         Text(
                           negocio.calificacionPromedio.toStringAsFixed(1),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF444444),
+                            color: AppColors.textSecondary(context),
                           ),
                         ),
                         Text(
                           ' (${negocio.numeroResenas})',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF999999),
+                            color: AppColors.textHint(context),
                           ),
                         ),
                       ],
@@ -102,9 +108,9 @@ class NegocioCard extends StatelessWidget {
                         negocio.direccion,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF888888),
+                          color: AppColors.textHint(context),
                           height: 1.3,
                         ),
                       ),
@@ -113,10 +119,10 @@ class NegocioCard extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(
                         'Desde \$${negocio.precioDesde!.toStringAsFixed(0)}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF2E7D32),
+                          color: AppColors.primary(context),
                         ),
                       ),
                     ],

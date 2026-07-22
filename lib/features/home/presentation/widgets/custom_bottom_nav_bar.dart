@@ -1,13 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 
-enum BottomNavTab {
-  explorar,
-  mapa,
-  favoritos,
-  resenas,
-  perfil,
-}
+enum BottomNavTab { explorar, mapa, favoritos, resenas, perfil }
 
 class AppBottomNavItem {
   final IconData icon;
@@ -68,7 +62,8 @@ class AppBottomNav extends StatelessWidget {
     this.navItems = items,
   });
 
-  int get _currentIndex => navItems.indexWhere((item) => item.tab == currentTab);
+  int get _currentIndex =>
+      navItems.indexWhere((item) => item.tab == currentTab);
 
   @override
   Widget build(BuildContext context) {
@@ -77,8 +72,8 @@ class AppBottomNav extends StatelessWidget {
     final isTablet = screenWidth >= 600;
     final isLargeScreen = screenWidth >= 900;
 
-    final horizontalMargin = isTablet 
-        ? (isLargeScreen ? screenWidth * 0.20 : screenWidth * 0.15) 
+    final horizontalMargin = isTablet
+        ? (isLargeScreen ? screenWidth * 0.20 : screenWidth * 0.15)
         : 16.0;
     final barHeight = isCompact ? 60.0 : (isTablet ? 76.0 : 68.0);
     final iconSize = isCompact ? 20.0 : (isTablet ? 26.0 : 22.0);
@@ -91,8 +86,14 @@ class AppBottomNav extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           return Container(
-            margin: EdgeInsets.symmetric(horizontal: horizontalMargin, vertical: 10),
-            padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: verticalPadding),
+            margin: EdgeInsets.symmetric(
+              horizontal: horizontalMargin,
+              vertical: 10,
+            ),
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding,
+              vertical: verticalPadding,
+            ),
             constraints: BoxConstraints(
               maxHeight: barHeight,
               minHeight: 52,
@@ -128,7 +129,9 @@ class AppBottomNav extends StatelessWidget {
                         vertical: isCompact ? 6 : 10,
                       ),
                       decoration: BoxDecoration(
-                        color: isSelected ? AppColors.primary(context) : Colors.transparent,
+                        color: isSelected
+                            ? AppColors.primary(context)
+                            : Colors.transparent,
                         borderRadius: BorderRadius.circular(30),
                       ),
                       child: Row(
@@ -138,7 +141,9 @@ class AppBottomNav extends StatelessWidget {
                           Icon(
                             isSelected ? item.activeIcon : item.icon,
                             size: isSelected ? iconSize * 1.1 : iconSize,
-                            color: isSelected ? Colors.white : AppColors.textSecondary(context),
+                            color: isSelected
+                                ? AppColors.onPrimary(context)
+                                : AppColors.textSecondary(context),
                           ),
                           if (isSelected) ...[
                             const SizedBox(width: 6),
@@ -148,7 +153,7 @@ class AppBottomNav extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: AppColors.onPrimary(context),
                                   fontWeight: FontWeight.bold,
                                   fontSize: fontSize,
                                 ),
