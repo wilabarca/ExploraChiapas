@@ -7,6 +7,8 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'mapa_ruta_page.dart';
+import '../../../favoritos/domain/entities/favorito.dart';
+import '../../../favoritos/presentation/providers/favoritos_provider.dart';
 import '../../../resena/domain/entities/DestinoResenaEntity.dart';
 import '../../../resena/presentation/pages/escribir_resena_page.dart';
 import '../../../resena/presentation/providers/ResenasProvider.dart';
@@ -49,6 +51,10 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
             targetType: 'destination',
             targetId: widget.id,
           );
+      final favProvider = context.read<FavoritosProvider>();
+      if (favProvider.status == FavoritosStatus.idle) {
+        favProvider.cargarFavoritos();
+      }
     });
   }
 
@@ -109,6 +115,24 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
                 fontWeight: FontWeight.bold,
               ),
             ),
+            actions: [
+              Consumer<FavoritosProvider>(
+                builder: (context, favProvider, _) {
+                  final esFav = favProvider.esFavorito(
+                    FavoritoTargetType.destination, widget.id);
+                  return IconButton(
+                    icon: Icon(
+                      esFav ? Icons.favorite : Icons.favorite_border,
+                      color: esFav ? Colors.red : AppColors.textPrimary(context),
+                    ),
+                    onPressed: () => favProvider.toggleFavorito(
+                      targetType: FavoritoTargetType.destination,
+                      targetId: widget.id,
+                    ),
+                  );
+                },
+              ),
+            ],
             flexibleSpace: widget.imageUrl.isNotEmpty
                 ? FlexibleSpaceBar(
                     background: Image.network(

@@ -11,6 +11,8 @@ import '../widgets/custom_bottom_nav_bar.dart';
 import '../../../destinos/domain/entities/destino.dart';
 import '../../../destinos/presentation/pages/lugar_detail_page.dart';
 import '../../../destinos/presentation/providers/destinos_provider.dart';
+import '../../../favoritos/presentation/providers/favoritos_provider.dart';
+import '../../../favoritos/domain/entities/favorito.dart';
 import '../../../eventos/domain/entities/evento.dart';
 import '../../../eventos/presentation/providers/eventos_provider.dart';
 import '../../data/home_api_service.dart';
@@ -206,6 +208,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
 
                   return Consumer<DestinoProvider>(
                     builder: (context, destinoProvider, child) {
+                      final favProvider = context.watch<FavoritosProvider>();
                       if (destinoProvider.listStatus == DestinoStatus.loading) {
                         return SkeletonCardRow(
                           count: 3,
@@ -307,14 +310,20 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
                             }
 
                             final destino = destinoProvider.destinos[index];
+                            final esFav = favProvider.esFavorito(
+                              FavoritoTargetType.destination, destino.id);
 
                             return DestinoCard(
                               nombre: destino.name,
                               categoria: s('destino_turistico'),
                               calificacion: destino.averageRating,
                               imageUrl: destino.imageUrl,
-                              esFavorito: false,
+                              esFavorito: esFav,
                               onTap: () => _openDestinoDetail(destino),
+                              onFavoritoTap: () => favProvider.toggleFavorito(
+                                targetType: FavoritoTargetType.destination,
+                                targetId: destino.id,
+                              ),
                             );
                           },
                         ),
