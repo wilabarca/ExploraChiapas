@@ -8,6 +8,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class MapaRutaPage extends StatefulWidget {
   final String nombre;
@@ -195,6 +196,14 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Theme(
+      data: isDark ? AppTheme.dark() : AppTheme.light(),
+      child: Builder(builder: (context) => _buildContent(context)),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
     final userPt = _pos != null ? LatLng(_pos!.latitude, _pos!.longitude) : null;
     final destPt = LatLng(widget.destLat, widget.destLng);
 
