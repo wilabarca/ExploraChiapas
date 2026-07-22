@@ -131,7 +131,7 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
       _pos = pos;
       final dist = _haversine(pos.latitude, pos.longitude, widget.destLat, widget.destLng);
 
-      if (dist < 0.1) {
+      if (dist < 0.01) {
         setState(() => _llegaste = true);
         _stream?.cancel();
         _osrmTimer?.cancel();
@@ -218,7 +218,7 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
                   polylines: [
                     Polyline(
                       points: _ruta,
-                      color: const Color(0xFF1565C0),
+                      color: AppColors.primary(context),
                       strokeWidth: 6,
                       borderColor: Colors.white,
                       borderStrokeWidth: 2,
@@ -234,7 +234,7 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
                       height: 22,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1976D2),
+                          color: AppColors.primary(context),
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 3),
                           boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 6)],
@@ -246,7 +246,7 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
                     width: 42,
                     height: 42,
                     alignment: Alignment.topCenter,
-                    child: const Icon(Icons.location_pin, color: Colors.red, size: 42),
+                    child: Icon(Icons.location_pin, color: AppColors.primary(context), size: 42),
                   ),
                 ],
               ),
@@ -257,21 +257,21 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
           Positioned(
             top: 0, left: 0, right: 0,
             child: Container(
-              color: const Color(0xFF1565C0),
+              color: AppColors.primary(context),
               padding: EdgeInsets.fromLTRB(
                   16, MediaQuery.of(context).padding.top + 8, 16, 12),
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    icon: Icon(Icons.arrow_back, color: AppColors.onPrimary(context)),
                     onPressed: () => Navigator.pop(context),
                   ),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       widget.nombre,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: AppColors.onPrimary(context),
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -307,10 +307,10 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
           Positioned(
             bottom: 0, left: 0, right: 0,
             child: Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                boxShadow: [
+              decoration: BoxDecoration(
+                color: AppColors.surface(context),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                boxShadow: const [
                   BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, -3))
                 ],
               ),
@@ -328,14 +328,19 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
     );
   }
 
-  Widget _panelCargando() => const Padding(
-        padding: EdgeInsets.symmetric(vertical: 12),
+  Widget _panelCargando() => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
-            SizedBox(width: 12),
-            Text('Calculando ruta...'),
+            SizedBox(
+              width: 20, height: 20,
+              child: CircularProgressIndicator(
+                  strokeWidth: 2, color: AppColors.primary(context)),
+            ),
+            const SizedBox(width: 12),
+            Text('Calculando ruta...',
+                style: TextStyle(color: AppColors.textSecondary(context))),
           ],
         ),
       );
@@ -343,20 +348,22 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
   Widget _panelLlegaste() => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.check_circle_outline, color: Colors.green, size: 48),
+          Icon(Icons.check_circle_outline, color: AppColors.primary(context), size: 48),
           const SizedBox(height: 8),
-          const Text('¡Llegaste!',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          Text('¡Llegaste!',
+              style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary(context))),
           const SizedBox(height: 4),
           Text('Estás en ${widget.nombre}',
-              style: const TextStyle(color: Colors.grey)),
+              style: TextStyle(color: AppColors.textSecondary(context))),
         ],
       );
 
   Widget _panelRuta() => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Métricas
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -365,7 +372,7 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
                 valor: _fmtTiempo(_durMin),
                 etiqueta: 'Tiempo restante',
               ),
-              Container(width: 1, height: 48, color: Colors.grey[200]),
+              Container(width: 1, height: 48, color: AppColors.borderSubtle(context)),
               _Metrica(
                 icono: Icons.straighten_outlined,
                 valor: _fmtDist(_distKm),
@@ -375,9 +382,9 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
           ),
           if (_esEstimado) ...[
             const SizedBox(height: 6),
-            const Text(
+            Text(
               '* Línea recta — sin conexión al servidor de rutas',
-              style: TextStyle(fontSize: 11, color: Colors.grey),
+              style: TextStyle(fontSize: 11, color: AppColors.textSecondary(context)),
               textAlign: TextAlign.center,
             ),
           ],
@@ -400,12 +407,15 @@ class _Metrica extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Icon(icono, color: const Color(0xFF1565C0), size: 26),
+        Icon(icono, color: AppColors.primary(context), size: 26),
         const SizedBox(height: 4),
         Text(valor,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary(context))),
         Text(etiqueta,
-            style: const TextStyle(fontSize: 11, color: Colors.grey)),
+            style: TextStyle(fontSize: 11, color: AppColors.textSecondary(context))),
       ],
     );
   }
