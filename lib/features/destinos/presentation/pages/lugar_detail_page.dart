@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
+import 'mapa_ruta_page.dart';
 import '../../../resena/domain/entities/DestinoResenaEntity.dart';
 import '../../../resena/presentation/pages/escribir_resena_page.dart';
 import '../../../resena/presentation/providers/ResenasProvider.dart';
@@ -73,15 +74,14 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
 
   Future<void> _trazarRuta() async {
     if (!_tieneCoords) return;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (_) => _RutaSheet(
-        nombre: widget.nombre,
-        destLat: widget.lat!,
-        destLng: widget.lng!,
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MapaRutaPage(
+          nombre:  widget.nombre,
+          destLat: widget.lat!,
+          destLng: widget.lng!,
+        ),
       ),
     );
   }
