@@ -131,7 +131,7 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
       _pos = pos;
       final dist = _haversine(pos.latitude, pos.longitude, widget.destLat, widget.destLng);
 
-      if (dist < 0.1) {
+      if (dist < 0.01) {
         setState(() => _llegaste = true);
         _stream?.cancel();
         _osrmTimer?.cancel();
