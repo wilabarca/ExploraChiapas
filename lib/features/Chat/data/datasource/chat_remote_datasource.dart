@@ -10,6 +10,8 @@ abstract class IChatRemoteDatasource {
     List<Map<String, String>> historial = const [],
     double? userLat,
     double? userLng,
+    String? nombreUsuario,
+    bool esPrimerMensaje = false,
   });
 }
 
@@ -25,12 +27,16 @@ class ChatRemoteDatasourceImpl implements IChatRemoteDatasource {
     List<Map<String, String>> historial = const [],
     double? userLat,
     double? userLng,
+    String? nombreUsuario,
+    bool esPrimerMensaje = false,
   }) async {
     final body = <String, dynamic>{
       'texto': texto,
       'historial': historial,
       if (userLat != null) 'user_lat': userLat,
       if (userLng != null) 'user_lng': userLng,
+      if (nombreUsuario != null) 'nombre_usuario': nombreUsuario,
+      if (esPrimerMensaje) 'es_primer_mensaje': true,
     };
     final response = await _mlApiClient.post(
       AppConstants.planearEndpoint,

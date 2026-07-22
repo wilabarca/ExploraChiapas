@@ -10,6 +10,7 @@ class DestinoCard extends StatelessWidget {
   final bool esFavorito;
   final bool esSostenible;
   final VoidCallback? onTap;
+  final VoidCallback? onFavoritoTap;
 
   const DestinoCard({
     super.key,
@@ -20,6 +21,7 @@ class DestinoCard extends StatelessWidget {
     this.esFavorito = false,
     this.esSostenible = false,
     this.onTap,
+    this.onFavoritoTap,
   });
 
   @override
@@ -52,20 +54,23 @@ class DestinoCard extends StatelessWidget {
                   ),
                   child: _buildImage(),
                 ),
-                if (esFavorito)
+                if (esFavorito || onFavoritoTap != null)
                   Positioned(
                     top: 8,
                     right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.favorite,
-                        color: Colors.red,
-                        size: 16,
+                    child: GestureDetector(
+                      onTap: onFavoritoTap,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          esFavorito ? Icons.favorite : Icons.favorite_border,
+                          color: esFavorito ? Colors.red : Colors.grey,
+                          size: 16,
+                        ),
                       ),
                     ),
                   ),

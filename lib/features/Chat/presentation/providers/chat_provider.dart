@@ -50,6 +50,13 @@ class ChatProvider extends ChangeNotifier {
   String? _conversacionId;
   String? get conversacionId => _conversacionId;
 
+  String? _nombreUsuario;
+  bool _esPrimerMensajeReal = true;
+
+  void setNombreUsuario(String? nombre) {
+    _nombreUsuario = nombre;
+  }
+
   ChatStatus _status = ChatStatus.idle;
   ChatStatus get status => _status;
 
@@ -90,11 +97,16 @@ class ChatProvider extends ChangeNotifier {
 
     final ubicacion = await _obtenerUbicacion();
 
+    final esPrimero = _esPrimerMensajeReal;
+    _esPrimerMensajeReal = false;
+
     final result = await _enviarMensajeUseCase(
       textoLimpio,
       historial: List.unmodifiable(_historialGroq),
       userLat: ubicacion?.latitude,
       userLng: ubicacion?.longitude,
+      nombreUsuario: _nombreUsuario,
+      esPrimerMensaje: esPrimero,
     );
 
     result.fold(
@@ -140,6 +152,7 @@ class ChatProvider extends ChangeNotifier {
     ));
     _historialGroq.clear();
     _conversacionId = null;
+    _esPrimerMensajeReal = true;
     _status = ChatStatus.idle;
     _errorMessage = null;
     notifyListeners();
