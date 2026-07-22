@@ -12,6 +12,7 @@ import '../../domain/usecases/get_user_interests_usecase.dart';
 import '../../domain/usecases/update_user_interests_usecase.dart';
 import '../../domain/entities/user_interests.dart';
 import '../../../../core/services/notifications/onesignal_service.dart';
+import '../../../../core/storage/secure_session_storage.dart';
 
 enum AuthStatus { idle, loading, success, error }
 
@@ -23,6 +24,7 @@ class AuthProvider extends ChangeNotifier {
   final AuthRepository _authRepository;
   final GetUserInterestsUseCase _getUserInterestsUseCase;
   final UpdateUserInterestsUseCase _updateUserInterestsUseCase;
+  final SecureSessionStorage _secureStorage;
 
   AuthProvider(
     this._loginUseCase,
@@ -31,6 +33,7 @@ class AuthProvider extends ChangeNotifier {
     this._authRepository,
     this._getUserInterestsUseCase,
     this._updateUserInterestsUseCase,
+    this._secureStorage,
   );
 
   AuthStatus _status = AuthStatus.idle;
@@ -49,7 +52,7 @@ class AuthProvider extends ChangeNotifier {
 
   List<UserInterest> _availableInterests = [];
   List<UserInterest> get availableInterests =>
-  List.unmodifiable(_availableInterests);
+      List.unmodifiable(_availableInterests);
 
   // ── Datos temporales del registro para auto-login ──
   Map<String, dynamic>? _registroData;
@@ -69,9 +72,8 @@ class AuthProvider extends ChangeNotifier {
       (token) async {
         _token = token;
 
-        // ✅ Guardar JWT en SharedPreferences
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(AppConstants.jwtTokenKey, token);
+        // ✅ Guardar JWT en almacenamiento seguro (Keystore/Keychain)
+        await _secureStorage.setToken(token);
         debugPrint('✅ JWT guardado: ${token.substring(0, 30)}...');
 
         return true;
@@ -91,13 +93,12 @@ class AuthProvider extends ChangeNotifier {
       (usuario) async {
         _usuario = usuario;
 
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(AppConstants.userNameKey, usuario.name);
-        await prefs.setString(AppConstants.userEmailKey, usuario.email);
-        await OneSignalService.loginUser(usuario.id,);
+        await _secureStorage.setUserName(usuario.name);
+        await _secureStorage.setUserEmail(usuario.email);
+        await OneSignalService.loginUser(usuario.id);
 
         debugPrint(
-          '✅ Login OK — tipo: ${prefs.getString(AppConstants.tipoUsuarioKey)}',
+          '✅ Login OK — tipo: ${await _secureStorage.getTipoUsuario()}',
         );
 
         _setSuccess();
@@ -119,8 +120,7 @@ class AuthProvider extends ChangeNotifier {
       },
       (token) async {
         _token = token;
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(AppConstants.jwtTokenKey, token);
+        await _secureStorage.setToken(token);
         return true;
       },
     );
@@ -131,108 +131,97 @@ class AuthProvider extends ChangeNotifier {
 
     return profileResult.fold(
       (failure) {
-        debugPrint('⚠️ Perfil no cargado tras login Google: ${failure.message}');
+        debugPrint(
+          '⚠️ Perfil no cargado tras login Google: ${failure.message}',
+        );
         _setSuccess();
         return true;
       },
       (usuario) async {
         _usuario = usuario;
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(AppConstants.userNameKey, usuario.name);
-        await prefs.setString(AppConstants.userEmailKey, usuario.email);
-        await OneSignalService.loginUser(usuario.id,);
+        await _secureStorage.setUserName(usuario.name);
+        await _secureStorage.setUserEmail(usuario.email);
+        await OneSignalService.loginUser(usuario.id);
         _setSuccess();
         return true;
       },
     );
   }
 
-// ── Cargar intereses del usuario ─────────────────────────
+  // ── Cargar intereses del usuario ─────────────────────────
 
-  Future<UserInterests?>
-    loadUserInterests() async {
-  final result =
-      await _getUserInterestsUseCase();
+  Future<UserInterests?> loadUserInterests() async {
+    final result = await _getUserInterestsUseCase();
 
-  return result.fold(
-    (failure) {
-      _errorMessage = failure.message;
+    return result.fold(
+      (failure) {
+        _errorMessage = failure.message;
 
-      debugPrint(
-        'Error cargando intereses: '
-        '${failure.message}',
-      );
+        debugPrint(
+          'Error cargando intereses: '
+          '${failure.message}',
+        );
 
-      notifyListeners();
+        notifyListeners();
 
-      return null;
-    },
-    (userInterests) {
-      _userInterests = userInterests;
-      _errorMessage = null;
+        return null;
+      },
+      (userInterests) {
+        _userInterests = userInterests;
+        _errorMessage = null;
 
-      notifyListeners();
+        notifyListeners();
 
-      return userInterests;
-    },
-  );
-}
+        return userInterests;
+      },
+    );
+  }
 
-// ── Guardar intereses del usuario ─────────────────────────
+  // ── Guardar intereses del usuario ─────────────────────────
 
-Future<bool> saveUserInterests({
-  required List<String> categoryIds,
-}) async {
-  final result =
-      await _updateUserInterestsUseCase(
-    categoryIds: categoryIds,
-  );
+  Future<bool> saveUserInterests({required List<String> categoryIds}) async {
+    final result = await _updateUserInterestsUseCase(categoryIds: categoryIds);
 
-  return result.fold(
-    (failure) {
-      _errorMessage = failure.message;
+    return result.fold(
+      (failure) {
+        _errorMessage = failure.message;
 
-      debugPrint(
-        'Error guardando intereses: '
-        '${failure.message}',
-      );
+        debugPrint(
+          'Error guardando intereses: '
+          '${failure.message}',
+        );
 
-      notifyListeners();
+        notifyListeners();
 
-      return false;
-    },
-    (userInterests) async {
-      _userInterests = userInterests;
-      _errorMessage = null;
+        return false;
+      },
+      (userInterests) async {
+        _userInterests = userInterests;
+        _errorMessage = null;
 
-      /*
+        /*
        * Se conserva como caché local,
        * pero el backend ya es la
        * fuente real de verdad.
        */
-      final prefs =
-          await SharedPreferences.getInstance();
+        final prefs = await SharedPreferences.getInstance();
 
-      await prefs.setBool(
-        AppConstants.onboardingKey,
-        userInterests.onboardingCompleted,
-      );
+        await prefs.setBool(
+          AppConstants.onboardingKey,
+          userInterests.onboardingCompleted,
+        );
 
-      await prefs.setStringList(
-        AppConstants.interesesKey,
-        userInterests.interests
-            .map(
-              (interest) => interest.name,
-            )
-            .toList(),
-      );
+        await prefs.setStringList(
+          AppConstants.interesesKey,
+          userInterests.interests.map((interest) => interest.name).toList(),
+        );
 
-      notifyListeners();
+        notifyListeners();
 
-      return true;
-    },
-  );
-}
+        return true;
+      },
+    );
+  }
 
   // ── Register ──────────────────────────────────────────────
   Future<bool> register(UsuarioRegistro datos) async {
@@ -254,15 +243,14 @@ Future<bool> saveUserInterests({
           'password': datos.contrasena, // <-- password para auto-login
         };
 
-        final prefs = await SharedPreferences.getInstance();
         final tipoStr = _tipoToString(datos.tipoUsuario);
-        await prefs.setString(AppConstants.tipoUsuarioKey, tipoStr);
+        await _secureStorage.setTipoUsuario(tipoStr);
 
         // Si el registro devuelve token, guardarlo también
         final token = data['token'] as String?;
         if (token != null) {
           _token = token;
-          await prefs.setString(AppConstants.jwtTokenKey, token);
+          await _secureStorage.setToken(token);
           debugPrint(
             '✅ JWT guardado tras registro: ${token.substring(0, 30)}...',
           );
@@ -279,16 +267,9 @@ Future<bool> saveUserInterests({
 
   // ── Cerrar sesión ─────────────────────────────────────────
   Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    // El JWT es lo que mantiene autenticada la sesión.
-    await prefs.remove(AppConstants.jwtTokenKey);
+    // Limpia JWT + datos de usuario cacheados (almacenamiento seguro).
+    await _secureStorage.clearSession();
     await OneSignalService.logoutUser();
-
-    // Limpiamos datos de usuario cacheados.
-    await prefs.remove(AppConstants.userNameKey);
-    await prefs.remove(AppConstants.userEmailKey);
-    await prefs.remove(AppConstants.tipoUsuarioKey);
 
     // Limpiar estado en memoria.
     _token = null;
@@ -301,37 +282,34 @@ Future<bool> saveUserInterests({
     _errorMessage = null;
 
     notifyListeners();
-}
+  }
 
-  Future<List<UserInterest>?>
-    loadInterestCategories() async {
-  final result =
-      await _authRepository
-          .getInterestCategories();
+  Future<List<UserInterest>?> loadInterestCategories() async {
+    final result = await _authRepository.getInterestCategories();
 
-  return result.fold(
-    (failure) {
-      _errorMessage = failure.message;
+    return result.fold(
+      (failure) {
+        _errorMessage = failure.message;
 
-      debugPrint(
-        'Error cargando categorías: '
-        '${failure.message}',
-      );
+        debugPrint(
+          'Error cargando categorías: '
+          '${failure.message}',
+        );
 
-      notifyListeners();
+        notifyListeners();
 
-      return null;
-    },
-    (categories) {
-      _availableInterests = categories;
-      _errorMessage = null;
+        return null;
+      },
+      (categories) {
+        _availableInterests = categories;
+        _errorMessage = null;
 
-      notifyListeners();
+        notifyListeners();
 
-      return categories;
-    },
-  );
-}
+        return categories;
+      },
+    );
+  }
 
   // ── Limpiar datos temporales del registro ──
   void clearRegistroData() {

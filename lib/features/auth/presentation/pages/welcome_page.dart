@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../../../../core/utils/app_constants.dart';
+import '../../../../core/di/injector.dart';
+import '../../../../core/storage/secure_session_storage.dart';
 import '../../../biometric_auth/domain/entities/biometric_availability.dart';
 import '../../../biometric_auth/presentation/providers/biometric_auth_provider.dart';
 import '../widgets/auth_button.dart';
@@ -40,8 +40,7 @@ class _WelcomePageState extends State<WelcomePage> {
       return;
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString(AppConstants.jwtTokenKey);
+    final token = await getIt<SecureSessionStorage>().getToken();
     if (!mounted) return;
 
     if (token != null && token.isNotEmpty) {

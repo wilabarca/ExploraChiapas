@@ -26,6 +26,7 @@ class _LoginPageState extends State<LoginPage> {
 
   String? _emailError;
   String? _passwordError;
+  String? _errorGeneral;
 
   @override
   void initState() {
@@ -57,6 +58,7 @@ class _LoginPageState extends State<LoginPage> {
     setState(() {
       _emailError = emailError;
       _passwordError = passwordError;
+      _errorGeneral = null;
     });
 
     return emailError == null && passwordError == null;
@@ -181,15 +183,20 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  // Antes esto era un SnackBar: podía quedar flotando sobre la pantalla
+  // equivocada si justo en ese momento ocurría una navegación (p. ej. el
+  // interceptor de 401 sacando al usuario). Al ser parte del árbol de esta
+  // misma pantalla, el banner inline nunca puede "sobrevivir" a un cambio
+  // de ruta ni superponerse a otra pantalla.
   void _mostrarError(String mensaje) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(mensaje),
-        backgroundColor: AppColors.error(context),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
+    if (!mounted) return;
+    setState(() => _errorGeneral = mensaje);
+  }
+
+  // El usuario ya empezó a corregir sus datos: el error anterior ya no
+  // aplica, así que desaparece en vez de quedar mostrando algo obsoleto.
+  void _limpiarErrorGeneral(String texto) {
+    if (_errorGeneral != null) setState(() => _errorGeneral = null);
   }
 
   // ── UI ──────────────────────────────────────────────────────────────────
@@ -216,7 +223,8 @@ class _LoginPageState extends State<LoginPage> {
                   const AuthBirdLogo(),
                   SizedBox(height: size.height * 0.04),
                   const _Encabezado(),
-                  SizedBox(height: size.height * 0.045),
+                  SizedBox(height: size.height * 0.025),
+                  _ErrorBanner(mensaje: _errorGeneral),
                   _FormularioLogin(
                     emailCtrl: _emailCtrl,
                     passCtrl: _passCtrl,
@@ -224,6 +232,7 @@ class _LoginPageState extends State<LoginPage> {
                     passwordError: _passwordError,
                     isLoading: isLoading,
                     onSubmit: _handleLogin,
+                    onFieldChanged: _limpiarErrorGeneral,
                   ),
                   SizedBox(height: size.height * 0.02),
                   const _Separador(),
@@ -288,6 +297,7 @@ class _FormularioLogin extends StatelessWidget {
   final String? passwordError;
   final bool isLoading;
   final VoidCallback onSubmit;
+  final ValueChanged<String>? onFieldChanged;
 
   const _FormularioLogin({
     required this.emailCtrl,
@@ -296,6 +306,7 @@ class _FormularioLogin extends StatelessWidget {
     required this.passwordError,
     required this.isLoading,
     required this.onSubmit,
+    this.onFieldChanged,
   });
 
   @override
@@ -315,6 +326,7 @@ class _FormularioLogin extends StatelessWidget {
             icon: Icons.mail_outline,
             keyboardType: TextInputType.emailAddress,
             errorText: emailError,
+            onChanged: onFieldChanged,
           ),
           const SizedBox(height: 16),
           RegisterField(
@@ -324,6 +336,7 @@ class _FormularioLogin extends StatelessWidget {
             icon: Icons.lock_outline,
             isPassword: true,
             errorText: passwordError,
+            onChanged: onFieldChanged,
           ),
           const SizedBox(height: 10),
           Align(
@@ -462,6 +475,82 @@ class _EnlaceRegistro extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Mensaje de error del intento de login (credenciales incorrectas, sin
+/// conexión, error inesperado, etc.). Aparece/desaparece con una animación
+/// de fade + slide + escala; al vivir dentro del propio árbol de la
+/// pantalla, nunca puede quedar flotando sobre otra ruta.
+class _ErrorBanner extends StatelessWidget {
+  final String? mensaje;
+
+  const _ErrorBanner({required this.mensaje});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOut,
+      alignment: Alignment.topCenter,
+      child: mensaje == null
+          ? const SizedBox(width: double.infinity)
+          : Padding(
+              padding: const EdgeInsets.only(bottom: 18),
+              child: TweenAnimationBuilder<double>(
+                key: ValueKey(mensaje),
+                tween: Tween(begin: 0, end: 1),
+                duration: const Duration(milliseconds: 320),
+                curve: Curves.easeOutBack,
+                builder: (context, value, child) {
+                  final t = value.clamp(0.0, 1.0);
+                  return Opacity(
+                    opacity: t,
+                    child: Transform.translate(
+                      offset: Offset(0, (1 - t) * -10),
+                      child: child,
+                    ),
+                  );
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.errorContainer(context),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: AppColors.error(context).withValues(alpha: 0.35),
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 20,
+                        color: AppColors.error(context),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          mensaje!,
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w500,
+                            height: 1.35,
+                            color: AppColors.onErrorContainer(context),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
     );
   }
 }

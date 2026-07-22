@@ -1,11 +1,10 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
-import '../../../../core/utils/app_constants.dart';
+import '../../../../core/storage/secure_session_storage.dart';
 import '../../domain/entities/user_interests.dart';
 import '../../domain/entities/usuario.dart';
 import '../../domain/entities/usuario_registro.dart';
@@ -15,8 +14,9 @@ import '../datasource/auth_remote_datasource.dart';
 @LazySingleton(as: AuthRepository)
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _dataSource;
+  final SecureSessionStorage _secureStorage;
 
-  AuthRepositoryImpl(this._dataSource);
+  AuthRepositoryImpl(this._dataSource, this._secureStorage);
 
   // ─────────────────────────────────────────────────────────────
   // REGISTRO
@@ -35,19 +35,9 @@ class AuthRepositoryImpl implements AuthRepository {
         userTypeId: usuario.userTypeId,
       );
 
-      final prefs = await SharedPreferences.getInstance();
-
-      await prefs.setString(AppConstants.tipoUsuarioKey, usuario.userTypeId);
-
-      await prefs.setString(
-        AppConstants.userNameKey,
-        result['name'] as String? ?? '',
-      );
-
-      await prefs.setString(
-        AppConstants.userEmailKey,
-        result['email'] as String? ?? '',
-      );
+      await _secureStorage.setTipoUsuario(usuario.userTypeId);
+      await _secureStorage.setUserName(result['name'] as String? ?? '');
+      await _secureStorage.setUserEmail(result['email'] as String? ?? '');
 
       return Right(result);
     } on ServerException catch (e) {
@@ -71,15 +61,13 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final token = await _dataSource.login(email: email, password: password);
 
-      final prefs = await SharedPreferences.getInstance();
-
-      await prefs.setString(AppConstants.jwtTokenKey, token);
+      await _secureStorage.setToken(token);
 
       debugPrint('✅ Login exitoso, token guardado');
 
       debugPrint(
         '👤 Tipo guardado: '
-        '${prefs.getString(AppConstants.tipoUsuarioKey)}',
+        '${await _secureStorage.getTipoUsuario()}',
       );
 
       return Right(token);
@@ -101,9 +89,7 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final token = await _dataSource.loginWithGoogle(idToken: idToken);
 
-      final prefs = await SharedPreferences.getInstance();
-
-      await prefs.setString(AppConstants.jwtTokenKey, token);
+      await _secureStorage.setToken(token);
 
       return Right(token);
     } on UnauthorizedException catch (e) {
@@ -194,12 +180,10 @@ class AuthRepositoryImpl implements AuthRepository {
         '"${usuario.userTypeId}"',
       );
 
-      final prefs = await SharedPreferences.getInstance();
-
-      final tipoActual = prefs.getString(AppConstants.tipoUsuarioKey);
+      final tipoActual = await _secureStorage.getTipoUsuario();
 
       if (tipoActual == null || tipoActual.isEmpty) {
-        await prefs.setString(AppConstants.tipoUsuarioKey, usuario.userTypeId);
+        await _secureStorage.setTipoUsuario(usuario.userTypeId);
 
         debugPrint(
           '👤 Tipo sincronizado desde perfil: '

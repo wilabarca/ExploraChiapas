@@ -1,18 +1,19 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:injectable/injectable.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../error/exceptions.dart';
 import '../navigation/app_navigator.dart';
+import '../storage/secure_session_storage.dart';
 import '../utils/app_constants.dart';
 
 @lazySingleton
 class ApiClient {
   late final Dio _dio;
+  final SecureSessionStorage _secureStorage;
 
   static const String _baseUrl = AppConstants.baseUrl;
 
-  ApiClient() {
+  ApiClient(this._secureStorage) {
     _dio = Dio(
       BaseOptions(
         baseUrl: _baseUrl,
@@ -28,8 +29,7 @@ class ApiClient {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          final prefs = await SharedPreferences.getInstance();
-          final token = prefs.getString(AppConstants.jwtTokenKey);
+          final token = await _secureStorage.getToken();
           debugPrint(
             '🔑 JWT interceptor: ${token != null ? "SÍ (${token.length} chars)" : "❌ NO HAY TOKEN"}',
           );
@@ -50,11 +50,20 @@ class ApiClient {
           debugPrint(
             '❌ Error ${error.response?.statusCode}: ${error.response?.data}',
           );
-          if (error.response?.statusCode == 401) {
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.remove(AppConstants.jwtTokenKey);
-            AppNavigator.key.currentState
-                ?.pushNamedAndRemoveUntil('/', (_) => false);
+          // Un 401 en login/registro significa "credenciales inválidas",
+          // no "tu sesión expiró": no debe disparar el logout global ni
+          // sacar al usuario de la pantalla donde está escribiendo. Antes
+          // esto se activaba con cualquier 401 y mandaba al usuario a
+          // Welcome a media escritura de su contraseña.
+          final esAutenticacionPublica = _esRutaDeAutenticacionPublica(
+            error.requestOptions.path,
+          );
+          if (error.response?.statusCode == 401 && !esAutenticacionPublica) {
+            await _secureStorage.clearSession();
+            AppNavigator.key.currentState?.pushNamedAndRemoveUntil(
+              '/',
+              (_) => false,
+            );
           }
           handler.next(error);
         },
@@ -63,6 +72,11 @@ class ApiClient {
   }
 
   Dio get dio => _dio;
+
+  bool _esRutaDeAutenticacionPublica(String path) {
+    return path.contains(AppConstants.loginEndpoint) ||
+        path.contains(AppConstants.registerEndpoint);
+  }
 
   // Despierta el servidor de Render (free tier duerme tras 15 min inactivo).
   // Llamar esto en pantallas donde el usuario tardará unos segundos antes
@@ -104,10 +118,9 @@ class ApiClient {
   }) async {
     try {
       debugPrint('📤 GET: $_baseUrl$path');
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString(AppConstants.jwtTokenKey);
+      final token = await _secureStorage.getToken();
       debugPrint(
-        '🔑 JWT en prefs: ${token != null ? "SÍ (${token.substring(0, token.length.clamp(0, 30))}...)" : "❌ NO HAY TOKEN"}',
+        '🔑 JWT en secure storage: ${token != null ? "SÍ (${token.substring(0, token.length.clamp(0, 30))}...)" : "❌ NO HAY TOKEN"}',
       );
       final response = await _dio.get(path, queryParameters: queryParameters);
       debugPrint('📥 Response ${response.statusCode}: ${response.data}');
@@ -139,42 +152,32 @@ class ApiClient {
     throw const ServerException(message: 'Error desconocido');
   }
 
-  Future<Response> put(
-  String path, {
-  dynamic data,
-}) async {
-  try {
-    debugPrint('📤 PUT: $_baseUrl$path');
-    debugPrint('📦 Body: $data');
+  Future<Response> put(String path, {dynamic data}) async {
+    try {
+      debugPrint('📤 PUT: $_baseUrl$path');
+      debugPrint('📦 Body: $data');
 
-    final response = await _dio.put(
-      path,
-      data: data,
+      final response = await _dio.put(path, data: data);
+
+      debugPrint('📥 Response ${response.statusCode}: ${response.data}');
+
+      return response;
+    } on DioException catch (e) {
+      debugPrint('💥 DioError PUT: ${e.type} - ${e.message}');
+
+      debugPrint(
+        '📥 Response: '
+        '${e.response?.statusCode} - '
+        '${e.response?.data}',
+      );
+
+      _handleDioError(e);
+    }
+
+    throw const ServerException(
+      message: 'Error desconocido hoy no duerme Abarca',
     );
-
-    debugPrint(
-      '📥 Response ${response.statusCode}: ${response.data}',
-    );
-
-    return response;
-  } on DioException catch (e) {
-    debugPrint(
-      '💥 DioError PUT: ${e.type} - ${e.message}',
-    );
-
-    debugPrint(
-      '📥 Response: '
-      '${e.response?.statusCode} - '
-      '${e.response?.data}',
-    );
-
-    _handleDioError(e);
   }
-
-  throw const ServerException(
-    message: 'Error desconocido hoy no duerme Abarca',
-  );
-}
 
   Future<Response> delete(String path) async {
     try {

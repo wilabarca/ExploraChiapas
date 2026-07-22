@@ -14,6 +14,7 @@ import 'edit_profile_page.dart';
 import '../../../home/presentation/widgets/custom_bottom_nav_bar.dart';
 import '../../../home/presentation/widgets/home_app_bar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../favoritos/presentation/providers/favoritos_provider.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -32,6 +33,10 @@ class _ProfilePageState extends State<ProfilePage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProfileProvider>().loadPerfil();
+      final favProvider = context.read<FavoritosProvider>();
+      if (favProvider.status == FavoritosStatus.idle) {
+        favProvider.cargarFavoritos();
+      }
     });
   }
 
@@ -194,8 +199,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   const ProfileStats(
                     rutasCreadas: '0',
-                    favoritos: '0',
-                    resenas: '0',
+                    favoritos:    '0',
+                    resenas:      '0',
                   ),
 
                   SizedBox(height: screenH * 0.016),

@@ -228,16 +228,15 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
                       final screenWidth = MediaQuery.of(context).size.width;
                       final cardHeight = screenWidth < 360 ? 225.0 : 210.0;
 
-                      return Consumer<DestinoProvider>(
-                        builder: (context, destinoProvider, child) {
-                          if (destinoProvider.listStatus ==
-                              DestinoStatus.loading) {
-                            return SkeletonCardRow(
-                              count: 3,
-                              cardHeight: cardHeight,
-                              cardWidth: 180,
-                            );
-                          }
+                  return Consumer<DestinoProvider>(
+                    builder: (context, destinoProvider, child) {
+                      if (destinoProvider.listStatus == DestinoStatus.loading) {
+                        return SkeletonCardRow(
+                          count: 3,
+                          cardHeight: cardHeight,
+                          cardWidth: 180,
+                        );
+                      }
 
                           if (destinoProvider.listStatus ==
                               DestinoStatus.error) {
@@ -344,24 +343,24 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
                                   );
                                 }
 
-                                final destino = destinoProvider.destinos[index];
+                            final destino = destinoProvider.destinos[index];
 
-                                return DestinoCard(
-                                  nombre: destino.name,
-                                  categoria: s('destino_turistico'),
-                                  calificacion: destino.averageRating,
-                                  imageUrl: destino.imageUrl,
-                                  esFavorito: false,
-                                  onTap: () => _openDestinoDetail(destino),
-                                );
-                              },
-                            ),
-                          );
-                        },
+                            return DestinoCard(
+                              nombre: destino.name,
+                              categoria: s('destino_turistico'),
+                              calificacion: destino.averageRating,
+                              imageUrl: destino.imageUrl,
+                              esFavorito: false,
+                              onTap: () => _openDestinoDetail(destino),
+                            );
+                          },
+                        ),
                       );
                     },
-                  ),
-                ),
+                  );
+                },
+              ),
+            ),
 
                 const SizedBox(height: 24),
 

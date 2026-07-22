@@ -8,5 +8,7 @@ abstract class IChatRepository {
     List<Map<String, String>> historial = const [],
     double? userLat,
     double? userLng,
+    String? nombreUsuario,
+    bool esPrimerMensaje = false,
   });
 }

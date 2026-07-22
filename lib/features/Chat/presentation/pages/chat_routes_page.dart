@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/di/injector.dart';
 import '../../../../core/network/ml_api_client.dart';
+import '../../../../core/utils/app_constants.dart';
 import '../providers/chat_provider.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/chat_input.dart';
@@ -27,9 +29,16 @@ class _ChatRoutesPageState extends State<ChatRoutesPage> {
   @override
   void initState() {
     super.initState();
-    // Despierta el servidor NLP en segundo plano para que la primera
-    // respuesta sea más rápida (Render free-tier duerme tras 15 min).
     getIt<MlApiClient>().warmup();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _cargarNombreUsuario());
+  }
+
+  Future<void> _cargarNombreUsuario() async {
+    final prefs = await SharedPreferences.getInstance();
+    final nombre = prefs.getString(AppConstants.userNameKey);
+    if (nombre != null && mounted) {
+      context.read<ChatProvider>().setNombreUsuario(nombre);
+    }
   }
 
   @override

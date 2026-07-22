@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../providers/auth_provider.dart';
 import '../widgets/interest_card.dart';
 
 import '../../domain/entities/user_interests.dart';
 
+import '../../../../core/di/injector.dart';
 import '../../../../core/permissions/location_permission.dart';
+import '../../../../core/storage/secure_session_storage.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/app_constants.dart';
 
 class InterestsPage extends StatefulWidget {
   const InterestsPage({super.key});
@@ -66,9 +66,7 @@ class _InterestsPageState extends State<InterestsPage> {
      * todavía no exista JWT porque el
      * auto-login ocurre al continuar.
      */
-    final prefs = await SharedPreferences.getInstance();
-
-    final token = prefs.getString(AppConstants.jwtTokenKey);
+    final token = await getIt<SecureSessionStorage>().getToken();
 
     UserInterests? current;
 
@@ -119,9 +117,7 @@ class _InterestsPageState extends State<InterestsPage> {
   Future<bool> _ensureAuthenticatedAfterRegistration(
     AuthProvider provider,
   ) async {
-    final prefs = await SharedPreferences.getInstance();
-
-    final currentToken = prefs.getString(AppConstants.jwtTokenKey);
+    final currentToken = await getIt<SecureSessionStorage>().getToken();
 
     /*
      * Si ya tenemos JWT no hace falta
