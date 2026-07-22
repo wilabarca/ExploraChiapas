@@ -18,6 +18,8 @@ class ChatRepositoryImpl implements IChatRepository {
     List<Map<String, String>> historial = const [],
     double? userLat,
     double? userLng,
+    String? nombreUsuario,
+    bool esPrimerMensaje = false,
   }) async {
     try {
       final recomendacion = await _datasource.enviarMensaje(
@@ -25,6 +27,8 @@ class ChatRepositoryImpl implements IChatRepository {
         historial: historial,
         userLat: userLat,
         userLng: userLng,
+        nombreUsuario: nombreUsuario,
+        esPrimerMensaje: esPrimerMensaje,
       );
       return Right(recomendacion);
     } on ServerException catch (e) {
