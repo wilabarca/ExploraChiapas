@@ -739,10 +739,13 @@ class _PromocionesBanner extends StatelessWidget {
             child: Container(
               padding: EdgeInsets.all(isTablet ? 22 : 18),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
+                gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFFFF7A45), Color(0xFFD84315)],
+                  colors: [
+                    AppColors.primary(context),
+                    Color.lerp(AppColors.primary(context), Colors.black, 0.25)!,
+                  ],
                 ),
                 borderRadius: BorderRadius.circular(18),
               ),
@@ -752,7 +755,7 @@ class _PromocionesBanner extends StatelessWidget {
                     right: -12,
                     bottom: -12,
                     child: Icon(
-                      Icons.local_fire_department,
+                      Icons.local_offer,
                       size: isTablet ? 100 : 78,
                       color: Colors.white.withOpacity(0.14),
                     ),
