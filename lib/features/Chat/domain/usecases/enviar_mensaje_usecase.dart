@@ -14,12 +14,16 @@ class EnviarMensajeUseCase {
     List<Map<String, String>> historial = const [],
     double? userLat,
     double? userLng,
+    String? nombreUsuario,
+    bool esPrimerMensaje = false,
   }) {
     return _repository.enviarMensaje(
       texto,
       historial: historial,
       userLat: userLat,
       userLng: userLng,
+      nombreUsuario: nombreUsuario,
+      esPrimerMensaje: esPrimerMensaje,
     );
   }
 }
