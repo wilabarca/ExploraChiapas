@@ -1,4 +1,7 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
 import '../widgets/home_app_bar.dart';
@@ -13,6 +16,7 @@ import '../widgets/restaurantes_destacados_section.dart';
 import '../widgets/hoteles_recomendados_section.dart';
 import '../../../../core/widgets/fade_slide_in.dart';
 import '../../../destinos/domain/entities/destino.dart';
+import '../../../destinos/domain/usecases/get_ubicacion_destino_usecase.dart';
 import '../../../destinos/presentation/pages/lugar_detail_page.dart';
 import '../../../destinos/presentation/providers/destinos_provider.dart';
 import '../../../eventos/presentation/providers/eventos_provider.dart';
@@ -35,6 +39,8 @@ class HomeTuristaPage extends StatefulWidget {
 class _HomeTuristaPageState extends State<HomeTuristaPage>
     with WidgetsBindingObserver, RouteAware {
   List<Map<String, dynamic>> _destacadosML = [];
+  Position? _userPos;
+  final Map<String, double> _distancias = {};
 
   // Evita que dos refrescos (p. ej. `resumed` + retorno de navegación
   // casi simultáneos) disparen peticiones duplicadas a la API.
@@ -46,6 +52,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
     WidgetsBinding.instance.addObserver(this);
 
     _cargarDestacadosML();
+    _cargarPosicion();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -54,6 +61,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
       if (destinoProvider.listStatus == DestinoStatus.idle) {
         destinoProvider.loadDestinos(limit: 10);
       }
+      destinoProvider.addListener(_onDestinosCargados);
 
       final promocionesProvider = context.read<PromocionesProvider>();
       if (promocionesProvider.status == PromocionesStatus.idle) {
@@ -75,6 +83,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     AppNavigator.routeObserver.unsubscribe(this);
+    context.read<DestinoProvider>().removeListener(_onDestinosCargados);
     super.dispose();
   }
 
@@ -96,6 +105,71 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
     final resultados = await getIt<MlApiClient>().fetchDestacados(limite: 10);
     if (!mounted) return;
     setState(() => _destacadosML = resultados);
+    _calcularDistanciasML(resultados);
+  }
+
+  Future<void> _cargarPosicion() async {
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) return;
+      var p = await Geolocator.checkPermission();
+      if (p == LocationPermission.denied) p = await Geolocator.requestPermission();
+      if (p == LocationPermission.denied || p == LocationPermission.deniedForever) return;
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.low,
+          timeLimit: Duration(seconds: 8),
+        ),
+      );
+      if (!mounted) return;
+      _userPos = pos;
+      final dp = context.read<DestinoProvider>();
+      if (dp.destinos.isNotEmpty) _fetchDistanciasAPI(dp.destinos);
+      _calcularDistanciasML(_destacadosML);
+    } catch (_) {}
+  }
+
+  void _onDestinosCargados() {
+    final dp = context.read<DestinoProvider>();
+    if (_userPos != null && dp.destinos.isNotEmpty) {
+      _fetchDistanciasAPI(dp.destinos);
+    }
+  }
+
+  void _fetchDistanciasAPI(List<Destino> destinos) {
+    for (final d in destinos) {
+      if (_distancias.containsKey(d.id)) continue;
+      _fetchDistanciaUna(d.id, d.locationId);
+    }
+  }
+
+  Future<void> _fetchDistanciaUna(String destinoId, String locationId) async {
+    final result = await getIt<GetUbicacionDestinoUseCase>()(id: locationId);
+    result.fold((_) {}, (ub) {
+      if (!ub.tieneCoordenadasValidas || _userPos == null || !mounted) return;
+      final km = _haversine(_userPos!.latitude, _userPos!.longitude, ub.latitude, ub.longitude);
+      setState(() => _distancias[destinoId] = km);
+    });
+  }
+
+  void _calcularDistanciasML(List<Map<String, dynamic>> ml) {
+    if (_userPos == null) return;
+    for (final d in ml) {
+      final id = d['id']?.toString();
+      final lat = (d['lat'] as num?)?.toDouble();
+      final lng = (d['lng'] as num?)?.toDouble();
+      if (id == null || lat == null || lng == null) continue;
+      final km = _haversine(_userPos!.latitude, _userPos!.longitude, lat, lng);
+      if (mounted) setState(() => _distancias[id] = km);
+    }
+  }
+
+  double _haversine(double lat1, double lon1, double lat2, double lon2) {
+    const r = 6371.0;
+    final dLat = (lat2 - lat1) * pi / 180;
+    final dLon = (lon2 - lon1) * pi / 180;
+    final a = sin(dLat / 2) * sin(dLat / 2) +
+        cos(lat1 * pi / 180) * cos(lat2 * pi / 180) * sin(dLon / 2) * sin(dLon / 2);
+    return r * 2 * atan2(sqrt(a), sqrt(1 - a));
   }
 
   /// Refresca únicamente los datos dinámicos del Home (promociones y
@@ -230,7 +304,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       final screenWidth = MediaQuery.of(context).size.width;
-                      final cardHeight = screenWidth < 360 ? 225.0 : 210.0;
+                      final cardHeight = screenWidth < 360 ? 255.0 : 240.0;
 
                       return Consumer<DestinoProvider>(
                         builder: (context, destinoProvider, child) {
@@ -298,6 +372,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
                                     calificacion: 0,
                                     imageUrl: d['foto_principal'] as String?,
                                     esFavorito: false,
+                                    distanciaKm: _distancias[d['id']?.toString()],
                                     onTap: () => Navigator.push(
                                       context,
                                       MaterialPageRoute(
@@ -313,9 +388,6 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
                                               '',
                                           lat: (d['lat'] as num?)?.toDouble(),
                                           lng: (d['lng'] as num?)?.toDouble(),
-                                          // Viene del motor ML, no de una
-                                          // fila real del backend: no puede
-                                          // recibir reseñas.
                                           targetType: null,
                                         ),
                                       ),
@@ -360,6 +432,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
                                   calificacion: destino.averageRating,
                                   imageUrl: destino.imageUrl,
                                   esFavorito: false,
+                                  distanciaKm: _distancias[destino.id],
                                   onTap: () => _openDestinoDetail(destino),
                                 );
                               },
