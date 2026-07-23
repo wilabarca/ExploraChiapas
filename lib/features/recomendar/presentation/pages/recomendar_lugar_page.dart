@@ -1,5 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+
+import '../../domain/entities/ubicacion_propuesta.dart';
+import '../providers/recomendar_provider.dart';
+import 'seleccionar_ubicacion_page.dart';
 
 class RecomendarLugarPage extends StatefulWidget {
   const RecomendarLugarPage({super.key});
@@ -11,414 +18,759 @@ class RecomendarLugarPage extends StatefulWidget {
 class _RecomendarLugarPageState extends State<RecomendarLugarPage> {
   final _nombreCtrl = TextEditingController();
   final _descripcionCtrl = TextEditingController();
-  final _ubicacionCtrl = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
-  String _categoriaSeleccionada = 'Naturaleza';
-  bool _isLoading = false;
+  String? _categoriaSeleccionadaId;
+  UbicacionPropuesta? _ubicacion;
+  final List<XFile> _imagenes = [];
 
-  final List<String> _categorias = [
-    'Naturaleza',
-    'Cultura',
-    'Gastronomía',
-    'Aventura',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = context.read<RecomendarProvider>();
+      if (provider.categorias.isEmpty) {
+        provider.cargarCategorias();
+      }
+    });
+  }
 
   @override
   void dispose() {
     _nombreCtrl.dispose();
     _descripcionCtrl.dispose();
-    _ubicacionCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _enviarSugerencia() async {
-    if (_nombreCtrl.text.isEmpty || _descripcionCtrl.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Completa nombre y descripción'),
-          backgroundColor: Colors.orange,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
-      return;
-    }
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 1));
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('¡Sugerencia enviada! Gracias por contribuir.'),
-        backgroundColor: AppColors.primary(context),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  Future<void> _seleccionarUbicacion() async {
+    final resultado = await Navigator.push<UbicacionPropuesta>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SeleccionarUbicacionPage(ubicacionInicial: _ubicacion),
       ),
     );
-    Navigator.pop(context);
+    if (resultado != null) {
+      setState(() => _ubicacion = resultado);
+    }
+  }
+
+  Future<void> _agregarImagenes() async {
+    if (_imagenes.length >= 5) {
+      _mostrarError('Máximo 5 fotografías permitidas.');
+      return;
+    }
+    final picker = ImagePicker();
+    final seleccionadas = await picker.pickMultiImage(imageQuality: 80);
+    if (seleccionadas.isEmpty) return;
+
+    final disponibles = 5 - _imagenes.length;
+    final aAgregar = seleccionadas.take(disponibles).toList();
+    setState(() => _imagenes.addAll(aAgregar));
+
+    if (seleccionadas.length > disponibles) {
+      _mostrarError('Solo se añadieron $disponibles foto(s). Límite: 5.');
+    }
+  }
+
+  void _quitarImagen(int index) => setState(() => _imagenes.removeAt(index));
+
+  void _mostrarError(String mensaje) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(mensaje),
+      backgroundColor: Theme.of(context).colorScheme.error,
+      behavior: SnackBarBehavior.floating,
+    ));
+  }
+
+  bool _validar() {
+    if (!(_formKey.currentState?.validate() ?? false)) return false;
+    if (_categoriaSeleccionadaId == null) {
+      _mostrarError('Selecciona una categoría.');
+      return false;
+    }
+    if (_ubicacion == null) {
+      _mostrarError('Selecciona la ubicación en el mapa.');
+      return false;
+    }
+    if (_imagenes.isEmpty) {
+      _mostrarError('Agrega al menos 1 fotografía.');
+      return false;
+    }
+    return true;
+  }
+
+  Future<void> _enviar() async {
+    if (!_validar()) return;
+    final provider = context.read<RecomendarProvider>();
+    if (provider.propuestaIdCreada != null) {
+      await provider.reintentarImagenes(imagenes: List.from(_imagenes));
+    } else {
+      await provider.enviarPropuesta(
+        nombre: _nombreCtrl.text.trim(),
+        descripcion: _descripcionCtrl.text.trim(),
+        categoriaId: _categoriaSeleccionadaId!,
+        ubicacion: _ubicacion!,
+        imagenes: List.from(_imagenes),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final mq = MediaQuery.of(context);
-    final screenW = mq.size.width;
-    final screenH = mq.size.height;
-    final isSmall = screenW < 360;
+    return Consumer<RecomendarProvider>(
+      builder: (context, provider, _) {
+        if (provider.status == RecomendarStatus.exito) {
+          return _PantallaExito(
+            onVerMisRecomendaciones: () {
+              provider.reiniciar();
+              Navigator.pushNamed(context, '/mis-propuestas');
+            },
+            onVolver: () {
+              provider.reiniciar();
+              Navigator.pop(context);
+            },
+          );
+        }
 
-    return Scaffold(
-      backgroundColor: AppColors.surface(context),
-      appBar: AppBar(
-        backgroundColor: AppColors.surface(context),
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF1B5E20)),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Recomendar Lugar',
-          style: TextStyle(
-            color: Color(0xFF1B5E20),
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
-        ),
-      ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return SingleChildScrollView(
-            padding: EdgeInsets.symmetric(
-              horizontal: constraints.maxWidth * 0.05,
-              vertical: screenH * 0.020,
+        final enviando = provider.status == RecomendarStatus.creandoUbicacion ||
+            provider.status == RecomendarStatus.creandoPropuesta ||
+            provider.status == RecomendarStatus.subiendoImagenes;
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Recomendar lugar'),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: enviando ? null : () => Navigator.pop(context),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Banner informativo ────────────────────
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F8F1),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Text(
-                    'Ayúdanos a descubrir los tesoros de Chiapas. '
-                    'Tu sugerencia será revisada por nuestro equipo '
-                    'para ser parte de las rutas exclusivas de Selva Moderna.',
-                    style: TextStyle(
-                      fontSize: isSmall ? 12 : 14,
-                      color: const Color(0xFF444444),
-                      height: 1.5,
+          ),
+          body: AbsorbPointer(
+            absorbing: enviando,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _BannerInfo(),
+                    const SizedBox(height: 20),
+
+                    // ── Nombre ──────────────────────────────────────────────
+                    _label('Nombre del lugar *'),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _nombreCtrl,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: const InputDecoration(
+                        hintText: 'Ej: Cascadas de Suchiapa',
+                        prefixIcon: Icon(Icons.place_outlined),
+                      ),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return 'El nombre es obligatorio';
+                        if (v.trim().length < 3) return 'Mínimo 3 caracteres';
+                        return null;
+                      },
                     ),
-                  ),
-                ),
+                    const SizedBox(height: 16),
 
-                SizedBox(height: screenH * 0.025),
-
-                // ── Nombre del lugar ──────────────────────
-                _buildLabel('Nombre del lugar'),
-                SizedBox(height: screenH * 0.010),
-                _buildTextField(
-                  controller: _nombreCtrl,
-                  hint: 'Ej. Cascadas de Agua Azul',
-                  isSmall: isSmall,
-                ),
-
-                SizedBox(height: screenH * 0.022),
-
-                // ── Descripción ───────────────────────────
-                _buildLabel('Descripción'),
-                SizedBox(height: screenH * 0.010),
-                _buildTextField(
-                  controller: _descripcionCtrl,
-                  hint: 'Cuéntanos por qué este lugar es especial...',
-                  maxLines: 5,
-                  isSmall: isSmall,
-                ),
-
-                SizedBox(height: screenH * 0.022),
-
-                // ── Categoría con Wrap ────────────────────
-                _buildLabel('Categoría'),
-                SizedBox(height: screenH * 0.012),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 8,
-                  children: _categorias.map((cat) {
-                    final isSelected = cat == _categoriaSeleccionada;
-                    return GestureDetector(
-                      onTap: () => setState(() => _categoriaSeleccionada = cat),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppColors.primary(context)
-                              : AppColors.surface(context),
-                          borderRadius: BorderRadius.circular(30),
-                          border: Border.all(
-                            color: isSelected
-                                ? AppColors.primary(context)
-                                : AppColors.textHint(context),
-                          ),
-                        ),
-                        child: Text(
-                          cat,
-                          style: TextStyle(
-                            fontSize: isSmall ? 12 : 14,
-                            fontWeight: FontWeight.w500,
-                            color: isSelected
-                                ? Colors.white
-                                : AppColors.textPrimary(context),
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-
-                SizedBox(height: screenH * 0.022),
-
-                // ── Dirección / Ubicación ─────────────────
-                _buildLabel('Dirección o Ubicación'),
-                SizedBox(height: screenH * 0.010),
-                Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.background(context),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: TextField(
-                    controller: _ubicacionCtrl,
-                    style: TextStyle(
-                      fontSize: isSmall ? 13 : 15,
-                      color: AppColors.textPrimary(context),
+                    // ── Categoría ────────────────────────────────────────────
+                    _label('Categoría *'),
+                    const SizedBox(height: 8),
+                    _SelectorCategoria(
+                      categorias: provider.categorias,
+                      cargando: provider.status == RecomendarStatus.loadingCategorias,
+                      seleccionadaId: _categoriaSeleccionadaId,
+                      onSeleccionar: (id) => setState(() => _categoriaSeleccionadaId = id),
                     ),
-                    decoration: InputDecoration(
-                      hintText: 'Calle, ciudad o coordenadas',
-                      hintStyle: TextStyle(color: AppColors.textHint(context)),
-                      prefixIcon: Icon(
-                        Icons.location_on_outlined,
-                        color: AppColors.primary(context),
-                        size: 20,
+                    const SizedBox(height: 16),
+
+                    // ── Descripción ──────────────────────────────────────────
+                    _label('Descripción *'),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _descripcionCtrl,
+                      maxLines: 4,
+                      maxLength: 500,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: const InputDecoration(
+                        hintText:
+                            'Cuéntanos qué hace especial este lugar, qué puede hacer '
+                            'el visitante y por qué debería agregarse a ExploraChiapas.',
+                        alignLabelWithHint: true,
                       ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 14,
-                      ),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return 'La descripción es obligatoria';
+                        if (v.trim().length < 10) return 'Describe el lugar con más detalle';
+                        return null;
+                      },
                     ),
-                  ),
-                ),
+                    const SizedBox(height: 16),
 
-                SizedBox(height: screenH * 0.022),
-
-                // ── Subir fotografías ─────────────────────
-                _buildLabel('Subir fotografías'),
-                SizedBox(height: screenH * 0.010),
-                AspectRatio(
-                  aspectRatio: 16 / 7,
-                  child: GestureDetector(
-                    onTap: () {}, // TODO: image picker
-                    child: Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: AppColors.background(context),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: AppColors.textHint(context),
-                          width: 1.5,
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.add_a_photo_outlined,
-                            color: AppColors.primary(context),
-                            size: 32,
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            'Presiona para subir fotos',
-                            style: TextStyle(
-                              color: AppColors.primary(context),
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'MÁXIMO 5 IMÁGENES (JPG, PNG)',
-                            style: TextStyle(
-                              color: AppColors.textHint(context),
-                              fontSize: 11,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
-                        ],
-                      ),
+                    // ── Ubicación ────────────────────────────────────────────
+                    _label('Ubicación *'),
+                    const SizedBox(height: 8),
+                    _SelectorUbicacion(
+                      ubicacion: _ubicacion,
+                      onSeleccionar: _seleccionarUbicacion,
                     ),
-                  ),
-                ),
+                    const SizedBox(height: 20),
 
-                SizedBox(height: screenH * 0.030),
-
-                // ── Botón enviar ──────────────────────────
-                FractionallySizedBox(
-                  widthFactor: 1.0,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: 54),
-                    child: ElevatedButton.icon(
-                      onPressed: _isLoading ? null : _enviarSugerencia,
-                      icon: _isLoading
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2.5,
-                              ),
-                            )
-                          : const Icon(
-                              Icons.send_outlined,
-                              color: Colors.white,
-                              size: 18,
-                            ),
-                      label: Text(
-                        _isLoading ? 'Enviando...' : 'Enviar sugerencia',
+                    // ── Fotografías ──────────────────────────────────────────
+                    Row(children: [
+                      _label('Fotografías *  '),
+                      Text(
+                        '${_imagenes.length}/5',
                         style: TextStyle(
-                          color: Colors.white,
-                          fontSize: isSmall ? 15 : 17,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: _imagenes.length >= 5
+                              ? Theme.of(context).colorScheme.error
+                              : Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withValues(alpha: 0.5),
                         ),
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary(context),
-                        disabledBackgroundColor: const Color(0xFFB0BEC5),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
+                    ]),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Mínimo 1, máximo 5. La primera foto será la portada.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.5),
                       ),
                     ),
-                  ),
-                ),
+                    const SizedBox(height: 10),
+                    _SelectorImagenes(
+                      imagenes: _imagenes,
+                      onAgregar: _agregarImagenes,
+                      onQuitar: _quitarImagen,
+                    ),
+                    const SizedBox(height: 24),
 
-                SizedBox(height: screenH * 0.022),
+                    // ── Progreso y errores ───────────────────────────────────
+                    if (enviando) _IndicadorProgreso(status: provider.status),
+                    if (provider.status == RecomendarStatus.error &&
+                        provider.errorMessage != null)
+                      _BannerError(
+                        mensaje: provider.errorMessage!,
+                        puedeReintentar: provider.propuestaIdCreada != null,
+                        onReintentar: _enviar,
+                      ),
+                    const SizedBox(height: 8),
 
-                // ── Banner inspiración ────────────────────
-                AspectRatio(
-                  aspectRatio: 16 / 7,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        Image.network(
-                          'https://images.unsplash.com/photo-1518638150340-f706e86654de?w=800&q=80',
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
-                              Container(color: const Color(0xFF1B5E20)),
-                        ),
-                        Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.transparent,
-                                Colors.black.withOpacity(0.65),
-                              ],
-                              stops: const [0.4, 1.0],
-                            ),
+                    // ── Botón principal ──────────────────────────────────────
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: enviando ? null : _enviar,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-                        Positioned(
-                          bottom: 16,
-                          left: 16,
-                          right: 16,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'Inspiración Chiapas',
-                                style: TextStyle(
+                        child: enviando
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
                                   color: Colors.white,
-                                  fontSize: isSmall ? 16 : 20,
+                                ),
+                              )
+                            : Text(
+                                provider.propuestaIdCreada != null
+                                    ? 'Reintentar envío de fotos'
+                                    : 'Enviar recomendación',
+                                style: const TextStyle(
+                                  fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              const Text(
-                                'Tus recomendaciones ayudan a otros viajeros.',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton(
+                        onPressed: enviando
+                            ? null
+                            : () => Navigator.pushNamed(context, '/mis-propuestas'),
+                        child: const Text('Ver mis recomendaciones'),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _label(String texto) => Text(
+        texto,
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+      );
+}
+
+// ── Widgets ────────────────────────────────────────────────────────────────────
+
+class _BannerInfo extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: cs.primaryContainer,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, color: cs.onPrimaryContainer, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Ayúdanos a descubrir nuevos lugares de Chiapas. Comparte la ubicación, '
+              'información y fotografías del sitio. Nuestro equipo revisará tu '
+              'recomendación antes de publicarla como un destino oficial.',
+              style: TextStyle(
+                  fontSize: 13, color: cs.onPrimaryContainer, height: 1.4),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SelectorCategoria extends StatelessWidget {
+  final List<dynamic> categorias;
+  final bool cargando;
+  final String? seleccionadaId;
+  final void Function(String id) onSeleccionar;
+
+  const _SelectorCategoria({
+    required this.categorias,
+    required this.cargando,
+    required this.seleccionadaId,
+    required this.onSeleccionar,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    if (cargando) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 8),
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    }
+    if (categorias.isEmpty) {
+      return Text(
+        'No se pudieron cargar las categorías.',
+        style: TextStyle(color: cs.error, fontSize: 13),
+      );
+    }
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: categorias.map((cat) {
+        final selected = cat.id == seleccionadaId;
+        return ChoiceChip(
+          label: Text(cat.nombre),
+          selected: selected,
+          onSelected: (_) => onSeleccionar(cat.id),
+          selectedColor: cs.primary,
+          labelStyle: TextStyle(
+            color: selected ? cs.onPrimary : cs.onSurface,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+            fontSize: 13,
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _SelectorUbicacion extends StatelessWidget {
+  final UbicacionPropuesta? ubicacion;
+  final VoidCallback onSeleccionar;
+
+  const _SelectorUbicacion({required this.ubicacion, required this.onSeleccionar});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    if (ubicacion == null) {
+      return OutlinedButton.icon(
+        onPressed: onSeleccionar,
+        icon: const Icon(Icons.map_outlined),
+        label: const Text('Seleccionar en el mapa'),
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size(double.infinity, 48),
+          side: BorderSide(color: cs.outline),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    }
+    return GestureDetector(
+      onTap: onSeleccionar,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          border: Border.all(color: cs.primary.withValues(alpha: 0.4)),
+          borderRadius: BorderRadius.circular(12),
+          color: cs.primaryContainer.withValues(alpha: 0.3),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.location_on, color: cs.primary, size: 22),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${ubicacion!.municipality}, ${ubicacion!.state}',
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: cs.onSurface),
+                  ),
+                  if (ubicacion!.address.isNotEmpty &&
+                      ubicacion!.address != 'Chiapas, México')
+                    Text(
+                      ubicacion!.address,
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: cs.onSurface.withValues(alpha: 0.6)),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  Text(
+                    '${ubicacion!.latitude.toStringAsFixed(6)}, '
+                    '${ubicacion!.longitude.toStringAsFixed(6)}',
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: cs.onSurface.withValues(alpha: 0.4)),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.edit_outlined, size: 18, color: cs.primary),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SelectorImagenes extends StatelessWidget {
+  final List<XFile> imagenes;
+  final VoidCallback onAgregar;
+  final void Function(int) onQuitar;
+
+  const _SelectorImagenes({
+    required this.imagenes,
+    required this.onAgregar,
+    required this.onQuitar,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return SizedBox(
+      height: 90,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: [
+          if (imagenes.length < 5)
+            GestureDetector(
+              onTap: onAgregar,
+              child: Container(
+                width: 80,
+                height: 80,
+                margin: const EdgeInsets.only(right: 8),
+                decoration: BoxDecoration(
+                  color: cs.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: cs.outline),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.add_a_photo_outlined, color: cs.primary, size: 26),
+                    const SizedBox(height: 4),
+                    Text('Agregar',
+                        style: TextStyle(fontSize: 11, color: cs.primary)),
+                  ],
+                ),
+              ),
+            ),
+          ...imagenes.asMap().entries.map((entry) {
+            final idx = entry.key;
+            final img = entry.value;
+            return Stack(
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    color: cs.surfaceContainer,
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.file(
+                      File(img.path),
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Icon(
+                        Icons.image,
+                        color: cs.onSurface.withValues(alpha: 0.3),
+                      ),
                     ),
                   ),
                 ),
-
-                SizedBox(height: screenH * 0.020),
+                Positioned(
+                  top: 2,
+                  right: 10,
+                  child: GestureDetector(
+                    onTap: () => onQuitar(idx),
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                          color: Colors.black54, shape: BoxShape.circle),
+                      child: const Icon(Icons.close,
+                          color: Colors.white, size: 14),
+                    ),
+                  ),
+                ),
+                if (idx == 0)
+                  Positioned(
+                    bottom: 4,
+                    left: 4,
+                    child: Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: cs.primary,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text('Portada',
+                          style: TextStyle(
+                              fontSize: 9,
+                              color: cs.onPrimary,
+                              fontWeight: FontWeight.bold)),
+                    ),
+                  ),
               ],
-            ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+class _IndicadorProgreso extends StatelessWidget {
+  final RecomendarStatus status;
+  const _IndicadorProgreso({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final pasos = [
+      (RecomendarStatus.creandoUbicacion, 'Preparando ubicación'),
+      (RecomendarStatus.creandoPropuesta, 'Registrando recomendación'),
+      (RecomendarStatus.subiendoImagenes, 'Subiendo fotografías'),
+    ];
+    final currentIndex = pasos.indexWhere((p) => p.$1 == status);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: cs.primaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: pasos.asMap().entries.map((entry) {
+          final i = entry.key;
+          final paso = entry.value;
+          final activo = i == currentIndex;
+          final terminado = i < currentIndex;
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(children: [
+              if (terminado)
+                Icon(Icons.check_circle, color: cs.primary, size: 16)
+              else if (activo)
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: cs.primary),
+                )
+              else
+                Icon(Icons.radio_button_unchecked,
+                    color: cs.onPrimaryContainer.withValues(alpha: 0.4),
+                    size: 16),
+              const SizedBox(width: 10),
+              Text(
+                paso.$2,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: activo
+                      ? cs.onPrimaryContainer
+                      : terminado
+                          ? cs.primary
+                          : cs.onPrimaryContainer.withValues(alpha: 0.5),
+                  fontWeight: activo ? FontWeight.w600 : FontWeight.normal,
+                ),
+              ),
+            ]),
           );
-        },
+        }).toList(),
       ),
     );
   }
+}
 
-  Widget _buildLabel(String text) {
-    return Builder(
-      builder: (context) => Text(
-        text,
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary(context),
-        ),
+class _BannerError extends StatelessWidget {
+  final String mensaje;
+  final bool puedeReintentar;
+  final VoidCallback onReintentar;
+
+  const _BannerError({
+    required this.mensaje,
+    required this.puedeReintentar,
+    required this.onReintentar,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: cs.errorContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Icon(Icons.error_outline, color: cs.onErrorContainer, size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(mensaje,
+                  style: TextStyle(fontSize: 13, color: cs.onErrorContainer)),
+            ),
+          ]),
+          if (puedeReintentar) ...[
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: onReintentar,
+              child: Text('Reintentar subida de fotos',
+                  style: TextStyle(color: cs.onErrorContainer)),
+            ),
+          ],
+        ],
       ),
     );
   }
+}
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String hint,
-    required bool isSmall,
-    int maxLines = 1,
-  }) {
-    return Builder(
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: AppColors.background(context),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: TextField(
-          controller: controller,
-          maxLines: maxLines,
-          style: TextStyle(
-            fontSize: isSmall ? 13 : 15,
-            color: AppColors.textPrimary(context),
-          ),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(color: AppColors.textHint(context)),
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
+class _PantallaExito extends StatelessWidget {
+  final VoidCallback onVerMisRecomendaciones;
+  final VoidCallback onVolver;
+
+  const _PantallaExito({
+    required this.onVerMisRecomendaciones,
+    required this.onVolver,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: cs.primaryContainer,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.check_circle_outline,
+                      size: 48, color: cs.primary),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Recomendación enviada',
+                  style: Theme.of(context)
+                      .textTheme
+                      .headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Gracias por ayudarnos a descubrir nuevos lugares de Chiapas. '
+                  'Tu recomendación será revisada antes de publicarse en ExploraChiapas.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: cs.onSurface.withValues(alpha: 0.7),
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: onVerMisRecomendaciones,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: cs.primary,
+                      foregroundColor: cs.onPrimary,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: const Text('Ver mis recomendaciones'),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: onVolver,
+                  child: const Text('Volver al inicio'),
+                ),
+              ],
             ),
           ),
         ),
