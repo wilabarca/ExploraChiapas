@@ -7,22 +7,14 @@ import '../../domain/entities/destino.dart';
 import '../../domain/usecases/get_destino_by_id_usecase.dart';
 import '../../domain/usecases/list_destinos_usecase.dart.dart';
 
-enum DestinoStatus {
-  idle,
-  loading,
-  success,
-  error,
-}
+enum DestinoStatus { idle, loading, success, error }
 
 @injectable
 class DestinoProvider extends ChangeNotifier {
   final ListDestinosUseCase _listDestinosUseCase;
   final GetDestinoByIdUseCase _getDestinoByIdUseCase;
 
-  DestinoProvider(
-    this._listDestinosUseCase,
-    this._getDestinoByIdUseCase,
-  );
+  DestinoProvider(this._listDestinosUseCase, this._getDestinoByIdUseCase);
 
   // ─────────────────────────────────────────────────────────────
   // Estado del listado
@@ -196,9 +188,7 @@ class DestinoProvider extends ChangeNotifier {
   // ─────────────────────────────────────────────────────────────
 
   Future<bool> loadMoreDestinos() async {
-    if (_isLoadingMore ||
-        !_hasMore ||
-        _listStatus == DestinoStatus.loading) {
+    if (_isLoadingMore || !_hasMore || _listStatus == DestinoStatus.loading) {
       return false;
     }
 
@@ -252,8 +242,7 @@ class DestinoProvider extends ChangeNotifier {
 
     if (normalizedId.isEmpty) {
       _detailStatus = DestinoStatus.error;
-      _detailErrorMessage =
-          'El identificador del destino es obligatorio';
+      _detailErrorMessage = 'El identificador del destino es obligatorio';
 
       notifyListeners();
 
@@ -277,9 +266,7 @@ class DestinoProvider extends ChangeNotifier {
 
     notifyListeners();
 
-    final result = await _getDestinoByIdUseCase(
-      id: normalizedId,
-    );
+    final result = await _getDestinoByIdUseCase(id: normalizedId);
 
     return result.fold(
       (failure) {
@@ -300,6 +287,81 @@ class DestinoProvider extends ChangeNotifier {
         return true;
       },
     );
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // Alternativas menos concurridas (misma categoría, isSaturated=false)
+  // ─────────────────────────────────────────────────────────────
+
+  List<Destino> _alternativas = <Destino>[];
+
+  UnmodifiableListView<Destino> get alternativas {
+    return UnmodifiableListView(_alternativas);
+  }
+
+  DestinoStatus _alternativasStatus = DestinoStatus.idle;
+
+  DestinoStatus get alternativasStatus => _alternativasStatus;
+
+  String? _alternativasErrorMessage;
+
+  String? get alternativasErrorMessage => _alternativasErrorMessage;
+
+  bool get isLoadingAlternativas =>
+      _alternativasStatus == DestinoStatus.loading;
+
+  /// Busca, contra el backend real, destinos activos de la misma
+  /// categoría que [actual] y que no estén marcados como saturados
+  /// (`isSaturated == false`), para ofrecerlos como alternativa menos
+  /// concurrida. No inventa ni simula destinos: si la API no devuelve
+  /// ninguno que cumpla el criterio, la lista queda vacía.
+  Future<bool> buscarAlternativas({
+    required String destinoId,
+    required String categoryId,
+  }) async {
+    _alternativas = <Destino>[];
+    _alternativasStatus = DestinoStatus.loading;
+    _alternativasErrorMessage = null;
+
+    notifyListeners();
+
+    final result = await _listDestinosUseCase(
+      categoryId: categoryId,
+      limit: 50,
+    );
+
+    return result.fold(
+      (failure) {
+        _alternativasStatus = DestinoStatus.error;
+        _alternativasErrorMessage = failure.message;
+
+        notifyListeners();
+
+        return false;
+      },
+      (destinos) {
+        _alternativas =
+            destinos
+                .where((d) => d.id != destinoId && d.active && !d.isSaturated)
+                .toList()
+              ..sort((a, b) => b.averageRating.compareTo(a.averageRating));
+
+        _alternativasStatus = DestinoStatus.success;
+        _alternativasErrorMessage = null;
+
+        notifyListeners();
+
+        return true;
+      },
+    );
+  }
+
+  void limpiarAlternativas() {
+    _alternativas = <Destino>[];
+    _alternativasStatus = DestinoStatus.idle;
+    _alternativasErrorMessage = null;
+
+    notifyListeners();
   }
 
   // ─────────────────────────────────────────────────────────────

@@ -67,6 +67,8 @@ import '../../features/destinos/domain/repositories/destinos_repository.dart'
     as _i991;
 import '../../features/destinos/domain/usecases/get_destino_by_id_usecase.dart'
     as _i429;
+import '../../features/destinos/domain/usecases/get_ubicacion_destino_usecase.dart'
+    as _i461;
 import '../../features/destinos/domain/usecases/list_destinos_usecase.dart.dart'
     as _i488;
 import '../../features/destinos/presentation/providers/destinos_provider.dart'
@@ -346,6 +348,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i429.GetDestinoByIdUseCase>(
       () => _i429.GetDestinoByIdUseCase(gh<_i991.DestinoRepository>()),
+    );
+    gh.factory<_i461.GetUbicacionDestinoUseCase>(
+      () => _i461.GetUbicacionDestinoUseCase(gh<_i991.DestinoRepository>()),
     );
     gh.factory<_i488.ListDestinosUseCase>(
       () => _i488.ListDestinosUseCase(gh<_i991.DestinoRepository>()),

@@ -131,6 +131,9 @@ class _FavoritosPageState extends State<FavoritosPage> {
           descripcion: destino.description,
           totalResenas: destino.totalReviews,
           targetType: 'destination',
+          categoryId: destino.categoryId,
+          locationId: destino.locationId,
+          isSaturated: destino.isSaturated,
         ),
       ),
     );

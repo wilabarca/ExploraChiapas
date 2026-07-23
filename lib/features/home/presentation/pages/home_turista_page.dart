@@ -158,6 +158,9 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
           descripcion: destino.description,
           totalResenas: destino.totalReviews,
           targetType: 'destination',
+          categoryId: destino.categoryId,
+          locationId: destino.locationId,
+          isSaturated: destino.isSaturated,
         ),
       ),
     );

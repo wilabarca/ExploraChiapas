@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'mapa_ruta_page.dart';
+import 'alternativas_menos_concurridas_page.dart';
 import '../../../favoritos/domain/entities/favorito.dart';
 import '../../../favoritos/presentation/providers/favoritos_provider.dart';
 import '../../../../core/utils/uuid_utils.dart';
@@ -34,6 +35,19 @@ class LugarDetailPage extends StatefulWidget {
   /// dónde viene el dato, en vez de asumir "destination" por defecto.
   final String? targetType;
 
+  /// Id real de categoría (`Destino.categoryId`) — solo disponible cuando
+  /// el lugar viene de una fila real del backend. Se usa para buscar
+  /// alternativas menos concurridas de la misma categoría.
+  final String? categoryId;
+
+  /// Id real de ubicación (`Destino.locationId`) — solo disponible cuando
+  /// el lugar viene de una fila real del backend.
+  final String? locationId;
+
+  /// Si el backend marca este destino como saturado (`Destino.isSaturated`).
+  /// `false` por defecto para lugares que no traen ese dato (ML/chat).
+  final bool isSaturated;
+
   const LugarDetailPage({
     super.key,
     required this.id,
@@ -46,6 +60,9 @@ class LugarDetailPage extends StatefulWidget {
     this.totalResenas = 0,
     this.lat,
     this.lng,
+    this.categoryId,
+    this.locationId,
+    this.isSaturated = false,
   });
 
   @override
@@ -89,6 +106,29 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => EscribirResenaPage(destino: destino)),
+    );
+  }
+
+  /// Solo se pueden buscar alternativas menos concurridas si el lugar es
+  /// real (id UUID válido) y trae categoryId — sin categoría no hay con
+  /// qué comparar "misma categoría, no saturado".
+  bool get _tieneAlternativasDisponibles =>
+      widget.isSaturated &&
+      widget.categoryId != null &&
+      esUuidValido(widget.id);
+
+  void _verAlternativas() {
+    if (!_tieneAlternativasDisponibles) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AlternativasMenosConcurridasPage(
+          destinoId: widget.id,
+          destinoNombre: widget.nombre,
+          categoryId: widget.categoryId!,
+          destinoLocationId: widget.locationId,
+        ),
+      ),
     );
   }
 
@@ -213,6 +253,12 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
                       ),
                     ],
                   ),
+
+                  // ── Aviso de saturación + alternativas ────────────────────
+                  if (_tieneAlternativasDisponibles) ...[
+                    const SizedBox(height: 16),
+                    _BannerAlternativas(onVerAlternativas: _verAlternativas),
+                  ],
 
                   // ── Descripción ───────────────────────────────────────────
                   if (widget.descripcion != null &&
@@ -396,6 +442,79 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
 
     // Ni ruta ni reseña disponibles: no hay acción útil que ofrecer.
     return const SizedBox.shrink();
+  }
+}
+
+// ── Banner de destino saturado con acceso a alternativas ────────────────────
+
+class _BannerAlternativas extends StatefulWidget {
+  final VoidCallback onVerAlternativas;
+
+  const _BannerAlternativas({required this.onVerAlternativas});
+
+  @override
+  State<_BannerAlternativas> createState() => _BannerAlternativasState();
+}
+
+class _BannerAlternativasState extends State<_BannerAlternativas> {
+  bool _presionado = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Listener(
+      onPointerDown: (_) => setState(() => _presionado = true),
+      onPointerUp: (_) => setState(() => _presionado = false),
+      onPointerCancel: (_) => setState(() => _presionado = false),
+      child: AnimatedScale(
+        scale: _presionado ? 0.97 : 1,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: widget.onVerAlternativas,
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.orange.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.orange.withValues(alpha: 0.4)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.groups_outlined, color: Colors.orange),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Este lugar está muy concurrido',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary(context),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Ver alternativas menos concurridas cerca',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: AppColors.textSecondary(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right,
+                  color: AppColors.textSecondary(context),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

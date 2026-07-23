@@ -13,6 +13,9 @@ import '../widgets/hoteles_recomendados_section.dart';
 import '../../../../core/navigation/app_navigator.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/fade_slide_in.dart';
+import '../../../eventos/domain/entities/envento_entity.dart';
+import '../../../eventos/domain/entities/evento.dart';
+import '../../../eventos/presentation/pages/detalle_evento_page.dart';
 import '../../../eventos/presentation/providers/eventos_provider.dart';
 import '../../../promociones/presentation/providers/promociones_provider.dart';
 
@@ -100,6 +103,33 @@ class _HomeLocalPageState extends State<HomeLocalPage>
   // ── Navegación a eventos: la misma vista con categorías filtrables ──────
   void _irAEventos() {
     Navigator.pushNamed(context, '/eventos');
+  }
+
+  // ── Detalle de un evento real de fin de semana ──────────────────────────
+  EventoEntity _mapEventoAEntidad(Evento e) {
+    return EventoEntity(
+      id: e.id,
+      titulo: e.titulo,
+      descripcion: e.descripcion ?? '',
+      fechaInicio: e.fechaInicio,
+      fechaFin: e.fechaFin,
+      ubicacion: e.municipio ?? 'Chiapas',
+      categoria: e.categoriaNombre ?? 'General',
+      imageUrl: (e.imagenUrl != null && e.imagenUrl!.isNotEmpty)
+          ? e.imagenUrl!
+          : 'https://images.unsplash.com/photo-1533587851505-d119e13fa0d7?w=800&q=80',
+      activo: e.activo,
+      ubicacionId: e.ubicacionId,
+    );
+  }
+
+  void _abrirEvento(Evento evento) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DetalleEventoPage(evento: _mapEventoAEntidad(evento)),
+      ),
+    );
   }
 
   /// Refresca únicamente los datos dinámicos del Home (promociones y
@@ -415,55 +445,69 @@ class _HomeLocalPageState extends State<HomeLocalPage>
 
                 const SizedBox(height: 16),
 
-                // Actividades de fin de semana — label
+                // Actividades de fin de semana — eventos reales (sábado y
+                // domingo), sin endpoint propio: filtra client-side sobre
+                // lo que ya cargó EventosProvider.
                 FadeSlideIn(
                   delay: const Duration(milliseconds: 320),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Text(
-                          'ACTIVIDADES DE FIN DE SEMANA',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textSecondary(context),
-                            letterSpacing: 1.1,
+                  child: Consumer<EventosProvider>(
+                    builder: (context, eventosProvider, _) {
+                      final actividades = eventosProvider.eventosFinDeSemana;
+
+                      if (eventosProvider.status == EventosStatus.loading &&
+                          actividades.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+                      if (actividades.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: Text(
+                              'ACTIVIDADES DE FIN DE SEMANA',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textSecondary(context),
+                                letterSpacing: 1.1,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        height: size.height * 0.22,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          children: [
-                            _ActividadCard(
-                              dia: 'SÁBADO',
-                              nombre: 'Taller de Barro\nAmatenango',
-                              imageUrl:
-                                  'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=400&q=80',
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            height: size.height * 0.22,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                              ),
+                              itemCount: actividades.length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(width: 12),
+                              itemBuilder: (context, index) {
+                                final evento = actividades[index];
+                                return _ActividadCard(
+                                  key: ValueKey(evento.id),
+                                  dia:
+                                      evento.fechaInicio.weekday ==
+                                          DateTime.saturday
+                                      ? 'SÁBADO'
+                                      : 'DOMINGO',
+                                  nombre: evento.titulo,
+                                  imageUrl: evento.imagenUrl,
+                                  retraso: Duration(milliseconds: 60 * index),
+                                  onTap: () => _abrirEvento(evento),
+                                );
+                              },
                             ),
-                            const SizedBox(width: 12),
-                            _ActividadCard(
-                              dia: 'DOMINGO',
-                              nombre: 'Senderismo Místico\nNocturno',
-                              imageUrl:
-                                  'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&q=80',
-                            ),
-                            const SizedBox(width: 12),
-                            _ActividadCard(
-                              dia: 'SÁBADO',
-                              nombre: 'Cata de Café\nde Altura',
-                              imageUrl:
-                                  'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&q=80',
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
 
@@ -497,81 +541,143 @@ class _HomeLocalPageState extends State<HomeLocalPage>
 class _ActividadCard extends StatelessWidget {
   final String dia;
   final String nombre;
-  final String imageUrl;
+  // Real (Evento.imagenUrl) o null si el evento no tiene foto — en ese
+  // caso se muestra un ícono, nunca una foto de stock fija.
+  final String? imageUrl;
+  final Duration retraso;
+  final VoidCallback onTap;
 
   const _ActividadCard({
+    super.key,
     required this.dia,
     required this.nombre,
     required this.imageUrl,
+    required this.retraso,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 150,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AspectRatio(
-            aspectRatio: 4 / 3,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
-                  child: CachedNetworkImage(
-                    imageUrl: imageUrl,
-                    fit: BoxFit.cover,
-                    placeholder: (_, __) =>
-                        Container(color: AppColors.primaryContainer(context)),
-                    errorWidget: (_, __, ___) => Container(
-                      color: AppColors.primaryContainer(context),
-                      child: Icon(
-                        Icons.image_not_supported,
-                        color: AppColors.primary(context),
+    return FadeSlideIn(
+      delay: retraso,
+      child: _ActividadCardPressable(
+        onTap: onTap,
+        child: SizedBox(
+          width: 150,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AspectRatio(
+                aspectRatio: 4 / 3,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: (imageUrl != null && imageUrl!.isNotEmpty)
+                          ? CachedNetworkImage(
+                              imageUrl: imageUrl!,
+                              fit: BoxFit.cover,
+                              placeholder: (_, __) => Container(
+                                color: AppColors.primaryContainer(context),
+                              ),
+                              errorWidget: (_, __, ___) => Container(
+                                color: AppColors.primaryContainer(context),
+                                child: Icon(
+                                  Icons.image_not_supported,
+                                  color: AppColors.primary(context),
+                                ),
+                              ),
+                            )
+                          : Container(
+                              color: AppColors.primaryContainer(context),
+                              child: Icon(
+                                Icons.celebration_outlined,
+                                color: AppColors.primary(context),
+                              ),
+                            ),
+                    ),
+                    Positioned(
+                      bottom: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          dia,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-                Positioned(
-                  bottom: 8,
-                  left: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      dia,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                nombre,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary(context),
+                  height: 1.3,
                 ),
-              ],
-            ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
-          const SizedBox(height: 6),
-          Text(
-            nombre,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary(context),
-              height: 1.3,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Envoltura táctil: reduce ligeramente de tamaño al presionar ───────────
+// (mismo patrón usado en ExplorarCercaPage — Listener puro para no
+// interferir con la detección de tap del GestureDetector interno).
+class _ActividadCardPressable extends StatefulWidget {
+  final VoidCallback onTap;
+  final Widget child;
+
+  const _ActividadCardPressable({required this.onTap, required this.child});
+
+  @override
+  State<_ActividadCardPressable> createState() =>
+      _ActividadCardPressableState();
+}
+
+class _ActividadCardPressableState extends State<_ActividadCardPressable> {
+  bool _presionado = false;
+
+  void _setPresionado(bool valor) {
+    if (_presionado != valor) setState(() => _presionado = valor);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: Listener(
+        onPointerDown: (_) => _setPresionado(true),
+        onPointerUp: (_) => _setPresionado(false),
+        onPointerCancel: (_) => _setPresionado(false),
+        child: AnimatedScale(
+          scale: _presionado ? 0.95 : 1.0,
+          duration: const Duration(milliseconds: 120),
+          curve: Curves.easeOut,
+          child: widget.child,
+        ),
       ),
     );
   }
