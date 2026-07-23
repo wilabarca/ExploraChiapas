@@ -1,6 +1,129 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../providers/recomendar_provider.dart';
+
+/// Overlay de carga con progreso real de los 3 pasos del envío
+/// ("Preparando ubicación" → "Registrando recomendación" → "Subiendo
+/// fotografías"), reactivo a [provider] (se repinta con cada
+/// `notifyListeners`). Quien invoca es responsable de cerrarlo con
+/// `Navigator.pop` una vez llega la respuesta final.
+Future<void> mostrarEnviandoPropuestaDialog(
+  BuildContext context,
+  RecomendarProvider provider,
+) {
+  return showGeneralDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    barrierLabel: '',
+    barrierColor: Colors.black.withValues(alpha: 0.45),
+    transitionDuration: const Duration(milliseconds: 220),
+    pageBuilder: (context, _, __) => const SizedBox.shrink(),
+    transitionBuilder: (context, animation, _, child) {
+      return PopScope(
+        canPop: false,
+        child: _PopTransition(
+          animation: animation,
+          child: _DialogCard(
+            child: AnimatedBuilder(
+              animation: provider,
+              builder: (context, _) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Enviando tu recomendación',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary(context),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    _PasoProgreso(
+                      texto: 'Preparando ubicación',
+                      paso: PasoRecomendacion.ubicacion,
+                      pasoActual: provider.pasoActual,
+                    ),
+                    const SizedBox(height: 10),
+                    _PasoProgreso(
+                      texto: 'Registrando recomendación',
+                      paso: PasoRecomendacion.propuesta,
+                      pasoActual: provider.pasoActual,
+                    ),
+                    const SizedBox(height: 10),
+                    _PasoProgreso(
+                      texto: 'Subiendo fotografías',
+                      paso: PasoRecomendacion.imagenes,
+                      pasoActual: provider.pasoActual,
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      );
+    },
+  );
+}
+
+class _PasoProgreso extends StatelessWidget {
+  final String texto;
+  final PasoRecomendacion paso;
+  final PasoRecomendacion? pasoActual;
+
+  const _PasoProgreso({
+    required this.texto,
+    required this.paso,
+    required this.pasoActual,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Orden fijo de los 3 pasos para saber si éste ya se completó.
+    const orden = [
+      PasoRecomendacion.ubicacion,
+      PasoRecomendacion.propuesta,
+      PasoRecomendacion.imagenes,
+    ];
+    final indicePaso = orden.indexOf(paso);
+    final indiceActual = pasoActual == null ? -1 : orden.indexOf(pasoActual!);
+
+    final completado = indiceActual > indicePaso;
+    final enCurso = pasoActual == paso;
+
+    final color = completado || enCurso
+        ? AppColors.primary(context)
+        : AppColors.textHint(context);
+
+    return Row(
+      children: [
+        SizedBox(
+          width: 20,
+          height: 20,
+          child: completado
+              ? Icon(Icons.check_circle, color: color, size: 20)
+              : enCurso
+              ? CircularProgressIndicator(strokeWidth: 2, color: color)
+              : Icon(Icons.circle_outlined, color: color, size: 18),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            texto,
+            style: TextStyle(
+              fontSize: 13.5,
+              fontWeight: enCurso ? FontWeight.w700 : FontWeight.w500,
+              color: color,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
 
 /// Overlay de carga no descartable mientras se envía la recomendación.
 /// Quien invoca esta función es responsable de cerrarlo con
@@ -46,14 +169,16 @@ Future<void> mostrarEnviandoSugerenciaDialog(BuildContext context) {
 }
 
 /// Bottom sheet de confirmación tras enviar la recomendación con éxito.
-Future<void> mostrarSugerenciaEnviadaSheet(BuildContext context) {
-  return showModalBottomSheet<void>(
+/// Devuelve `true` si el usuario elige "Ver mis recomendaciones".
+Future<bool> mostrarSugerenciaEnviadaSheet(BuildContext context) async {
+  final verMisRecomendaciones = await showModalBottomSheet<bool>(
     context: context,
     isDismissible: false,
     enableDrag: false,
     backgroundColor: Colors.transparent,
     builder: (ctx) => const _SugerenciaEnviadaSheetContent(),
   );
+  return verMisRecomendaciones ?? false;
 }
 
 class _SugerenciaEnviadaSheetContent extends StatelessWidget {
@@ -152,8 +277,27 @@ class _SugerenciaEnviadaSheetContent extends StatelessWidget {
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.primary(context),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  side: BorderSide(color: AppColors.primary(context)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Ver mis recomendaciones',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => Navigator.of(context).pop(false),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary(context),
                   padding: const EdgeInsets.symmetric(vertical: 14),

@@ -38,6 +38,12 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
   bool _esEstimado = false;
   bool _enVivo = false;
 
+  // Ángulo acumulado (sin envolver a 0-360) para que la flecha de
+  // dirección gire siempre por el camino más corto, sin dar una vuelta
+  // completa falsa cada vez que el rumbo cruza el norte (359° → 1°).
+  double _headingAcumulado = 0;
+  bool _enMovimiento = false;
+
   StreamSubscription<Position>? _stream;
   Timer? _osrmTimer;
 
@@ -134,9 +140,11 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
   void _iniciarTracking() {
     _stream =
         Geolocator.getPositionStream(
+          // 8 m (en vez de 30) para que el punto y la flecha del usuario
+          // se sientan continuos caminando, no solo en auto.
           locationSettings: const LocationSettings(
             accuracy: LocationAccuracy.high,
-            distanceFilter: 30,
+            distanceFilter: 8,
           ),
         ).listen((pos) {
           if (!mounted) return;
@@ -148,15 +156,23 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
             widget.destLng,
           );
 
-      if (dist < 0.1) {
-        setState(() => _llegaste = true);
-        _stream?.cancel();
-        _osrmTimer?.cancel();
-        return;
-      }
+          if (dist < 0.1) {
+            setState(() => _llegaste = true);
+            _stream?.cancel();
+            _osrmTimer?.cancel();
+            return;
+          }
+
+          // El GPS solo reporta un rumbo confiable cuando el usuario se
+          // está desplazando; parado, `heading` oscila sin sentido.
+          final moviendose = pos.speed > 0.3;
+          if (moviendose && pos.heading >= 0) {
+            _actualizarHeadingAcumulado(pos.heading);
+          }
 
           setState(() {
             _enVivo = true;
+            _enMovimiento = moviendose;
             _distKm = dist;
             _durMin = dist * 1.4;
             // Actualizar primer punto de la ruta con posición actual
@@ -174,6 +190,14 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
     _osrmTimer = Timer.periodic(const Duration(minutes: 2), (_) async {
       if (_pos != null && mounted) await _calcularOSRM(_pos!);
     });
+  }
+
+  /// Suma el giro más corto hacia [nuevoHeading] al ángulo acumulado, en
+  /// vez de asignarlo directamente — así `AnimatedRotation` nunca da una
+  /// vuelta completa de más al cruzar el norte (359° → 1°).
+  void _actualizarHeadingAcumulado(double nuevoHeading) {
+    final diferencia = ((nuevoHeading - _headingAcumulado + 540) % 360) - 180;
+    _headingAcumulado += diferencia;
   }
 
   Future<Position?> _obtenerPos() async {
@@ -229,7 +253,9 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
   }
 
   Widget _buildContent(BuildContext context) {
-    final userPt = _pos != null ? LatLng(_pos!.latitude, _pos!.longitude) : null;
+    final userPt = _pos != null
+        ? LatLng(_pos!.latitude, _pos!.longitude)
+        : null;
     final destPt = LatLng(widget.destLat, widget.destLng);
 
     return Scaffold(
@@ -264,17 +290,12 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
                   if (userPt != null)
                     Marker(
                       point: userPt,
-                      width: 22,
-                      height: 22,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.primary(context),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 3),
-                          boxShadow: const [
-                            BoxShadow(color: Colors.black26, blurRadius: 6),
-                          ],
-                        ),
+                      width: 64,
+                      height: 64,
+                      child: _UserLocationMarker(
+                        color: AppColors.primary(context),
+                        headingAcumulado: _headingAcumulado,
+                        enMovimiento: _enMovimiento,
                       ),
                     ),
                   Marker(
@@ -282,7 +303,11 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
                     width: 42,
                     height: 42,
                     alignment: Alignment.topCenter,
-                    child: const Icon(Icons.location_pin, color: Colors.red, size: 42),
+                    child: const Icon(
+                      Icons.location_pin,
+                      color: Colors.red,
+                      size: 42,
+                    ),
                   ),
                 ],
               ),
@@ -305,7 +330,10 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: Icon(Icons.arrow_back, color: AppColors.onPrimary(context)),
+                    icon: Icon(
+                      Icons.arrow_back,
+                      color: AppColors.onPrimary(context),
+                    ),
                     onPressed: () => Navigator.pop(context),
                   ),
                   const SizedBox(width: 4),
@@ -361,7 +389,11 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
                 color: Colors.white,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                 boxShadow: [
-                  BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, -3))
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 10,
+                    offset: Offset(0, -3),
+                  ),
                 ],
               ),
               padding: EdgeInsets.fromLTRB(
@@ -383,60 +415,166 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
   }
 
   Widget _panelCargando() => const Padding(
-        padding: EdgeInsets.symmetric(vertical: 12),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
-            SizedBox(width: 12),
-            Text('Calculando ruta...'),
-          ],
+    padding: EdgeInsets.symmetric(vertical: 12),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(strokeWidth: 2),
         ),
-      );
+        SizedBox(width: 12),
+        Text('Calculando ruta...'),
+      ],
+    ),
+  );
 
   Widget _panelLlegaste() => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.check_circle_outline, color: Colors.green, size: 48),
-          const SizedBox(height: 8),
-          const Text('¡Llegaste!',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          Text('Estás en ${widget.nombre}',
-              style: const TextStyle(color: Colors.grey)),
-        ],
-      );
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      const Icon(Icons.check_circle_outline, color: Colors.green, size: 48),
+      const SizedBox(height: 8),
+      const Text(
+        '¡Llegaste!',
+        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+      ),
+      const SizedBox(height: 4),
+      Text(
+        'Estás en ${widget.nombre}',
+        style: const TextStyle(color: Colors.grey),
+      ),
+    ],
+  );
 
   Widget _panelRuta() => Column(
-        mainAxisSize: MainAxisSize.min,
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      // Métricas
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          // Métricas
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _Metrica(
-                icono: Icons.access_time_outlined,
-                valor: _fmtTiempo(_durMin),
-                etiqueta: 'Tiempo restante',
-              ),
-              Container(width: 1, height: 48, color: Colors.grey[200]),
-              _Metrica(
-                icono: Icons.straighten_outlined,
-                valor: _fmtDist(_distKm),
-                etiqueta: 'Distancia restante',
-              ),
-            ],
+          _Metrica(
+            icono: Icons.access_time_outlined,
+            valor: _fmtTiempo(_durMin),
+            etiqueta: 'Tiempo restante',
           ),
-          if (_esEstimado) ...[
-            const SizedBox(height: 6),
-            const Text(
-              '* Línea recta — sin conexión al servidor de rutas',
-              style: TextStyle(fontSize: 11, color: Colors.grey),
-              textAlign: TextAlign.center,
-            ),
-          ],
+          Container(width: 1, height: 48, color: Colors.grey[200]),
+          _Metrica(
+            icono: Icons.straighten_outlined,
+            valor: _fmtDist(_distKm),
+            etiqueta: 'Distancia restante',
+          ),
         ],
-      );
+      ),
+      if (_esEstimado) ...[
+        const SizedBox(height: 6),
+        const Text(
+          '* Línea recta — sin conexión al servidor de rutas',
+          style: TextStyle(fontSize: 11, color: Colors.grey),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    ],
+  );
+}
+
+/// Marcador de "mi ubicación": punto azul con anillo pulsante (para
+/// reforzar visualmente que la posición se sigue actualizando en vivo) y
+/// una flecha de dirección que solo aparece y gira mientras el usuario
+/// está caminando/moviéndose.
+class _UserLocationMarker extends StatelessWidget {
+  final Color color;
+  final double headingAcumulado;
+  final bool enMovimiento;
+
+  const _UserLocationMarker({
+    required this.color,
+    required this.headingAcumulado,
+    required this.enMovimiento,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        _PulsingRing(color: color),
+        AnimatedOpacity(
+          opacity: enMovimiento ? 1 : 0,
+          duration: const Duration(milliseconds: 250),
+          child: AnimatedRotation(
+            turns: headingAcumulado / 360,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+            child: Transform.translate(
+              offset: const Offset(0, -22),
+              child: Icon(
+                Icons.navigation,
+                color: color,
+                size: 20,
+                shadows: const [Shadow(color: Colors.black26, blurRadius: 3)],
+              ),
+            ),
+          ),
+        ),
+        Container(
+          width: 20,
+          height: 20,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 3),
+            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 6)],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Anillo translúcido que crece y se desvanece en bucle, alrededor del
+/// punto de "mi ubicación" — la misma idea visual que Google/Apple Maps
+/// usan para indicar "esto se está actualizando en tiempo real".
+class _PulsingRing extends StatefulWidget {
+  final Color color;
+
+  const _PulsingRing({required this.color});
+
+  @override
+  State<_PulsingRing> createState() => _PulsingRingState();
+}
+
+class _PulsingRingState extends State<_PulsingRing>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 2),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (context, _) {
+        final t = _ctrl.value;
+        return Container(
+          width: 20 + 34 * t,
+          height: 20 + 34 * t,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: widget.color.withValues(alpha: (1 - t) * 0.30),
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _Metrica extends StatelessWidget {
@@ -456,10 +594,14 @@ class _Metrica extends StatelessWidget {
       children: [
         Icon(icono, color: AppColors.primary(context), size: 26),
         const SizedBox(height: 4),
-        Text(valor,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-        Text(etiqueta,
-            style: const TextStyle(fontSize: 11, color: Colors.grey)),
+        Text(
+          valor,
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        ),
+        Text(
+          etiqueta,
+          style: const TextStyle(fontSize: 11, color: Colors.grey),
+        ),
       ],
     );
   }

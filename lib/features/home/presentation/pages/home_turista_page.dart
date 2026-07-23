@@ -157,6 +157,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
           imageUrl: destino.imageUrl ?? '',
           descripcion: destino.description,
           totalResenas: destino.totalReviews,
+          targetType: 'destination',
         ),
       ),
     );
@@ -228,15 +229,16 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
                       final screenWidth = MediaQuery.of(context).size.width;
                       final cardHeight = screenWidth < 360 ? 225.0 : 210.0;
 
-                  return Consumer<DestinoProvider>(
-                    builder: (context, destinoProvider, child) {
-                      if (destinoProvider.listStatus == DestinoStatus.loading) {
-                        return SkeletonCardRow(
-                          count: 3,
-                          cardHeight: cardHeight,
-                          cardWidth: 180,
-                        );
-                      }
+                      return Consumer<DestinoProvider>(
+                        builder: (context, destinoProvider, child) {
+                          if (destinoProvider.listStatus ==
+                              DestinoStatus.loading) {
+                            return SkeletonCardRow(
+                              count: 3,
+                              cardHeight: cardHeight,
+                              cardWidth: 180,
+                            );
+                          }
 
                           if (destinoProvider.listStatus ==
                               DestinoStatus.error) {
@@ -308,6 +310,10 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
                                               '',
                                           lat: (d['lat'] as num?)?.toDouble(),
                                           lng: (d['lng'] as num?)?.toDouble(),
+                                          // Viene del motor ML, no de una
+                                          // fila real del backend: no puede
+                                          // recibir reseñas.
+                                          targetType: null,
                                         ),
                                       ),
                                     ),
@@ -343,24 +349,24 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
                                   );
                                 }
 
-                            final destino = destinoProvider.destinos[index];
+                                final destino = destinoProvider.destinos[index];
 
-                            return DestinoCard(
-                              nombre: destino.name,
-                              categoria: s('destino_turistico'),
-                              calificacion: destino.averageRating,
-                              imageUrl: destino.imageUrl,
-                              esFavorito: false,
-                              onTap: () => _openDestinoDetail(destino),
-                            );
-                          },
-                        ),
+                                return DestinoCard(
+                                  nombre: destino.name,
+                                  categoria: s('destino_turistico'),
+                                  calificacion: destino.averageRating,
+                                  imageUrl: destino.imageUrl,
+                                  esFavorito: false,
+                                  onTap: () => _openDestinoDetail(destino),
+                                );
+                              },
+                            ),
+                          );
+                        },
                       );
                     },
-                  );
-                },
-              ),
-            ),
+                  ),
+                ),
 
                 const SizedBox(height: 24),
 

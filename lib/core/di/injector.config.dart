@@ -81,6 +81,8 @@ import '../../features/eventos/domain/usecases/get_evento_by_id_usecase.dart'
     as _i247;
 import '../../features/eventos/domain/usecases/get_eventos_usecase.dart'
     as _i703;
+import '../../features/eventos/domain/usecases/get_ubicacion_evento_usecase.dart'
+    as _i560;
 import '../../features/eventos/presentation/providers/eventos_provider.dart'
     as _i902;
 import '../../features/favoritos/data/datasource/favoritos_remote_datasource.dart'
@@ -147,8 +149,18 @@ import '../../features/recomendar/data/repositories/recomendar_repository_impl.d
     as _i1012;
 import '../../features/recomendar/domain/repositories/i_recomendar_repository.dart'
     as _i302;
+import '../../features/recomendar/domain/usecases/crear_propuesta_destino_usecase.dart'
+    as _i349;
+import '../../features/recomendar/domain/usecases/eliminar_imagen_propuesta_usecase.dart'
+    as _i271;
+import '../../features/recomendar/domain/usecases/get_mis_propuestas_usecase.dart'
+    as _i704;
+import '../../features/recomendar/domain/usecases/subir_imagenes_propuesta_usecase.dart'
+    as _i151;
 import '../../features/recomendar/domain/usecases/sugerir_lugar_usecase.dart'
     as _i731;
+import '../../features/recomendar/presentation/providers/mis_recomendaciones_provider.dart'
+    as _i739;
 import '../../features/recomendar/presentation/providers/recomendar_provider.dart'
     as _i243;
 import '../../features/resena/data/datasource/ResenasRemoteDataSource.dart'
@@ -304,11 +316,35 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i991.DestinoRepository>(
       () => _i641.DestinoRepositoryImpl(gh<_i484.DestinoRemoteDataSource>()),
     );
+    gh.factory<_i349.CrearPropuestaDestinoUseCase>(
+      () =>
+          _i349.CrearPropuestaDestinoUseCase(gh<_i302.IRecomendarRepository>()),
+    );
+    gh.factory<_i271.EliminarImagenPropuestaUseCase>(
+      () => _i271.EliminarImagenPropuestaUseCase(
+        gh<_i302.IRecomendarRepository>(),
+      ),
+    );
+    gh.factory<_i704.GetMisPropuestasUseCase>(
+      () => _i704.GetMisPropuestasUseCase(gh<_i302.IRecomendarRepository>()),
+    );
+    gh.factory<_i151.SubirImagenesPropuestaUseCase>(
+      () => _i151.SubirImagenesPropuestaUseCase(
+        gh<_i302.IRecomendarRepository>(),
+      ),
+    );
     gh.factory<_i731.SugerirLugarUseCase>(
       () => _i731.SugerirLugarUseCase(gh<_i302.IRecomendarRepository>()),
     );
     gh.lazySingleton<_i252.NegocioRepository>(
       () => _i722.NegocioRepositoryImpl(gh<_i907.NegocioRemoteDataSource>()),
+    );
+    gh.factory<_i243.RecomendarProvider>(
+      () => _i243.RecomendarProvider(
+        gh<_i731.SugerirLugarUseCase>(),
+        gh<_i349.CrearPropuestaDestinoUseCase>(),
+        gh<_i151.SubirImagenesPropuestaUseCase>(),
+      ),
     );
     gh.lazySingleton<_i787.AuthRepository>(
       () => _i153.AuthRepositoryImpl(
@@ -341,6 +377,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i488.ListDestinosUseCase>(
       () => _i488.ListDestinosUseCase(gh<_i991.DestinoRepository>()),
     );
+    gh.factory<_i739.MisRecomendacionesProvider>(
+      () => _i739.MisRecomendacionesProvider(
+        gh<_i704.GetMisPropuestasUseCase>(),
+        gh<_i271.EliminarImagenPropuestaUseCase>(),
+      ),
+    );
     gh.factory<_i568.GetProfileUseCase>(
       () => _i568.GetProfileUseCase(gh<_i787.AuthRepository>()),
     );
@@ -365,14 +407,14 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i683.EventosRepository>(
       () => _i696.EventosRepositoryImpl(gh<_i747.EventosRemoteDataSource>()),
     );
-    gh.factory<_i243.RecomendarProvider>(
-      () => _i243.RecomendarProvider(gh<_i731.SugerirLugarUseCase>()),
-    );
     gh.factory<_i247.GetEventoByIdUseCase>(
       () => _i247.GetEventoByIdUseCase(gh<_i683.EventosRepository>()),
     );
     gh.factory<_i703.GetEventosUseCase>(
       () => _i703.GetEventosUseCase(gh<_i683.EventosRepository>()),
+    );
+    gh.factory<_i560.GetUbicacionEventoUseCase>(
+      () => _i560.GetUbicacionEventoUseCase(gh<_i683.EventosRepository>()),
     );
     gh.factory<_i331.DeletePerfilUseCase>(
       () => _i331.DeletePerfilUseCase(gh<_i879.IProfileRepository>()),

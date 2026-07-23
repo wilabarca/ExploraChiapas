@@ -3,14 +3,28 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../domain/entities/envento_entity.dart';
+import '../../domain/usecases/get_ubicacion_evento_usecase.dart';
+import '../../../../core/di/injector.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../destinos/presentation/pages/mapa_ruta_page.dart';
 import '../../../favoritos/domain/entities/favorito.dart';
 import '../../../favoritos/presentation/providers/favoritos_provider.dart';
 
-class DetalleEventoPage extends StatelessWidget {
+class DetalleEventoPage extends StatefulWidget {
   final EventoEntity evento;
 
   const DetalleEventoPage({super.key, required this.evento});
+
+  @override
+  State<DetalleEventoPage> createState() => _DetalleEventoPageState();
+}
+
+class _DetalleEventoPageState extends State<DetalleEventoPage> {
+  final _getUbicacionEvento = getIt<GetUbicacionEventoUseCase>();
+
+  bool _buscandoUbicacion = false;
+
+  EventoEntity get evento => widget.evento;
 
   Color get _categoriaColor {
     switch (evento.categoria) {
@@ -25,6 +39,64 @@ class DetalleEventoPage extends StatelessWidget {
       default:
         return const Color(0xFF2E7D32);
     }
+  }
+
+  void _mostrarAviso(String mensaje) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensaje),
+        backgroundColor: AppColors.error(context),
+      ),
+    );
+  }
+
+  /// "Deseo ir": obtiene la ubicación real del evento (nunca coordenadas
+  /// simuladas) y abre el mapa interno de la app para trazar la ruta
+  /// desde la posición actual del usuario. No confirma asistencia ni
+  /// reserva nada — solo muestra cómo llegar.
+  Future<void> _deseoIr() async {
+    if (_buscandoUbicacion) return;
+
+    final ubicacionId = evento.ubicacionId;
+    if (ubicacionId == null || ubicacionId.trim().isEmpty) {
+      _mostrarAviso('Este evento todavía no tiene una ubicación registrada.');
+      return;
+    }
+
+    setState(() => _buscandoUbicacion = true);
+
+    final result = await _getUbicacionEvento(id: ubicacionId);
+
+    if (!mounted) return;
+    setState(() => _buscandoUbicacion = false);
+
+    result.fold(
+      (failure) => _mostrarAviso(
+        failure.message.isNotEmpty
+            ? failure.message
+            : 'No se pudo obtener la ubicación del evento.',
+      ),
+      (ubicacion) {
+        if (!ubicacion.tieneCoordenadasValidas) {
+          _mostrarAviso(
+            'La ubicación de este evento no tiene coordenadas válidas.',
+          );
+          return;
+        }
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => MapaRutaPage(
+              nombre: evento.titulo,
+              destLat: ubicacion.latitude,
+              destLng: ubicacion.longitude,
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -349,15 +421,22 @@ class DetalleEventoPage extends StatelessWidget {
             child: ConstrainedBox(
               constraints: const BoxConstraints(minHeight: 54),
               child: ElevatedButton.icon(
-                onPressed: () {
-                  // TODO: registrarse al evento
-                },
-                icon: Icon(
-                  Icons.confirmation_number_outlined,
-                  color: AppColors.onPrimary(context),
-                ),
+                onPressed: _buscandoUbicacion ? null : _deseoIr,
+                icon: _buscandoUbicacion
+                    ? SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.2,
+                          color: AppColors.onPrimary(context),
+                        ),
+                      )
+                    : Icon(
+                        Icons.directions_outlined,
+                        color: AppColors.onPrimary(context),
+                      ),
                 label: Text(
-                  'Asistir al evento',
+                  _buscandoUbicacion ? 'Buscando ubicación...' : 'Deseo ir',
                   style: TextStyle(
                     color: AppColors.onPrimary(context),
                     fontSize: 16,
@@ -366,6 +445,9 @@ class DetalleEventoPage extends StatelessWidget {
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary(context),
+                  disabledBackgroundColor: AppColors.primary(
+                    context,
+                  ).withValues(alpha: 0.7),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),

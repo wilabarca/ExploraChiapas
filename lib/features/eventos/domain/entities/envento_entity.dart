@@ -10,6 +10,11 @@ class EventoEntity {
   final bool activo;
   final String creadoPor;
 
+  /// Id de la ubicación real del evento en el backend (tabla `ubicacion`).
+  /// `null` si el evento no tiene ubicación asignada; en ese caso no se
+  /// puede trazar ruta hacia él.
+  final String? ubicacionId;
+
   const EventoEntity({
     required this.id,
     required this.titulo,
@@ -21,6 +26,7 @@ class EventoEntity {
     required this.imageUrl,
     this.activo = true,
     this.creadoPor = 'Admin',
+    this.ubicacionId,
   });
 
   static const _meses = [

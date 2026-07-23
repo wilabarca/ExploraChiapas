@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
+import '../../domain/entities/propuesta_destino.dart';
 import '../../domain/entities/ubicacion_sugerida.dart';
 import '../../domain/repositories/i_recomendar_repository.dart';
 import '../datasource/recomendar_remote_datasource.dart';
@@ -17,14 +18,76 @@ class RecomendarRepositoryImpl implements IRecomendarRepository {
     required double latitude,
     required double longitude,
     String? address,
-  }) async {
-    try {
-      final ubicacion = await _datasource.sugerirLugar(
+    String? municipality,
+    String? state,
+    String? mapProvider,
+  }) {
+    return _ejecutar(
+      () => _datasource.sugerirLugar(
         latitude: latitude,
         longitude: longitude,
         address: address,
-      );
-      return Right(ubicacion);
+        municipality: municipality,
+        state: state,
+        mapProvider: mapProvider,
+      ),
+    );
+  }
+
+  @override
+  Future<Either<Failure, PropuestaDestino>> crearPropuesta({
+    required String name,
+    required String description,
+    required String categoryId,
+    required String locationId,
+  }) {
+    return _ejecutar(
+      () => _datasource.crearPropuesta(
+        name: name,
+        description: description,
+        categoryId: categoryId,
+        locationId: locationId,
+      ),
+    );
+  }
+
+  @override
+  Future<Either<Failure, PropuestaDestino>> subirImagenesPropuesta({
+    required String proposalId,
+    required List<String> rutasImagenes,
+  }) {
+    return _ejecutar(
+      () => _datasource.subirImagenesPropuesta(
+        proposalId: proposalId,
+        rutasImagenes: rutasImagenes,
+      ),
+    );
+  }
+
+  @override
+  Future<Either<Failure, List<PropuestaDestino>>> obtenerMisPropuestas() {
+    return _ejecutar(() => _datasource.obtenerMisPropuestas());
+  }
+
+  @override
+  Future<Either<Failure, void>> eliminarImagenPropuesta({
+    required String proposalId,
+    required String imageId,
+  }) {
+    return _ejecutar(
+      () => _datasource.eliminarImagenPropuesta(
+        proposalId: proposalId,
+        imageId: imageId,
+      ),
+    );
+  }
+
+  Future<Either<Failure, T>> _ejecutar<T>(
+    Future<T> Function() operacion,
+  ) async {
+    try {
+      final resultado = await operacion();
+      return Right(resultado);
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(message: e.message));
     } on NetworkException catch (e) {

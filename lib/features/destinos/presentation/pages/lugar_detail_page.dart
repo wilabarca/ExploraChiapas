@@ -9,6 +9,7 @@ import '../../../../core/theme/app_colors.dart';
 import 'mapa_ruta_page.dart';
 import '../../../favoritos/domain/entities/favorito.dart';
 import '../../../favoritos/presentation/providers/favoritos_provider.dart';
+import '../../../../core/utils/uuid_utils.dart';
 import '../../../resena/domain/entities/DestinoResenaEntity.dart';
 import '../../../resena/presentation/pages/escribir_resena_page.dart';
 import '../../../resena/presentation/providers/ResenasProvider.dart';
@@ -25,6 +26,14 @@ class LugarDetailPage extends StatefulWidget {
   final double? lat;
   final double? lng;
 
+  /// Tipo de entidad para la API de reseñas ('destination' | 'business' |
+  /// 'location'), o `null` si este lugar no proviene de una fila real del
+  /// backend (p. ej. una recomendación del motor ML o del chat) y por lo
+  /// tanto no puede recibir reseñas todavía. Es obligatorio a propósito:
+  /// obliga a cada pantalla que navega aquí a decidir explícitamente de
+  /// dónde viene el dato, en vez de asumir "destination" por defecto.
+  final String? targetType;
+
   const LugarDetailPage({
     super.key,
     required this.id,
@@ -32,6 +41,7 @@ class LugarDetailPage extends StatefulWidget {
     required this.categoria,
     required this.calificacion,
     required this.imageUrl,
+    required this.targetType,
     this.descripcion,
     this.totalResenas = 0,
     this.lat,
@@ -43,14 +53,20 @@ class LugarDetailPage extends StatefulWidget {
 }
 
 class _LugarDetailPageState extends State<LugarDetailPage> {
+  /// Solo se puede escribir/cargar reseñas si el lugar tiene un tipo de
+  /// entidad conocido y un id con formato de UUID real del backend.
+  bool get _esResenable => widget.targetType != null && esUuidValido(widget.id);
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ResenasProvider>().cargarResenas(
-        targetType: 'destination',
-        targetId: widget.id,
-      );
+      if (_esResenable) {
+        context.read<ResenasProvider>().cargarResenas(
+          targetType: widget.targetType!,
+          targetId: widget.id,
+        );
+      }
       final favProvider = context.read<FavoritosProvider>();
       if (favProvider.status == FavoritosStatus.idle) {
         favProvider.cargarFavoritos();
@@ -59,6 +75,7 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
   }
 
   void _irAEscribirResena() {
+    if (!_esResenable) return;
     final destino = DestinoResenaEntity(
       id: widget.id,
       nombre: widget.nombre,
@@ -66,7 +83,8 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
       imageUrl: widget.imageUrl,
       calificacion: widget.calificacion,
       totalResenas: widget.totalResenas,
-      tipo: 'Naturaleza',
+      tipo: widget.categoria,
+      targetType: widget.targetType!,
     );
     Navigator.push(
       context,
@@ -119,11 +137,15 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
               Consumer<FavoritosProvider>(
                 builder: (context, favProvider, _) {
                   final esFav = favProvider.esFavorito(
-                    FavoritoTargetType.destination, widget.id);
+                    FavoritoTargetType.destination,
+                    widget.id,
+                  );
                   return IconButton(
                     icon: Icon(
                       esFav ? Icons.favorite : Icons.favorite_border,
-                      color: esFav ? Colors.red : AppColors.textPrimary(context),
+                      color: esFav
+                          ? Colors.red
+                          : AppColors.textPrimary(context),
                     ),
                     onPressed: () => favProvider.toggleFavorito(
                       targetType: FavoritoTargetType.destination,
@@ -231,52 +253,66 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
                           color: AppColors.textPrimary(context),
                         ),
                       ),
-                      TextButton.icon(
-                        onPressed: _irAEscribirResena,
-                        icon: Icon(
-                          Icons.rate_review_outlined,
-                          size: 18,
-                          color: AppColors.primary(context),
+                      if (_esResenable)
+                        TextButton.icon(
+                          onPressed: _irAEscribirResena,
+                          icon: Icon(
+                            Icons.rate_review_outlined,
+                            size: 18,
+                            color: AppColors.primary(context),
+                          ),
+                          label: Text(
+                            'Escribir reseña',
+                            style: TextStyle(color: AppColors.primary(context)),
+                          ),
                         ),
-                        label: Text(
-                          'Escribir reseña',
-                          style: TextStyle(color: AppColors.primary(context)),
-                        ),
-                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
 
-                  Consumer<ResenasProvider>(
-                    builder: (context, provider, _) {
-                      if (provider.status == ResenasStatus.loading) {
-                        return const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(24),
-                            child: CircularProgressIndicator(),
+                  if (!_esResenable)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Center(
+                        child: Text(
+                          'Este lugar todavía no admite reseñas.',
+                          style: TextStyle(
+                            color: AppColors.textSecondary(context),
                           ),
-                        );
-                      }
-                      if (provider.resenas.isEmpty) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 24),
-                          child: Center(
-                            child: Text(
-                              'Aún no hay reseñas. ¡Sé el primero!',
-                              style: TextStyle(
-                                color: AppColors.textSecondary(context),
+                        ),
+                      ),
+                    )
+                  else
+                    Consumer<ResenasProvider>(
+                      builder: (context, provider, _) {
+                        if (provider.status == ResenasStatus.loading) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(24),
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        }
+                        if (provider.resenas.isEmpty) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 24),
+                            child: Center(
+                              child: Text(
+                                'Aún no hay reseñas. ¡Sé el primero!',
+                                style: TextStyle(
+                                  color: AppColors.textSecondary(context),
+                                ),
                               ),
                             ),
-                          ),
+                          );
+                        }
+                        return Column(
+                          children: provider.resenas
+                              .map((r) => ResenaCard(resena: r))
+                              .toList(),
                         );
-                      }
-                      return Column(
-                        children: provider.resenas
-                            .map((r) => ResenaCard(resena: r))
-                            .toList(),
-                      );
-                    },
-                  ),
+                      },
+                    ),
                   const SizedBox(height: 80),
                 ],
               ),
@@ -296,90 +332,70 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
             ),
           ],
         ),
-        child: SafeArea(
-          top: false,
-          child: _tieneCoords
-              ? Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: _trazarRuta,
-                        icon: const Icon(
-                          Icons.directions_outlined,
-                          color: Colors.white,
-                        ),
-                        label: const Text(
-                          'Trazar ruta',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1565C0),
-                          elevation: 0,
-                          minimumSize: const Size(0, 52),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: _irAEscribirResena,
-                        icon: const Icon(
-                          Icons.rate_review_outlined,
-                          color: Colors.white,
-                        ),
-                        label: const Text(
-                          'Dejar reseña',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary(context),
-                          elevation: 0,
-                          minimumSize: const Size(0, 52),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                )
-              : ElevatedButton.icon(
-                  onPressed: _irAEscribirResena,
-                  icon: const Icon(
-                    Icons.rate_review_outlined,
-                    color: Colors.white,
-                  ),
-                  label: const Text(
-                    'Dejar reseña',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary(context),
-                    elevation: 0,
-                    minimumSize: const Size(double.infinity, 52),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                ),
-        ),
+        child: SafeArea(top: false, child: _buildBottomActions(context)),
       ),
     );
+  }
+
+  Widget _buildBottomActions(BuildContext context) {
+    final trazarRutaButton = ElevatedButton.icon(
+      onPressed: _trazarRuta,
+      icon: const Icon(Icons.directions_outlined, color: Colors.white),
+      label: const Text(
+        'Trazar ruta',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF1565C0),
+        elevation: 0,
+        minimumSize: const Size(0, 52),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+      ),
+    );
+
+    final dejarResenaButton = ElevatedButton.icon(
+      onPressed: _irAEscribirResena,
+      icon: const Icon(Icons.rate_review_outlined, color: Colors.white),
+      label: const Text(
+        'Dejar reseña',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primary(context),
+        elevation: 0,
+        minimumSize: const Size(0, 52),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+      ),
+    );
+
+    if (_tieneCoords && _esResenable) {
+      return Row(
+        children: [
+          Expanded(child: trazarRutaButton),
+          const SizedBox(width: 12),
+          Expanded(child: dejarResenaButton),
+        ],
+      );
+    }
+
+    if (_tieneCoords && !_esResenable) {
+      return SizedBox(width: double.infinity, child: trazarRutaButton);
+    }
+
+    if (!_tieneCoords && _esResenable) {
+      return SizedBox(width: double.infinity, child: dejarResenaButton);
+    }
+
+    // Ni ruta ni reseña disponibles: no hay acción útil que ofrecer.
+    return const SizedBox.shrink();
   }
 }
 

@@ -25,6 +25,28 @@ class AppConstants {
   // no hay forma de enviarlas ya aprobadas desde el cliente.
   static const String locationsEndpoint = '/locations';
 
+  // Proveedor de mapa real usado por la app (OpenStreetMap vía flutter_map
+  // + tiles de tile.openstreetmap.org) — se envía tal cual al backend al
+  // crear una ubicación, nunca un valor inventado.
+  static const String mapProviderOpenStreetMap = 'openstreetmap';
+
+  // Endpoint de propuestas de destino ("Recomendar lugar"). El usuario
+  // propone un nuevo destino turístico; queda "pendiente" hasta que un
+  // admin_plataforma la aprueba o rechaza. Todos requieren
+  // Authorization: Bearer TOKEN.
+  //   POST   {destinationProposalsEndpoint}                -> crear propuesta
+  //   GET    {destinationProposalsEndpoint}/mine            -> mis propuestas
+  //   POST   {destinationProposalsEndpoint}/{id}/images     -> subir fotos
+  //   DELETE {destinationProposalsEndpoint}/{id}/images/{imageId}
+  static const String destinationProposalsEndpoint = '/destination-proposals';
+
+  // Nombre exacto del campo multipart para las fotos de una propuesta de
+  // destino (plural — distinto del campo 'imagen' singular que usa la
+  // foto de perfil). Se puede repetir hasta 5 veces en la misma petición.
+  static const String destinationProposalImagesField = 'imagenes';
+  static const int destinationProposalMaxImages = 5;
+  static const int destinationProposalMinImages = 1;
+
   // Uso: GET {baseUrl}{promotionsEndpoint}?negocioId=UUID_NEGOCIO
   static const String promotionsEndpoint = '/promotions';
 

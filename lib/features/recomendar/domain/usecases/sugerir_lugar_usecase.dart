@@ -14,11 +14,17 @@ class SugerirLugarUseCase {
     required double latitude,
     required double longitude,
     String? address,
+    String? municipality,
+    String? state,
+    String? mapProvider,
   }) {
     return _repository.sugerirLugar(
       latitude: latitude,
       longitude: longitude,
       address: address,
+      municipality: municipality,
+      state: state,
+      mapProvider: mapProvider,
     );
   }
 }

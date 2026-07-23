@@ -130,6 +130,7 @@ class _FavoritosPageState extends State<FavoritosPage> {
           imageUrl: destino.imageUrl ?? '',
           descripcion: destino.description,
           totalResenas: destino.totalReviews,
+          targetType: 'destination',
         ),
       ),
     );

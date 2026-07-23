@@ -168,36 +168,76 @@ class _TarjetaDegradada extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(20),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Ink(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: colores,
+    return _PressableScale(
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Ink(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: colores,
+              ),
+            ),
+            child: Stack(
+              children: [
+                Positioned(
+                  right: -20,
+                  top: -10,
+                  child: Icon(
+                    iconoMarcaAgua,
+                    size: 130,
+                    color: Colors.white.withValues(alpha: 0.12),
+                  ),
+                ),
+                child,
+              ],
             ),
           ),
-          child: Stack(
-            children: [
-              Positioned(
-                right: -20,
-                top: -10,
-                child: Icon(
-                  iconoMarcaAgua,
-                  size: 130,
-                  color: Colors.white.withValues(alpha: 0.12),
-                ),
-              ),
-              child,
-            ],
-          ),
         ),
+      ),
+    );
+  }
+}
+
+// ── Envoltura reutilizable: reduce ligeramente de tamaño al presionar ─────
+// Aporta retroalimentación táctil (además del ripple de InkWell) en las
+// tarjetas principales de esta pantalla.
+class _PressableScale extends StatefulWidget {
+  final Widget child;
+
+  const _PressableScale({required this.child});
+
+  @override
+  State<_PressableScale> createState() => _PressableScaleState();
+}
+
+class _PressableScaleState extends State<_PressableScale> {
+  bool _presionado = false;
+
+  void _setPresionado(bool valor) {
+    if (_presionado != valor) setState(() => _presionado = valor);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Solo reacciona a la presión para el efecto visual — el tap en sí
+    // (navegación) lo sigue resolviendo el InkWell interno, que ya trae
+    // su propio ripple y soporte de accesibilidad.
+    return Listener(
+      onPointerDown: (_) => _setPresionado(true),
+      onPointerUp: (_) => _setPresionado(false),
+      onPointerCancel: (_) => _setPresionado(false),
+      child: AnimatedScale(
+        scale: _presionado ? 0.97 : 1.0,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+        child: widget.child,
       ),
     );
   }

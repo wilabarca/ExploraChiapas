@@ -66,6 +66,7 @@ class _HomeResenasPageState extends State<HomeResenasPage> {
       // La API de reseñas no da un conteo agregado por destino todavía.
       totalResenas: destino.totalReviews,
       tipo: categoriaNombre,
+      targetType: 'destination',
       esPopular: destino.averageRating >= 4.7,
     );
   }
