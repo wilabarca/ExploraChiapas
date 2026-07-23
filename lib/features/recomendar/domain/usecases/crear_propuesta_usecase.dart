@@ -3,12 +3,12 @@ import 'package:injectable/injectable.dart';
 
 import '../../../../core/error/failures.dart';
 import '../entities/propuesta_destino.dart';
-import '../repositories/i_recomendar_repository.dart';
+import '../repositories/recomendar_repository.dart';
 
 @injectable
-class CrearPropuestaDestinoUseCase {
-  final IRecomendarRepository _repository;
-  CrearPropuestaDestinoUseCase(this._repository);
+class CrearPropuestaUseCase {
+  final RecomendarRepository _repository;
+  const CrearPropuestaUseCase(this._repository);
 
   Future<Either<Failure, PropuestaDestino>> call({
     required String name,

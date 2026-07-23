@@ -1,22 +1,22 @@
 import 'package:dartz/dartz.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../../core/error/failures.dart';
-import '../entities/propuesta_destino.dart';
-import '../repositories/i_recomendar_repository.dart';
+import '../repositories/recomendar_repository.dart';
 
 @injectable
 class SubirImagenesPropuestaUseCase {
-  final IRecomendarRepository _repository;
-  SubirImagenesPropuestaUseCase(this._repository);
+  final RecomendarRepository _repository;
+  const SubirImagenesPropuestaUseCase(this._repository);
 
-  Future<Either<Failure, PropuestaDestino>> call({
+  Future<Either<Failure, void>> call({
     required String proposalId,
-    required List<String> rutasImagenes,
+    required List<XFile> imagenes,
   }) {
-    return _repository.subirImagenesPropuesta(
+    return _repository.subirImagenes(
       proposalId: proposalId,
-      rutasImagenes: rutasImagenes,
+      imagenes: imagenes,
     );
   }
 }

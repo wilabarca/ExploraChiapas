@@ -1,27 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:injectable/injectable.dart';
 
-import '../../../../core/error/failures.dart';
-import '../../domain/entities/propuesta_destino.dart';
-import '../../domain/usecases/crear_propuesta_destino_usecase.dart';
-import '../../domain/usecases/sugerir_lugar_usecase.dart';
+import '../../domain/entities/categoria.dart';
+import '../../domain/entities/ubicacion_propuesta.dart';
+import '../../domain/usecases/crear_propuesta_usecase.dart';
+import '../../domain/usecases/crear_ubicacion_usecase.dart';
+import '../../domain/usecases/get_categorias_usecase.dart';
 import '../../domain/usecases/subir_imagenes_propuesta_usecase.dart';
 
-enum RecomendarStatus { idle, enviando, exito, error }
-
-/// Paso conceptual actual del envío, para el indicador de progreso de la
-/// pantalla ("✓ Preparando ubicación", "✓ Registrando recomendación",
-/// "✓ Subiendo fotografías").
-enum PasoRecomendacion { ubicacion, propuesta, imagenes }
+enum RecomendarStatus {
+  idle,
+  loadingCategorias,
+  listo,
+  creandoUbicacion,
+  creandoPropuesta,
+  subiendoImagenes,
+  exito,
+  error,
+}
 
 @injectable
 class RecomendarProvider extends ChangeNotifier {
-  final SugerirLugarUseCase _sugerirLugar;
-  final CrearPropuestaDestinoUseCase _crearPropuesta;
+  final GetCategoriasUseCase _getCategorias;
+  final CrearUbicacionUseCase _crearUbicacion;
+  final CrearPropuestaUseCase _crearPropuesta;
   final SubirImagenesPropuestaUseCase _subirImagenes;
 
   RecomendarProvider(
-    this._sugerirLugar,
+    this._getCategorias,
+    this._crearUbicacion,
     this._crearPropuesta,
     this._subirImagenes,
   );
@@ -29,134 +37,143 @@ class RecomendarProvider extends ChangeNotifier {
   RecomendarStatus _status = RecomendarStatus.idle;
   RecomendarStatus get status => _status;
 
-  PasoRecomendacion? _pasoActual;
-  PasoRecomendacion? get pasoActual => _pasoActual;
+  List<Categoria> _categorias = [];
+  List<Categoria> get categorias => _categorias;
 
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
-  int? _errorStatusCode;
-  int? get errorStatusCode => _errorStatusCode;
+  // ID de la propuesta ya creada (para reintentar subida de fotos sin duplicar)
+  String? _propuestaIdCreada;
+  String? get propuestaIdCreada => _propuestaIdCreada;
 
-  // Se conservan entre reintentos para no volver a crear una ubicación o
-  // una propuesta que el backend ya registró con éxito — solo se limpian
-  // en reset() (envío completo o el usuario empieza una recomendación
-  // nueva desde cero).
-  String? _locationId;
-  String? _proposalId;
+  // Estado de éxito para mostrar confirmación
+  String? _propuestaIdExito;
+  String? get propuestaIdExito => _propuestaIdExito;
 
-  PropuestaDestino? _propuesta;
-  PropuestaDestino? get propuesta => _propuesta;
-
-  /// `true` si la propuesta ya se creó en un intento anterior y solo
-  /// falta reintentar la subida de fotos — útil para que la UI explique
-  /// por qué un reintento es más rápido la segunda vez.
-  bool get propuestaYaCreada => _proposalId != null;
-
-  Future<bool> enviarPropuesta({
-    required String name,
-    required String description,
-    required String categoryId,
-    required double latitude,
-    required double longitude,
-    String? mapProvider,
-    required List<String> rutasImagenes,
-  }) async {
-    _status = RecomendarStatus.enviando;
+  Future<void> cargarCategorias() async {
+    if (_status == RecomendarStatus.loadingCategorias) return;
+    _status = RecomendarStatus.loadingCategorias;
     _errorMessage = null;
-    _errorStatusCode = null;
     notifyListeners();
 
-    if (_locationId == null) {
-      _pasoActual = PasoRecomendacion.ubicacion;
-      notifyListeners();
-
-      final resultado = await _sugerirLugar(
-        latitude: latitude,
-        longitude: longitude,
-        mapProvider: mapProvider,
-      );
-
-      final huboError = resultado.fold(
-        (failure) {
-          _marcarError(failure);
-          return true;
-        },
-        (ubicacion) {
-          _locationId = ubicacion.id;
-          return false;
-        },
-      );
-      if (huboError) return false;
-    }
-
-    if (_proposalId == null) {
-      _pasoActual = PasoRecomendacion.propuesta;
-      notifyListeners();
-
-      final resultado = await _crearPropuesta(
-        name: name,
-        description: description,
-        categoryId: categoryId,
-        locationId: _locationId!,
-      );
-
-      final huboError = resultado.fold(
-        (failure) {
-          _marcarError(failure);
-          return true;
-        },
-        (propuesta) {
-          _proposalId = propuesta.id;
-          _propuesta = propuesta;
-          return false;
-        },
-      );
-      if (huboError) return false;
-    }
-
-    _pasoActual = PasoRecomendacion.imagenes;
-    notifyListeners();
-
-    final resultadoImagenes = await _subirImagenes(
-      proposalId: _proposalId!,
-      rutasImagenes: rutasImagenes,
-    );
-
-    return resultadoImagenes.fold(
+    final result = await _getCategorias();
+    result.fold(
       (failure) {
-        _marcarError(failure);
-        return false;
+        _status = RecomendarStatus.error;
+        _errorMessage = failure.message;
       },
-      (propuestaConFotos) {
-        _propuesta = propuestaConFotos;
-        _status = RecomendarStatus.exito;
-        _pasoActual = null;
-        notifyListeners();
-        return true;
+      (cats) {
+        _categorias = cats;
+        _status = RecomendarStatus.listo;
       },
     );
-  }
-
-  void _marcarError(Failure failure) {
-    _status = RecomendarStatus.error;
-    _errorMessage = failure.message;
-    _errorStatusCode = failure is ServerFailure ? failure.statusCode : null;
-    _pasoActual = null;
     notifyListeners();
   }
 
-  /// Reinicia todo el flujo, incluyendo `locationId`/`proposalId` — solo
-  /// debe llamarse tras un envío exitoso o si el usuario decide empezar
-  /// una recomendación nueva desde cero, nunca durante un reintento.
-  void reset() {
-    _status = RecomendarStatus.idle;
+  Future<void> enviarPropuesta({
+    required String nombre,
+    required String descripcion,
+    required String categoriaId,
+    required UbicacionPropuesta ubicacion,
+    required List<XFile> imagenes,
+  }) async {
     _errorMessage = null;
-    _errorStatusCode = null;
-    _pasoActual = null;
-    _locationId = null;
-    _proposalId = null;
-    _propuesta = null;
+
+    // ── Paso 1: crear ubicación ──────────────────────────────────────────────
+    _status = RecomendarStatus.creandoUbicacion;
+    notifyListeners();
+
+    final ubicacionResult = await _crearUbicacion(ubicacion);
+    if (ubicacionResult.isLeft()) {
+      _status = RecomendarStatus.error;
+      _errorMessage = ubicacionResult.fold((f) => f.message, (_) => null);
+      notifyListeners();
+      return;
+    }
+    final locationId = ubicacionResult.getOrElse(() => '');
+
+    // ── Paso 2: crear propuesta (omitir si ya fue creada en intento anterior) ─
+    if (_propuestaIdCreada == null) {
+      _status = RecomendarStatus.creandoPropuesta;
+      notifyListeners();
+
+      final propuestaResult = await _crearPropuesta(
+        name: nombre,
+        description: descripcion,
+        categoryId: categoriaId,
+        locationId: locationId,
+      );
+      if (propuestaResult.isLeft()) {
+        _status = RecomendarStatus.error;
+        _errorMessage = propuestaResult.fold((f) => f.message, (_) => null);
+        notifyListeners();
+        return;
+      }
+      _propuestaIdCreada = propuestaResult.getOrElse(
+        () => throw StateError('propuesta vacía'),
+      ).id;
+    }
+
+    // ── Paso 3: subir fotografías ────────────────────────────────────────────
+    _status = RecomendarStatus.subiendoImagenes;
+    notifyListeners();
+
+    final imagenesResult = await _subirImagenes(
+      proposalId: _propuestaIdCreada!,
+      imagenes: imagenes,
+    );
+    if (imagenesResult.isLeft()) {
+      _status = RecomendarStatus.error;
+      // Mantiene _propuestaIdCreada para poder reintentar sin duplicar
+      _errorMessage =
+          '${imagenesResult.fold((f) => f.message, (_) => '')}. '
+          'Tu recomendación fue registrada, pero las fotografías no se subieron. '
+          'Intenta de nuevo.';
+      notifyListeners();
+      return;
+    }
+
+    // ── Éxito ────────────────────────────────────────────────────────────────
+    _propuestaIdExito = _propuestaIdCreada;
+    _propuestaIdCreada = null;
+    _status = RecomendarStatus.exito;
+    notifyListeners();
+  }
+
+  /// Permite reintentar solo la subida de imágenes cuando la propuesta ya existe
+  Future<void> reintentarImagenes({
+    required List<XFile> imagenes,
+  }) async {
+    if (_propuestaIdCreada == null) return;
+    _errorMessage = null;
+    _status = RecomendarStatus.subiendoImagenes;
+    notifyListeners();
+
+    final result = await _subirImagenes(
+      proposalId: _propuestaIdCreada!,
+      imagenes: imagenes,
+    );
+    result.fold(
+      (failure) {
+        _status = RecomendarStatus.error;
+        _errorMessage =
+            '${failure.message}. Intenta de nuevo.';
+      },
+      (_) {
+        _propuestaIdExito = _propuestaIdCreada;
+        _propuestaIdCreada = null;
+        _status = RecomendarStatus.exito;
+      },
+    );
+    notifyListeners();
+  }
+
+  void reiniciar() {
+    _status = _categorias.isEmpty ? RecomendarStatus.idle : RecomendarStatus.listo;
+    _errorMessage = null;
+    _propuestaIdCreada = null;
+    _propuestaIdExito = null;
     notifyListeners();
   }
 }

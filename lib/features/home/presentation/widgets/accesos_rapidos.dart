@@ -26,6 +26,11 @@ class AccesosRapidos extends StatelessWidget {
         'label': 'Cerca',
         'ruta': '/cerca',
       },
+      {
+        'icono': Icons.add_location_alt_outlined,
+        'label': 'Recomendar',
+        'ruta': '/recomendar',
+      },
     ];
 
     return SizedBox(

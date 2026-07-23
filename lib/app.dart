@@ -43,9 +43,9 @@ import 'features/maps/data/datasources/map_remote_datasource.dart';
 import 'core/network/api_client.dart';
 import 'features/destinos/presentation/pages/explorar_cerca_page.dart';
 import 'features/recomendar/presentation/pages/recomendar_lugar_page.dart';
-import 'features/recomendar/presentation/pages/mis_recomendaciones_page.dart';
+import 'features/recomendar/presentation/pages/mis_propuestas_page.dart';
 import 'features/recomendar/presentation/providers/recomendar_provider.dart';
-import 'features/recomendar/presentation/providers/mis_recomendaciones_provider.dart';
+import 'features/recomendar/presentation/providers/mis_propuestas_provider.dart';
 import 'features/resena/presentation/pages/home_resenas_page.dart';
 import 'features/negocio/presentation/pages/negocio_lista_page.dart';
 import 'features/promociones/presentation/pages/promociones_page.dart';
@@ -242,13 +242,12 @@ class _ExploraChiapasAppState extends State<ExploraChiapasApp> {
                     settings: settings,
                   );
 
-                case '/mis-recomendaciones':
+                case '/mis-propuestas':
                   return MaterialPageRoute(
-                    builder: (_) =>
-                        ChangeNotifierProvider<MisRecomendacionesProvider>(
-                          create: (_) => getIt<MisRecomendacionesProvider>(),
-                          child: const MisRecomendacionesPage(),
-                        ),
+                    builder: (_) => ChangeNotifierProvider<MisPropuestasProvider>(
+                      create: (_) => getIt<MisPropuestasProvider>(),
+                      child: const MisPropuestasPage(),
+                    ),
                     settings: settings,
                   );
 
