@@ -11,7 +11,10 @@ import '../widgets/eventos_banner.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/promociones_fuego_banner.dart';
 import '../widgets/promociones_activas_section.dart';
+import '../widgets/negocio_home_card.dart';
 import '../../../../core/navigation/app_navigator.dart';
+import '../../../negocio/domain/entities/negocio.dart';
+import '../../../negocio/domain/usecases/obtener_negocio.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/fade_slide_in.dart';
 import '../../../../core/widgets/skeleton_loader.dart';
@@ -38,6 +41,8 @@ class _HomeLocalPageState extends State<HomeLocalPage>
   bool _isRefreshingHome = false;
 
   List<Map<String, dynamic>> _destacadosML = [];
+  List<Negocio> _negocios = [];
+  bool _cargandoNegocios = false;
   Position? _userPos;
   final Map<String, double> _distancias = {};
 
@@ -47,6 +52,7 @@ class _HomeLocalPageState extends State<HomeLocalPage>
     WidgetsBinding.instance.addObserver(this);
 
     _cargarDestacadosML();
+    _cargarNegocios();
     _cargarPosicion();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -97,6 +103,14 @@ class _HomeLocalPageState extends State<HomeLocalPage>
     if (!mounted) return;
     setState(() => _destacadosML = resultados);
     _calcularDistanciasML(resultados);
+  }
+
+  Future<void> _cargarNegocios() async {
+    setState(() => _cargandoNegocios = true);
+    final result = await getIt<ObtenerNegocios>()();
+    if (!mounted) return;
+    result.fold((_) {}, (list) => setState(() => _negocios = list));
+    if (mounted) setState(() => _cargandoNegocios = false);
   }
 
   Future<void> _cargarPosicion() async {
@@ -386,6 +400,54 @@ class _HomeLocalPageState extends State<HomeLocalPage>
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: EventosBanner(onExplorar: _irAEventos),
                       ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // ── Negocios registrados ───────────────────────────────────
+                FadeSlideIn(
+                  delay: const Duration(milliseconds: 220),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SectionHeader(
+                        icon: Icons.storefront_outlined,
+                        titulo: 'Negocios',
+                        mostrarVerTodos: true,
+                        onVerTodos: () =>
+                            Navigator.pushNamed(context, '/negocios'),
+                      ),
+                      const SizedBox(height: 14),
+                      if (_cargandoNegocios)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 20),
+                          child: SkeletonCardRow(
+                            count: 3,
+                            cardHeight: 170,
+                            cardWidth: 160,
+                          ),
+                        )
+                      else if (_negocios.isEmpty)
+                        const SizedBox.shrink()
+                      else
+                        SizedBox(
+                          height: 195,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 20),
+                            itemCount: _negocios.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: 12),
+                            itemBuilder: (context, i) => NegocioHomeCard(
+                              negocio: _negocios[i],
+                              onTap: () =>
+                                  Navigator.pushNamed(context, '/negocios'),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),

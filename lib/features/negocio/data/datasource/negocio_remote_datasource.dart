@@ -39,8 +39,18 @@ class NegocioRemoteDataSourceImpl implements NegocioRemoteDataSource {
         if (soloVerificados == true) 'isVerified': 'true',
       },
     );
-    final body = response.data as Map<String, dynamic>;
-    return (body['data'] as List)
+    final raw = response.data;
+    List<dynamic> list;
+    if (raw is List) {
+      list = raw;
+    } else if (raw is Map<String, dynamic>) {
+      final candidate = raw['data'] ?? raw['businesses'] ??
+          raw['results'] ?? raw['items'];
+      list = (candidate is List) ? candidate : [];
+    } else {
+      list = [];
+    }
+    return list
         .map((e) => NegocioModel.fromJson(e as Map<String, dynamic>))
         .toList();
   }

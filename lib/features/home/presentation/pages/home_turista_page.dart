@@ -13,8 +13,11 @@ import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/promociones_fuego_banner.dart';
 import '../widgets/promociones_activas_section.dart';
 import '../../../../core/widgets/fade_slide_in.dart';
+import '../widgets/negocio_home_card.dart';
 import '../../../destinos/presentation/pages/lugar_detail_page.dart';
 import '../../../eventos/presentation/providers/eventos_provider.dart';
+import '../../../negocio/domain/entities/negocio.dart';
+import '../../../negocio/domain/usecases/obtener_negocio.dart';
 import '../../../promociones/presentation/providers/promociones_provider.dart';
 import '../../../../core/di/injector.dart';
 import '../../../../core/l10n/app_strings.dart';
@@ -34,6 +37,8 @@ class HomeTuristaPage extends StatefulWidget {
 class _HomeTuristaPageState extends State<HomeTuristaPage>
     with WidgetsBindingObserver, RouteAware {
   List<Map<String, dynamic>> _destacadosML = [];
+  List<Negocio> _negocios = [];
+  bool _cargandoNegocios = false;
   Position? _userPos;
   final Map<String, double> _distancias = {};
 
@@ -47,6 +52,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
     WidgetsBinding.instance.addObserver(this);
 
     _cargarDestacadosML();
+    _cargarNegocios();
     _cargarPosicion();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -94,6 +100,14 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
     if (!mounted) return;
     setState(() => _destacadosML = resultados);
     _calcularDistanciasML(resultados);
+  }
+
+  Future<void> _cargarNegocios() async {
+    setState(() => _cargandoNegocios = true);
+    final result = await getIt<ObtenerNegocios>()();
+    if (!mounted) return;
+    result.fold((_) {}, (list) => setState(() => _negocios = list));
+    if (mounted) setState(() => _cargandoNegocios = false);
   }
 
   Future<void> _cargarPosicion() async {
@@ -324,9 +338,56 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
                 ),
                 const SizedBox(height: 24),
 
-                // ── Turismo Sostenible ────────────────────────────────────
+                // ── Negocios registrados ──────────────────────────────────
                 FadeSlideIn(
                   delay: const Duration(milliseconds: 240),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SectionHeader(
+                        icon: Icons.storefront_outlined,
+                        titulo: 'Negocios',
+                        mostrarVerTodos: true,
+                        onVerTodos: () =>
+                            Navigator.pushNamed(context, '/negocios'),
+                      ),
+                      const SizedBox(height: 14),
+                      if (_cargandoNegocios)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 20),
+                          child: SkeletonCardRow(
+                            count: 3,
+                            cardHeight: 170,
+                            cardWidth: 160,
+                          ),
+                        )
+                      else if (_negocios.isEmpty)
+                        const SizedBox.shrink()
+                      else
+                        SizedBox(
+                          height: 195,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 20),
+                            itemCount: _negocios.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: 12),
+                            itemBuilder: (context, i) => NegocioHomeCard(
+                              negocio: _negocios[i],
+                              onTap: () =>
+                                  Navigator.pushNamed(context, '/negocios'),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // ── Turismo Sostenible ────────────────────────────────────
+                FadeSlideIn(
+                  delay: const Duration(milliseconds: 280),
                   child: _SostenibleSection(
                     onVerMapa: () => Navigator.pushNamed(context, '/mapa'),
                   ),
