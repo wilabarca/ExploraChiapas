@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../core/di/injector.dart';
+import '../../../../core/storage/secure_session_storage.dart';
 import '../../../../core/utils/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../profile/presentation/providers/profile_provider.dart';
@@ -25,9 +26,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _cargarTipo() async {
-    final prefs = await SharedPreferences.getInstance();
+    final tipoUsuario = await getIt<SecureSessionStorage>().getTipoUsuario();
     setState(() {
-      _tipoUsuario = prefs.getString(AppConstants.tipoUsuarioKey) ?? '';
+      _tipoUsuario = tipoUsuario ?? '';
       _loaded = true;
     });
     debugPrint('🏠 Tipo de usuario cargado: $_tipoUsuario');

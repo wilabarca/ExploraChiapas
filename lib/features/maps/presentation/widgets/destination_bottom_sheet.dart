@@ -74,8 +74,11 @@ class DestinationBottomSheet extends StatelessWidget {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.star_rounded,
-                                color: Color(0xFFFFC107), size: 16),
+                            const Icon(
+                              Icons.star_rounded,
+                              color: Color(0xFFFFC107),
+                              size: 16,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               destino.calificacion.toStringAsFixed(1),
@@ -91,7 +94,9 @@ class DestinationBottomSheet extends StatelessWidget {
                         if (destino.esMock)
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.orange.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(10),
@@ -116,16 +121,22 @@ class DestinationBottomSheet extends StatelessWidget {
                 children: [
                   GestureDetector(
                     onTap: onCerrar,
-                    child: Icon(Icons.close,
-                        size: 20, color: AppColors.textSecondary(context)),
+                    child: Icon(
+                      Icons.close,
+                      size: 20,
+                      color: AppColors.textSecondary(context),
+                    ),
                   ),
                   if (destino.esSostenible) ...[
                     const SizedBox(height: 6),
                     Tooltip(
                       message:
                           'Destino con baja afluencia: experiencia tranquila',
-                      child: Icon(Icons.eco,
-                          color: AppColors.primary(context), size: 24),
+                      child: Icon(
+                        Icons.eco,
+                        color: AppColors.primary(context),
+                        size: 24,
+                      ),
                     ),
                   ],
                 ],
@@ -145,8 +156,9 @@ class DestinationBottomSheet extends StatelessWidget {
                   Text(
                     'Afluencia actual',
                     style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary(context)),
+                      fontSize: 12,
+                      color: AppColors.textSecondary(context),
+                    ),
                   ),
                   Row(
                     mainAxisSize: MainAxisSize.min,
@@ -154,8 +166,11 @@ class DestinationBottomSheet extends StatelessWidget {
                       if (destino.afluencia > 75)
                         const Padding(
                           padding: EdgeInsets.only(right: 4),
-                          child: Icon(Icons.warning_amber_rounded,
-                              size: 14, color: Colors.orange),
+                          child: Icon(
+                            Icons.warning_amber_rounded,
+                            size: 14,
+                            color: Colors.orange,
+                          ),
                         ),
                       Text(
                         destino.afluencia > 75 ? 'Alta' : 'Normal',
@@ -206,8 +221,10 @@ class DestinationBottomSheet extends StatelessWidget {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: onGuardar,
-                  icon: Icon(Icons.bookmark_border,
-                      color: AppColors.primary(context)),
+                  icon: Icon(
+                    Icons.bookmark_border,
+                    color: AppColors.primary(context),
+                  ),
                   label: Text(
                     'Guardar',
                     style: TextStyle(color: AppColors.primary(context)),
@@ -215,7 +232,8 @@ class DestinationBottomSheet extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: AppColors.primary(context)),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30)),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                 ),
@@ -224,14 +242,20 @@ class DestinationBottomSheet extends StatelessWidget {
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: onVerRuta,
-                  icon: const Icon(Icons.directions, color: Colors.white),
-                  label: const Text('Ver ruta',
-                      style: TextStyle(color: Colors.white)),
+                  icon: Icon(
+                    Icons.directions,
+                    color: AppColors.onPrimary(context),
+                  ),
+                  label: Text(
+                    'Ver ruta',
+                    style: TextStyle(color: AppColors.onPrimary(context)),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary(context),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30)),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                 ),
@@ -261,32 +285,32 @@ class _TipoBadge extends StatelessWidget {
 
   // Softer background colors (same palette, reduced saturation)
   static const _fondos = {
-    'naturaleza':  Color(0xFFE8F5E9),
-    'cultura':     Color(0xFFE3F2FD),
+    'naturaleza': Color(0xFFE8F5E9),
+    'cultura': Color(0xFFE3F2FD),
     'gastronomia': Color(0xFFFFF3E0),
-    'aventura':    Color(0xFFF3E5F5),
-    'descanso':    Color(0xFFE0F7FA),
+    'aventura': Color(0xFFF3E5F5),
+    'descanso': Color(0xFFE0F7FA),
   };
   static const _fondosDark = {
-    'naturaleza':  Color(0xFF1B3A1C),
-    'cultura':     Color(0xFF0D253A),
+    'naturaleza': Color(0xFF1B3A1C),
+    'cultura': Color(0xFF0D253A),
     'gastronomia': Color(0xFF3A2200),
-    'aventura':    Color(0xFF2A0B3A),
-    'descanso':    Color(0xFF003A40),
+    'aventura': Color(0xFF2A0B3A),
+    'descanso': Color(0xFF003A40),
   };
   static const _textos = {
-    'naturaleza':  Color(0xFF43A047),
-    'cultura':     Color(0xFF1976D2),
+    'naturaleza': Color(0xFF43A047),
+    'cultura': Color(0xFF1976D2),
     'gastronomia': Color(0xFFEF6C00),
-    'aventura':    Color(0xFF7B1FA2),
-    'descanso':    Color(0xFF00ACC1),
+    'aventura': Color(0xFF7B1FA2),
+    'descanso': Color(0xFF00ACC1),
   };
   static const _iconos = {
-    'naturaleza':  Icons.park_outlined,
-    'cultura':     Icons.account_balance_outlined,
+    'naturaleza': Icons.park_outlined,
+    'cultura': Icons.account_balance_outlined,
     'gastronomia': Icons.restaurant_outlined,
-    'aventura':    Icons.terrain_outlined,
-    'descanso':    Icons.spa_outlined,
+    'aventura': Icons.terrain_outlined,
+    'descanso': Icons.spa_outlined,
   };
 
   @override

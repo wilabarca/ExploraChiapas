@@ -59,6 +59,12 @@ class PromocionesProvider extends ChangeNotifier {
     }
   }
 
+  // ── Promociones vigentes, SIN depender del filtro que el usuario haya
+  // elegido en la vista completa de Promociones (que comparte esta misma
+  // instancia del provider). El Home siempre debe mostrar "activas". ─────
+  List<PromocionEntity> get promocionesActivas =>
+      _promociones.where((p) => p.estado == PromocionEstado.vigente).toList();
+
   void cambiarFiltro(PromocionesFiltro nuevoFiltro) {
     _filtro = nuevoFiltro;
     notifyListeners();

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/profile_provider.dart';
@@ -45,17 +46,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
         child: Wrap(
           children: [
             ListTile(
-              leading: const Icon(
+              leading: Icon(
                 Icons.camera_alt_outlined,
-                color: Color(0xFF2E7D32),
+                color: AppColors.primary(context),
               ),
               title: const Text('Tomar foto'),
               onTap: () => Navigator.pop(context, ImageSource.camera),
             ),
             ListTile(
-              leading: const Icon(
+              leading: Icon(
                 Icons.photo_library_outlined,
-                color: Color(0xFF2E7D32),
+                color: AppColors.primary(context),
               ),
               title: const Text('Elegir de la galería'),
               onTap: () => Navigator.pop(context, ImageSource.gallery),
@@ -84,7 +85,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Foto de perfil actualizada'),
-          backgroundColor: const Color(0xFF2E7D32),
+          backgroundColor: AppColors.primary(context),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -95,7 +96,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(provider.errorMessage ?? 'No se pudo subir la foto'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.error(context),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -118,7 +119,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Perfil actualizado correctamente'),
-          backgroundColor: const Color(0xFF2E7D32),
+          backgroundColor: AppColors.primary(context),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -130,7 +131,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(provider.errorMessage ?? 'Error al actualizar'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.error(context),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -154,19 +155,19 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final perfil = context.watch<ProfileProvider>().perfil;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F8F8),
+      backgroundColor: AppColors.background(context),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface(context),
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF1B5E20)),
+          icon: Icon(Icons.arrow_back, color: AppColors.primary(context)),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Editar Perfil',
           style: TextStyle(
-            color: Color(0xFF1B5E20),
+            color: AppColors.primary(context),
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
@@ -194,7 +195,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       ),
                     ),
                     if (subiendoFoto)
-                      const CircularProgressIndicator(color: Color(0xFF2E7D32)),
+                      CircularProgressIndicator(
+                        color: AppColors.primary(context),
+                      ),
                   ],
                 ),
 
@@ -203,10 +206,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   onTap: subiendoFoto ? null : _subirFoto,
                   child: Text(
                     subiendoFoto ? 'SUBIENDO...' : 'CAMBIAR FOTO DE PERFIL',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF2E7D32),
+                      color: AppColors.primary(context),
                       letterSpacing: 1.2,
                     ),
                   ),
@@ -223,15 +226,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       vertical: 14,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF5F5F5),
+                      color: AppColors.surfaceContainer(context),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE0E0E0)),
+                      border: Border.all(
+                        color: AppColors.borderSubtle(context),
+                      ),
                     ),
                     child: Text(
                       perfil?.tipoUsuarioLabel ?? 'Turista',
                       style: TextStyle(
                         fontSize: isSmall ? 13 : 15,
-                        color: const Color(0xFF555555),
+                        color: AppColors.textSecondary(context),
                       ),
                     ),
                   ),
@@ -259,15 +264,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       vertical: 14,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF5F5F5),
+                      color: AppColors.surfaceContainer(context),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE0E0E0)),
+                      border: Border.all(
+                        color: AppColors.borderSubtle(context),
+                      ),
                     ),
                     child: Text(
                       perfil?.email ?? '',
                       style: TextStyle(
                         fontSize: isSmall ? 13 : 15,
-                        color: const Color(0xFF555555),
+                        color: AppColors.textSecondary(context),
                       ),
                     ),
                   ),
@@ -281,26 +288,26 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     vertical: 14,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.surface(context),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE0E0E0)),
+                    border: Border.all(color: AppColors.borderSubtle(context)),
                   ),
                   child: Row(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE8F5E9),
+                          color: AppColors.primaryContainer(context),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.lock_outline,
-                          color: Color(0xFF2E7D32),
+                          color: AppColors.primary(context),
                           size: 20,
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -308,16 +315,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
                               'Contraseña',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Color(0xFF2E7D32),
+                                color: AppColors.primary(context),
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            SizedBox(height: 2),
+                            const SizedBox(height: 2),
                             Text(
                               '••••••••••••',
                               style: TextStyle(
                                 fontSize: 15,
-                                color: Color(0xFF1B1B1B),
+                                color: AppColors.textPrimary(context),
                               ),
                             ),
                           ],
@@ -325,10 +332,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       ),
                       TextButton(
                         onPressed: () {},
-                        child: const Text(
+                        child: Text(
                           'CAMBIAR',
                           style: TextStyle(
-                            color: Color(0xFF2E7D32),
+                            color: AppColors.primary(context),
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
                           ),
@@ -343,24 +350,24 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE8F5E9),
+                    color: AppColors.primaryContainer(context),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
                       Icon(
                         Icons.info_outline,
-                        color: Color(0xFF2E7D32),
+                        color: AppColors.primary(context),
                         size: 18,
                       ),
-                      SizedBox(width: 10),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           'Tu información se utiliza para personalizar '
                           'tus planes de viaje y reservas en parques naturales.',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF555555),
+                            color: AppColors.textSecondary(context),
                             height: 1.4,
                           ),
                         ),
@@ -378,26 +385,25 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     child: ElevatedButton(
                       onPressed: isLoading ? null : _guardar,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2E7D32),
-                        disabledBackgroundColor: const Color(0xFFB0BEC5),
+                        backgroundColor: AppColors.primary(context),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
                         elevation: 0,
                       ),
                       child: isLoading
-                          ? const SizedBox(
+                          ? SizedBox(
                               height: 22,
                               width: 22,
                               child: CircularProgressIndicator(
-                                color: Colors.white,
+                                color: AppColors.onPrimary(context),
                                 strokeWidth: 2.5,
                               ),
                             )
-                          : const Text(
+                          : Text(
                               'Guardar cambios',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: AppColors.onPrimary(context),
                                 fontSize: 17,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -418,14 +424,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Widget _buildLabel(String text, IconData icon) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: const Color(0xFF555555)),
+        Icon(icon, size: 16, color: AppColors.textSecondary(context)),
         const SizedBox(width: 6),
         Text(
           text,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF555555),
+            color: AppColors.textSecondary(context),
           ),
         ),
       ],
@@ -438,16 +444,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surfaceContainer(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE0E0E0)),
+        border: Border.all(color: AppColors.borderSubtle(context)),
       ),
       child: TextField(
         controller: controller,
-        style: const TextStyle(fontSize: 15, color: Color(0xFF1B1B1B)),
+        style: TextStyle(fontSize: 15, color: AppColors.textPrimary(context)),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(color: Color(0xFFAAAAAA)),
+          hintStyle: TextStyle(color: AppColors.textHint(context)),
+          // Evita heredar el "filled: true" del InputDecorationTheme
+          // global, que pintaría un rectángulo de esquinas cuadradas
+          // encima del fondo redondeado de este Container.
+          filled: false,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../domain/entities/envento_entity.dart';
 
@@ -33,11 +34,13 @@ class EventoCard extends StatelessWidget {
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface(context),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
+                  color: Colors.black.withValues(
+                    alpha: AppColors.isDark(context) ? 0.3 : 0.06,
+                  ),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -57,12 +60,12 @@ class EventoCard extends StatelessWidget {
                       imageUrl: evento.imageUrl,
                       fit: BoxFit.cover,
                       placeholder: (_, __) =>
-                          Container(color: const Color(0xFFD8F5D8)),
+                          Container(color: AppColors.primaryContainer(context)),
                       errorWidget: (_, __, ___) => Container(
-                        color: const Color(0xFFD8F5D8),
-                        child: const Icon(
+                        color: AppColors.primaryContainer(context),
+                        child: Icon(
                           Icons.image_not_supported,
-                          color: Colors.white54,
+                          color: AppColors.primary(context),
                         ),
                       ),
                     ),
@@ -99,10 +102,10 @@ class EventoCard extends StatelessWidget {
                       // Título
                       Text(
                         evento.titulo,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1B1B1B),
+                          color: AppColors.textPrimary(context),
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -117,18 +120,18 @@ class EventoCard extends StatelessWidget {
                           Expanded(
                             child: Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.calendar_today_outlined,
                                   size: 14,
-                                  color: Color(0xFF2E7D32),
+                                  color: AppColors.primary(context),
                                 ),
                                 const SizedBox(width: 5),
                                 Flexible(
                                   child: Text(
                                     evento.fechaFormateada,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 13,
-                                      color: Color(0xFF555555),
+                                      color: AppColors.textSecondary(context),
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -140,18 +143,18 @@ class EventoCard extends StatelessWidget {
                           Expanded(
                             child: Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.location_on_outlined,
                                   size: 14,
-                                  color: Color(0xFF2E7D32),
+                                  color: AppColors.primary(context),
                                 ),
                                 const SizedBox(width: 5),
                                 Flexible(
                                   child: Text(
                                     evento.ubicacion,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 13,
-                                      color: Color(0xFF555555),
+                                      color: AppColors.textSecondary(context),
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),

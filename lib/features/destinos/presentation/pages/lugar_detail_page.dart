@@ -5,10 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/di/injector.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'mapa_ruta_page.dart';
+import 'alternativas_menos_concurridas_page.dart';
 import '../../../favoritos/domain/entities/favorito.dart';
 import '../../../favoritos/presentation/providers/favoritos_provider.dart';
+import '../../../../core/utils/uuid_utils.dart';
+import '../../domain/usecases/get_ubicacion_destino_usecase.dart';
 import '../../../resena/domain/entities/DestinoResenaEntity.dart';
 import '../../../resena/presentation/pages/escribir_resena_page.dart';
 import '../../../resena/presentation/providers/ResenasProvider.dart';
@@ -25,6 +29,27 @@ class LugarDetailPage extends StatefulWidget {
   final double? lat;
   final double? lng;
 
+  /// Tipo de entidad para la API de reseñas ('destination' | 'business' |
+  /// 'location'), o `null` si este lugar no proviene de una fila real del
+  /// backend (p. ej. una recomendación del motor ML o del chat) y por lo
+  /// tanto no puede recibir reseñas todavía. Es obligatorio a propósito:
+  /// obliga a cada pantalla que navega aquí a decidir explícitamente de
+  /// dónde viene el dato, en vez de asumir "destination" por defecto.
+  final String? targetType;
+
+  /// Id real de categoría (`Destino.categoryId`) — solo disponible cuando
+  /// el lugar viene de una fila real del backend. Se usa para buscar
+  /// alternativas menos concurridas de la misma categoría.
+  final String? categoryId;
+
+  /// Id real de ubicación (`Destino.locationId`) — solo disponible cuando
+  /// el lugar viene de una fila real del backend.
+  final String? locationId;
+
+  /// Si el backend marca este destino como saturado (`Destino.isSaturated`).
+  /// `false` por defecto para lugares que no traen ese dato (ML/chat).
+  final bool isSaturated;
+
   const LugarDetailPage({
     super.key,
     required this.id,
@@ -32,10 +57,14 @@ class LugarDetailPage extends StatefulWidget {
     required this.categoria,
     required this.calificacion,
     required this.imageUrl,
+    required this.targetType,
     this.descripcion,
     this.totalResenas = 0,
     this.lat,
     this.lng,
+    this.categoryId,
+    this.locationId,
+    this.isSaturated = false,
   });
 
   @override
@@ -43,14 +72,20 @@ class LugarDetailPage extends StatefulWidget {
 }
 
 class _LugarDetailPageState extends State<LugarDetailPage> {
+  /// Solo se puede escribir/cargar reseñas si el lugar tiene un tipo de
+  /// entidad conocido y un id con formato de UUID real del backend.
+  bool get _esResenable => widget.targetType != null && esUuidValido(widget.id);
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ResenasProvider>().cargarResenas(
-            targetType: 'destination',
-            targetId: widget.id,
-          );
+      if (_esResenable) {
+        context.read<ResenasProvider>().cargarResenas(
+          targetType: widget.targetType!,
+          targetId: widget.id,
+        );
+      }
       final favProvider = context.read<FavoritosProvider>();
       if (favProvider.status == FavoritosStatus.idle) {
         favProvider.cargarFavoritos();
@@ -59,6 +94,7 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
   }
 
   void _irAEscribirResena() {
+    if (!_esResenable) return;
     final destino = DestinoResenaEntity(
       id: widget.id,
       nombre: widget.nombre,
@@ -66,30 +102,98 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
       imageUrl: widget.imageUrl,
       calificacion: widget.calificacion,
       totalResenas: widget.totalResenas,
-      tipo: 'Naturaleza',
+      tipo: widget.categoria,
+      targetType: widget.targetType!,
     );
     Navigator.push(
       context,
+      MaterialPageRoute(builder: (_) => EscribirResenaPage(destino: destino)),
+    );
+  }
+
+  /// Solo se pueden buscar alternativas menos concurridas si el lugar es
+  /// real (id UUID válido) y trae categoryId — sin categoría no hay con
+  /// qué comparar "misma categoría, no saturado".
+  bool get _tieneAlternativasDisponibles =>
+      widget.isSaturated &&
+      widget.categoryId != null &&
+      esUuidValido(widget.id);
+
+  void _verAlternativas() {
+    if (!_tieneAlternativasDisponibles) return;
+    Navigator.push(
+      context,
       MaterialPageRoute(
-        builder: (_) => EscribirResenaPage(destino: destino),
+        builder: (_) => AlternativasMenosConcurridasPage(
+          destinoId: widget.id,
+          destinoNombre: widget.nombre,
+          categoryId: widget.categoryId!,
+          destinoLocationId: widget.locationId,
+        ),
       ),
     );
   }
 
   bool get _tieneCoords => widget.lat != null && widget.lng != null;
 
-  Future<void> _trazarRuta() async {
-    if (!_tieneCoords) return;
+  bool get _tieneLocationId =>
+      widget.locationId != null && widget.locationId!.trim().isNotEmpty;
+
+  bool get _puedeIrAlLugar => _tieneCoords || _tieneLocationId;
+
+  bool _ubicandoLugar = false;
+
+  /// Si ya vienen coordenadas directas (p. ej. recomendación ML) las usa
+  /// tal cual; si el lugar es real solo trae `locationId`, resuelve la
+  /// ubicación real vía `GET /locations/{id}` justo antes de navegar —
+  /// así el botón da feedback inmediato (spinner) y el mapa arranca en
+  /// cuanto llega la respuesta, sin diálogos bloqueantes intermedios.
+  Future<void> _irAlLugar() async {
+    if (_ubicandoLugar) return;
+
+    if (_tieneCoords) {
+      _abrirMapaRuta(widget.lat!, widget.lng!);
+      return;
+    }
+
+    if (!_tieneLocationId) return;
+
+    setState(() => _ubicandoLugar = true);
+    final result = await getIt<GetUbicacionDestinoUseCase>()(
+      id: widget.locationId!,
+    );
+    if (!mounted) return;
+    setState(() => _ubicandoLugar = false);
+
+    result.fold(
+      (failure) => _mostrarError(
+        'No se pudo obtener la ubicación de este lugar. Intenta de nuevo.',
+      ),
+      (ubicacion) {
+        if (!ubicacion.tieneCoordenadasValidas) {
+          _mostrarError('Este lugar todavía no tiene coordenadas registradas.');
+          return;
+        }
+        _abrirMapaRuta(ubicacion.latitude, ubicacion.longitude);
+      },
+    );
+  }
+
+  void _abrirMapaRuta(double lat, double lng) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => MapaRutaPage(
-          nombre:  widget.nombre,
-          destLat: widget.lat!,
-          destLng: widget.lng!,
-        ),
+        builder: (_) =>
+            MapaRutaPage(nombre: widget.nombre, destLat: lat, destLng: lng),
       ),
     );
+  }
+
+  void _mostrarError(String mensaje) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(mensaje)));
   }
 
   @override
@@ -103,8 +207,10 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
             pinned: true,
             backgroundColor: AppColors.surface(context),
             leading: IconButton(
-              icon: Icon(Icons.arrow_back,
-                  color: AppColors.textPrimary(context)),
+              icon: Icon(
+                Icons.arrow_back,
+                color: AppColors.textPrimary(context),
+              ),
               onPressed: () => Navigator.pop(context),
             ),
             title: Text(
@@ -119,11 +225,15 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
               Consumer<FavoritosProvider>(
                 builder: (context, favProvider, _) {
                   final esFav = favProvider.esFavorito(
-                    FavoritoTargetType.destination, widget.id);
+                    FavoritoTargetType.destination,
+                    widget.id,
+                  );
                   return IconButton(
                     icon: Icon(
                       esFav ? Icons.favorite : Icons.favorite_border,
-                      color: esFav ? Colors.red : AppColors.textPrimary(context),
+                      color: esFav
+                          ? Colors.red
+                          : AppColors.textPrimary(context),
                     ),
                     onPressed: () => favProvider.toggleFavorito(
                       targetType: FavoritoTargetType.destination,
@@ -135,13 +245,7 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
             ],
             flexibleSpace: widget.imageUrl.isNotEmpty
                 ? FlexibleSpaceBar(
-                    background: Image.network(
-                      widget.imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: AppColors.primaryContainer(context),
-                      ),
-                    ),
+                    background: _ImageCarousel(imageUrls: [widget.imageUrl]),
                   )
                 : null,
           ),
@@ -156,7 +260,9 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.primaryContainer(context),
                           borderRadius: BorderRadius.circular(20),
@@ -171,8 +277,11 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Icon(Icons.star,
-                          size: 16, color: Color(0xFFFFC107)),
+                      const Icon(
+                        Icons.star,
+                        size: 16,
+                        color: Color(0xFFFFC107),
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         widget.calificacion.toStringAsFixed(1),
@@ -181,11 +290,18 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
                       Text(
                         '  (${widget.totalResenas} reseñas)',
                         style: TextStyle(
-                            color: AppColors.textSecondary(context),
-                            fontSize: 13),
+                          color: AppColors.textSecondary(context),
+                          fontSize: 13,
+                        ),
                       ),
                     ],
                   ),
+
+                  // ── Aviso de saturación + alternativas ────────────────────
+                  if (_tieneAlternativasDisponibles) ...[
+                    const SizedBox(height: 16),
+                    _BannerAlternativas(onVerAlternativas: _verAlternativas),
+                  ],
 
                   // ── Descripción ───────────────────────────────────────────
                   if (widget.descripcion != null &&
@@ -226,48 +342,66 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
                           color: AppColors.textPrimary(context),
                         ),
                       ),
-                      TextButton.icon(
-                        onPressed: _irAEscribirResena,
-                        icon: Icon(Icons.rate_review_outlined,
-                            size: 18, color: AppColors.primary(context)),
-                        label: Text(
-                          'Escribir reseña',
-                          style: TextStyle(color: AppColors.primary(context)),
+                      if (_esResenable)
+                        TextButton.icon(
+                          onPressed: _irAEscribirResena,
+                          icon: Icon(
+                            Icons.rate_review_outlined,
+                            size: 18,
+                            color: AppColors.primary(context),
+                          ),
+                          label: Text(
+                            'Escribir reseña',
+                            style: TextStyle(color: AppColors.primary(context)),
+                          ),
                         ),
-                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
 
-                  Consumer<ResenasProvider>(
-                    builder: (context, provider, _) {
-                      if (provider.status == ResenasStatus.loading) {
-                        return const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(24),
-                            child: CircularProgressIndicator(),
+                  if (!_esResenable)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Center(
+                        child: Text(
+                          'Este lugar todavía no admite reseñas.',
+                          style: TextStyle(
+                            color: AppColors.textSecondary(context),
                           ),
-                        );
-                      }
-                      if (provider.resenas.isEmpty) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 24),
-                          child: Center(
-                            child: Text(
-                              'Aún no hay reseñas. ¡Sé el primero!',
-                              style: TextStyle(
-                                  color: AppColors.textSecondary(context)),
+                        ),
+                      ),
+                    )
+                  else
+                    Consumer<ResenasProvider>(
+                      builder: (context, provider, _) {
+                        if (provider.status == ResenasStatus.loading) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(24),
+                              child: CircularProgressIndicator(),
                             ),
-                          ),
+                          );
+                        }
+                        if (provider.resenas.isEmpty) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 24),
+                            child: Center(
+                              child: Text(
+                                'Aún no hay reseñas. ¡Sé el primero!',
+                                style: TextStyle(
+                                  color: AppColors.textSecondary(context),
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+                        return Column(
+                          children: provider.resenas
+                              .map((r) => ResenaCard(resena: r))
+                              .toList(),
                         );
-                      }
-                      return Column(
-                        children: provider.resenas
-                            .map((r) => ResenaCard(resena: r))
-                            .toList(),
-                      );
-                    },
-                  ),
+                      },
+                    ),
                   const SizedBox(height: 80),
                 ],
               ),
@@ -287,75 +421,244 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
             ),
           ],
         ),
-        child: SafeArea(
-          top: false,
-          child: _tieneCoords
-              ? Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: _trazarRuta,
-                        icon: const Icon(Icons.directions_outlined,
-                            color: Colors.white),
-                        label: const Text(
-                          'Trazar ruta',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1565C0),
-                          elevation: 0,
-                          minimumSize: const Size(0, 52),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30)),
-                        ),
-                      ),
+        child: SafeArea(top: false, child: _buildBottomActions(context)),
+      ),
+    );
+  }
+
+  Widget _buildBottomActions(BuildContext context) {
+    final irAlLugarButton = ElevatedButton.icon(
+      onPressed: _ubicandoLugar ? null : _irAlLugar,
+      icon: _ubicandoLugar
+          ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+          : const Icon(Icons.directions_outlined, color: Colors.white),
+      label: Text(
+        _ubicandoLugar ? 'Ubicando...' : 'Ir al lugar',
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF1565C0),
+        elevation: 0,
+        minimumSize: const Size(0, 52),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+      ),
+    );
+
+    final dejarResenaButton = ElevatedButton.icon(
+      onPressed: _irAEscribirResena,
+      icon: const Icon(Icons.rate_review_outlined, color: Colors.white),
+      label: const Text(
+        'Dejar reseña',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primary(context),
+        elevation: 0,
+        minimumSize: const Size(0, 52),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+      ),
+    );
+
+    if (_puedeIrAlLugar && _esResenable) {
+      return Row(
+        children: [
+          Expanded(child: irAlLugarButton),
+          const SizedBox(width: 12),
+          Expanded(child: dejarResenaButton),
+        ],
+      );
+    }
+
+    if (_puedeIrAlLugar && !_esResenable) {
+      return SizedBox(width: double.infinity, child: irAlLugarButton);
+    }
+
+    if (!_puedeIrAlLugar && _esResenable) {
+      return SizedBox(width: double.infinity, child: dejarResenaButton);
+    }
+
+    // Ni ruta ni reseña disponibles: no hay acción útil que ofrecer.
+    return const SizedBox.shrink();
+  }
+}
+
+// ── Carrusel de fotos del header ─────────────────────────────────────────────
+
+/// Header con scroll horizontal de fotos + indicadores de página. Recibe
+/// una lista de URLs reales (nunca inventadas): hoy la API de destinos
+/// solo expone una foto por lugar (`Destino.imageUrl`), así que normalmente
+/// se renderiza con un solo elemento — pero el widget ya está listo para
+/// mostrar varias en cuanto el backend las exponga, sin volver a tocarlo.
+class _ImageCarousel extends StatefulWidget {
+  final List<String> imageUrls;
+
+  const _ImageCarousel({required this.imageUrls});
+
+  @override
+  State<_ImageCarousel> createState() => _ImageCarouselState();
+}
+
+class _ImageCarouselState extends State<_ImageCarousel> {
+  final _pageCtrl = PageController();
+  int _pagina = 0;
+
+  @override
+  void dispose() {
+    _pageCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final imagenes = widget.imageUrls
+        .where((url) => url.trim().isNotEmpty)
+        .toList();
+
+    if (imagenes.isEmpty) {
+      return Container(color: AppColors.primaryContainer(context));
+    }
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        PageView.builder(
+          controller: _pageCtrl,
+          itemCount: imagenes.length,
+          onPageChanged: (index) => setState(() => _pagina = index),
+          itemBuilder: (context, index) {
+            return AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              child: Image.network(
+                imagenes[index],
+                key: ValueKey(imagenes[index]),
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, progress) {
+                  if (progress == null) return child;
+                  return Container(
+                    color: AppColors.primaryContainer(context),
+                    child: const Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: _irAEscribirResena,
-                        icon: const Icon(Icons.rate_review_outlined,
-                            color: Colors.white),
-                        label: const Text(
-                          'Dejar reseña',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary(context),
-                          elevation: 0,
-                          minimumSize: const Size(0, 52),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30)),
-                        ),
-                      ),
-                    ),
-                  ],
-                )
-              : ElevatedButton.icon(
-                  onPressed: _irAEscribirResena,
-                  icon: const Icon(Icons.rate_review_outlined,
-                      color: Colors.white),
-                  label: const Text(
-                    'Dejar reseña',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600),
+                  );
+                },
+                errorBuilder: (_, __, ___) =>
+                    Container(color: AppColors.primaryContainer(context)),
+              ),
+            );
+          },
+        ),
+        if (imagenes.length > 1)
+          Positioned(
+            bottom: 14,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(imagenes.length, (index) {
+                final activo = index == _pagina;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOut,
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: activo ? 18 : 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: activo
+                        ? Colors.white
+                        : Colors.white.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(3),
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary(context),
-                    elevation: 0,
-                    minimumSize: const Size(double.infinity, 52),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30)),
+                );
+              }),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+// ── Banner de destino saturado con acceso a alternativas ────────────────────
+
+class _BannerAlternativas extends StatefulWidget {
+  final VoidCallback onVerAlternativas;
+
+  const _BannerAlternativas({required this.onVerAlternativas});
+
+  @override
+  State<_BannerAlternativas> createState() => _BannerAlternativasState();
+}
+
+class _BannerAlternativasState extends State<_BannerAlternativas> {
+  bool _presionado = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Listener(
+      onPointerDown: (_) => setState(() => _presionado = true),
+      onPointerUp: (_) => setState(() => _presionado = false),
+      onPointerCancel: (_) => setState(() => _presionado = false),
+      child: AnimatedScale(
+        scale: _presionado ? 0.97 : 1,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: widget.onVerAlternativas,
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.orange.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.orange.withValues(alpha: 0.4)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.groups_outlined, color: Colors.orange),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Este lugar está muy concurrido',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary(context),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Ver alternativas menos concurridas cerca',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: AppColors.textSecondary(context),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+                Icon(
+                  Icons.chevron_right,
+                  color: AppColors.textSecondary(context),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -381,13 +684,13 @@ class _RutaSheet extends StatefulWidget {
 
 class _RutaSheetState extends State<_RutaSheet> {
   _RutaInfo? _info;
-  String?    _error;
-  bool       _cargando  = true;
-  bool       _llegaste  = false;
-  bool       _enVivo    = false;
+  String? _error;
+  bool _cargando = true;
+  bool _llegaste = false;
+  bool _enVivo = false;
 
   StreamSubscription<Position>? _posStream;
-  Timer?    _osrmTimer;
+  Timer? _osrmTimer;
   Position? _ultimaPos;
 
   @override
@@ -406,10 +709,12 @@ class _RutaSheetState extends State<_RutaSheet> {
   Future<void> _iniciar() async {
     final pos = await _obtenerPosicion();
     if (pos == null) {
-      if (mounted) setState(() {
-        _error = 'No se pudo obtener tu ubicación. Activa el GPS e intenta de nuevo.';
-        _cargando = false;
-      });
+      if (mounted)
+        setState(() {
+          _error =
+              'No se pudo obtener tu ubicación. Activa el GPS e intenta de nuevo.';
+          _cargando = false;
+        });
       return;
     }
     _ultimaPos = pos;
@@ -429,64 +734,78 @@ class _RutaSheetState extends State<_RutaSheet> {
       final routes = resp.data['routes'] as List?;
       if (routes != null && routes.isNotEmpty) {
         final route = routes[0] as Map;
-        if (mounted) setState(() {
-          _info = _RutaInfo(
-            distanciaKm: (route['distance'] as num).toDouble() / 1000,
-            duracionMin: (route['duration'] as num).toDouble() / 60,
-            origenLat: pos.latitude,
-            origenLng: pos.longitude,
-          );
-          _cargando = false;
-        });
+        if (mounted)
+          setState(() {
+            _info = _RutaInfo(
+              distanciaKm: (route['distance'] as num).toDouble() / 1000,
+              duracionMin: (route['duration'] as num).toDouble() / 60,
+              origenLat: pos.latitude,
+              origenLng: pos.longitude,
+            );
+            _cargando = false;
+          });
         return;
       }
     } catch (_) {}
 
     // Fallback Haversine con factor de carretera 1.4
-    final dist = _haversine(pos.latitude, pos.longitude, widget.destLat, widget.destLng);
-    if (mounted) setState(() {
-      _info = _RutaInfo(
-        distanciaKm: dist,
-        duracionMin: dist * 1.4,
-        origenLat: pos.latitude,
-        origenLng: pos.longitude,
-        esEstimado: true,
-      );
-      _cargando = false;
-    });
-  }
-
-  void _iniciarTracking() {
-    // Actualiza cada vez que el usuario se mueve ≥30 m
-    _posStream = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 30,
-      ),
-    ).listen((pos) {
-      _ultimaPos = pos;
-      final dist = _haversine(pos.latitude, pos.longitude, widget.destLat, widget.destLng);
-
-      if (dist < 0.1) {
-        // Llegó (dentro de 100 m)
-        if (mounted) setState(() => _llegaste = true);
-        _posStream?.cancel();
-        _osrmTimer?.cancel();
-        return;
-      }
-
-      // Actualización rápida con Haversine mientras el usuario se mueve
-      if (mounted) setState(() {
-        _enVivo = true;
+    final dist = _haversine(
+      pos.latitude,
+      pos.longitude,
+      widget.destLat,
+      widget.destLng,
+    );
+    if (mounted)
+      setState(() {
         _info = _RutaInfo(
           distanciaKm: dist,
           duracionMin: dist * 1.4,
           origenLat: pos.latitude,
           origenLng: pos.longitude,
-          esEstimado: _info?.esEstimado ?? true,
+          esEstimado: true,
         );
+        _cargando = false;
       });
-    }, onError: (_) {});
+  }
+
+  void _iniciarTracking() {
+    // Actualiza cada vez que el usuario se mueve ≥30 m
+    _posStream =
+        Geolocator.getPositionStream(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 30,
+          ),
+        ).listen((pos) {
+          _ultimaPos = pos;
+          final dist = _haversine(
+            pos.latitude,
+            pos.longitude,
+            widget.destLat,
+            widget.destLng,
+          );
+
+          if (dist < 0.1) {
+            // Llegó (dentro de 100 m)
+            if (mounted) setState(() => _llegaste = true);
+            _posStream?.cancel();
+            _osrmTimer?.cancel();
+            return;
+          }
+
+          // Actualización rápida con Haversine mientras el usuario se mueve
+          if (mounted)
+            setState(() {
+              _enVivo = true;
+              _info = _RutaInfo(
+                distanciaKm: dist,
+                duracionMin: dist * 1.4,
+                origenLat: pos.latitude,
+                origenLng: pos.longitude,
+                esEstimado: _info?.esEstimado ?? true,
+              );
+            });
+        }, onError: (_) {});
 
     // Cada 2 minutos recalcula con OSRM para obtener distancia real por carretera
     _osrmTimer = Timer.periodic(const Duration(minutes: 2), (_) async {
@@ -503,7 +822,8 @@ class _RutaSheetState extends State<_RutaSheet> {
         permiso = await Geolocator.requestPermission();
       }
       if (permiso == LocationPermission.denied ||
-          permiso == LocationPermission.deniedForever) return null;
+          permiso == LocationPermission.deniedForever)
+        return null;
       return await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
@@ -519,7 +839,8 @@ class _RutaSheetState extends State<_RutaSheet> {
     const r = 6371.0;
     final dLat = _rad(lat2 - lat1);
     final dLon = _rad(lon2 - lon1);
-    final a = sin(dLat / 2) * sin(dLat / 2) +
+    final a =
+        sin(dLat / 2) * sin(dLat / 2) +
         cos(_rad(lat1)) * cos(_rad(lat2)) * sin(dLon / 2) * sin(dLon / 2);
     return r * 2 * atan2(sqrt(a), sqrt(1 - a));
   }
@@ -558,10 +879,11 @@ class _RutaSheetState extends State<_RutaSheet> {
         children: [
           // Handle
           Container(
-            width: 40, height: 4,
+            width: 40,
+            height: 4,
             margin: const EdgeInsets.only(bottom: 20),
             decoration: BoxDecoration(
-              color: Colors.grey[300],
+              color: AppColors.borderSubtle(context),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -569,7 +891,11 @@ class _RutaSheetState extends State<_RutaSheet> {
           // Título + badge EN VIVO
           Row(
             children: [
-              const Icon(Icons.location_on, color: Color(0xFF1565C0), size: 22),
+              Icon(
+                Icons.location_on,
+                color: AppColors.primary(context),
+                size: 22,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -583,7 +909,10 @@ class _RutaSheetState extends State<_RutaSheet> {
               ),
               if (_enVivo && !_llegaste)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.green,
                     borderRadius: BorderRadius.circular(20),
@@ -593,11 +922,14 @@ class _RutaSheetState extends State<_RutaSheet> {
                     children: [
                       Icon(Icons.circle, color: Colors.white, size: 7),
                       SizedBox(width: 4),
-                      Text('EN VIVO',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold)),
+                      Text(
+                        'EN VIVO',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -607,8 +939,11 @@ class _RutaSheetState extends State<_RutaSheet> {
 
           if (_llegaste) ...[
             // ── Pantalla de llegada ───────────────────────────────────────
-            const Icon(Icons.check_circle_outline,
-                color: Colors.green, size: 56),
+            const Icon(
+              Icons.check_circle_outline,
+              color: Colors.green,
+              size: 56,
+            ),
             const SizedBox(height: 10),
             Text(
               '¡Llegaste!',
@@ -626,14 +961,22 @@ class _RutaSheetState extends State<_RutaSheet> {
           ] else if (_cargando) ...[
             const CircularProgressIndicator(),
             const SizedBox(height: 12),
-            Text('Calculando ruta...',
-                style: TextStyle(color: AppColors.textSecondary(context))),
+            Text(
+              'Calculando ruta...',
+              style: TextStyle(color: AppColors.textSecondary(context)),
+            ),
           ] else if (_error != null) ...[
-            Icon(Icons.error_outline, color: Colors.red[400], size: 40),
+            Icon(
+              Icons.error_outline,
+              color: AppColors.error(context),
+              size: 40,
+            ),
             const SizedBox(height: 8),
-            Text(_error!,
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textSecondary(context))),
+            Text(
+              _error!,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textSecondary(context)),
+            ),
           ] else if (_info != null) ...[
             // ── Métricas de ruta ──────────────────────────────────────────
             Row(
@@ -644,7 +987,11 @@ class _RutaSheetState extends State<_RutaSheet> {
                   valor: _formatDuracion(_info!.duracionMin),
                   etiqueta: 'Tiempo restante',
                 ),
-                Container(width: 1, height: 50, color: Colors.grey[200]),
+                Container(
+                  width: 1,
+                  height: 50,
+                  color: AppColors.borderSubtle(context),
+                ),
                 _InfoChip(
                   icon: Icons.straighten_outlined,
                   valor: _info!.distanciaKm >= 1
@@ -663,7 +1010,9 @@ class _RutaSheetState extends State<_RutaSheet> {
                       : '* Estimación en línea recta (sin conexión a servidor de rutas)',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      fontSize: 11, color: AppColors.textSecondary(context)),
+                    fontSize: 11,
+                    color: AppColors.textSecondary(context),
+                  ),
                 ),
               ),
             if (!_enVivo && !_info!.esEstimado)
@@ -672,7 +1021,9 @@ class _RutaSheetState extends State<_RutaSheet> {
                 child: Text(
                   'Se actualizará automáticamente al moverte',
                   style: TextStyle(
-                      fontSize: 11, color: AppColors.textSecondary(context)),
+                    fontSize: 11,
+                    color: AppColors.textSecondary(context),
+                  ),
                 ),
               ),
             const SizedBox(height: 24),
@@ -680,20 +1031,26 @@ class _RutaSheetState extends State<_RutaSheet> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: _abrirEnMaps,
-                icon: const Icon(Icons.open_in_new, color: Colors.white, size: 18),
+                icon: const Icon(
+                  Icons.open_in_new,
+                  color: Colors.white,
+                  size: 18,
+                ),
                 label: const Text(
                   'Abrir en Google Maps',
                   style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600),
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1565C0),
                   elevation: 0,
                   minimumSize: const Size(double.infinity, 52),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30)),
+                    borderRadius: BorderRadius.circular(30),
+                  ),
                 ),
               ),
             ),
@@ -736,7 +1093,7 @@ class _InfoChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Icon(icon, color: const Color(0xFF1565C0), size: 28),
+        Icon(icon, color: AppColors.primary(context), size: 28),
         const SizedBox(height: 6),
         Text(
           valor,
@@ -749,7 +1106,9 @@ class _InfoChip extends StatelessWidget {
         Text(
           etiqueta,
           style: TextStyle(
-              fontSize: 12, color: AppColors.textSecondary(context)),
+            fontSize: 12,
+            color: AppColors.textSecondary(context),
+          ),
         ),
       ],
     );

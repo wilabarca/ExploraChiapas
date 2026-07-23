@@ -6,8 +6,6 @@ class PlanificaBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-
     return LayoutBuilder(
       builder: (context, constraints) {
         final isCompact = constraints.maxWidth < 340;
@@ -72,13 +70,13 @@ class PlanificaBanner extends StatelessWidget {
                   onPressed: () => Navigator.pushNamed(context, '/chat'),
                   icon: Icon(
                     Icons.smart_toy_outlined,
-                    color: isDark ? Colors.black : Colors.white,
+                    color: AppColors.onPrimary(context),
                     size: 18,
                   ),
                   label: Text(
                     'Hablar con el guía',
                     style: TextStyle(
-                      color: isDark ? Colors.black : Colors.white,
+                      color: AppColors.onPrimary(context),
                       fontWeight: FontWeight.w600,
                       fontSize: isCompact ? 13 : 15,
                     ),
@@ -86,7 +84,9 @@ class PlanificaBanner extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary(context),
                     elevation: 0,
-                    padding: EdgeInsets.symmetric(vertical: isCompact ? 12 : 14),
+                    padding: EdgeInsets.symmetric(
+                      vertical: isCompact ? 12 : 14,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),

@@ -6,6 +6,8 @@ import '../../../favoritos/domain/entities/favorito.dart';
 import '../../../favoritos/presentation/providers/favoritos_provider.dart';
 import '../../../resena/domain/entities/DestinoResenaEntity.dart';
 import '../../../resena/presentation/pages/escribir_resena_page.dart';
+import '../../../resena/presentation/providers/ResenasProvider.dart';
+import '../../../resena/presentation/widgets/resena_card.dart';
 import '../../domain/entities/negocio.dart';
 import '../../domain/usecases/obtener_negocio_por_id.dart';
 import '../../../../core/di/injector.dart';
@@ -40,6 +42,10 @@ class _NegocioDetallePageState extends State<NegocioDetallePage> {
       if (favProvider.status == FavoritosStatus.idle) {
         favProvider.cargarFavoritos();
       }
+      context.read<ResenasProvider>().cargarResenas(
+        targetType: 'business',
+        targetId: widget.negocioId,
+      );
     });
   }
 
@@ -65,8 +71,10 @@ class _NegocioDetallePageState extends State<NegocioDetallePage> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.share_outlined,
-                color: AppColors.textPrimary(context)),
+            icon: Icon(
+              Icons.share_outlined,
+              color: AppColors.textPrimary(context),
+            ),
             tooltip: 'Compartir',
             onPressed: () {
               Share.share(
@@ -81,7 +89,9 @@ class _NegocioDetallePageState extends State<NegocioDetallePage> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(
-              child: CircularProgressIndicator(color: AppColors.primary(context)),
+              child: CircularProgressIndicator(
+                color: AppColors.primary(context),
+              ),
             );
           }
 
@@ -114,9 +124,9 @@ class _NegocioDetallePageState extends State<NegocioDetallePage> {
                     esFavorito: esFavorito,
                     onToggleFavorito: () {
                       context.read<FavoritosProvider>().toggleFavorito(
-                            targetType: FavoritoTargetType.business,
-                            targetId: widget.negocioId,
-                          );
+                        targetType: FavoritoTargetType.business,
+                        targetId: widget.negocioId,
+                      );
                     },
                   ),
                   const SizedBox(height: 22),
@@ -138,7 +148,8 @@ class _NegocioDetallePageState extends State<NegocioDetallePage> {
                           imageUrl: negocio.imagenPrincipal,
                           calificacion: negocio.calificacionPromedio,
                           totalResenas: negocio.numeroResenas,
-                          tipo: 'Restaurante',
+                          tipo: negocio.tipoNegocioNombre,
+                          targetType: 'business',
                         );
                         Navigator.push(
                           context,
@@ -166,6 +177,48 @@ class _NegocioDetallePageState extends State<NegocioDetallePage> {
                         ),
                       ),
                     ),
+                  ),
+                  const SizedBox(height: 26),
+                  const Divider(),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Reseñas',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary(context),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Consumer<ResenasProvider>(
+                    builder: (context, provider, _) {
+                      if (provider.status == ResenasStatus.loading) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(24),
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
+                      }
+                      if (provider.resenas.isEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 24),
+                          child: Center(
+                            child: Text(
+                              'Aún no hay reseñas. ¡Sé el primero!',
+                              style: TextStyle(
+                                color: AppColors.textSecondary(context),
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                      return Column(
+                        children: provider.resenas
+                            .map((r) => ResenaCard(resena: r))
+                            .toList(),
+                      );
+                    },
                   ),
                   const SizedBox(height: 40),
                 ],

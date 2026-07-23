@@ -6,14 +6,15 @@ import '../entities/user_interests.dart';
 
 abstract class AuthRepository {
   Future<Either<Failure, Map<String, dynamic>>> register(
-      UsuarioRegistro usuario);
+    UsuarioRegistro usuario,
+  );
 
   Future<Either<Failure, String>> login({
     required String email,
     required String password,
   });
-  
-  Future<Either<Failure, List<UserInterest>>>getInterestCategories();
+
+  Future<Either<Failure, List<UserInterest>>> getInterestCategories();
 
   Future<Either<Failure, String>> loginWithGoogle({required String idToken});
 
@@ -21,12 +22,9 @@ abstract class AuthRepository {
 
   Future<Either<Failure, UserInterests>> getUserInterests();
 
-  Future<Either<Failure, UserInterests>> updateUserInterests({required List<String> categoryIds,});
-
-  Future<Either<Failure, Usuario>> updateProfile({
-    String? name,
-    String? phone,
+  Future<Either<Failure, UserInterests>> updateUserInterests({
+    required List<String> categoryIds,
   });
 
-  Future<Either<Failure, void>> deleteProfile();
+  Future<Either<Failure, Usuario>> updateProfile({String? name, String? phone});
 }

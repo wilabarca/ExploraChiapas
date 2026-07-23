@@ -1,9 +1,13 @@
 /// Representa un lugar que puede recibir reseñas (destino o negocio).
 ///
-/// ⚠️ Agregué `id` y `targetType` respecto a tu versión anterior: son
-/// obligatorios para llamar a GET/POST /v1/api/reviews (que necesita
-/// targetType + targetId). Si tu `resenas_fake_data.dart` no los tiene
-/// todavía, agrégalos ahí (o dime y te reescribo ese archivo también).
+/// `targetType` se recibe explícito desde quien construye la entidad, en
+/// vez de inferirse a partir del nombre de categoría mostrado en pantalla
+/// (heurística anterior: "Restaurante"/"Hotel" = negocio, cualquier otra
+/// cosa = destino). Esa heurística fallaba con categorías reales que no
+/// están en esa lista corta (p. ej. un negocio categorizado como
+/// "Gastronomía"), y no tenía forma de representar un lugar que no
+/// corresponde a ninguna fila real del backend (recomendaciones del motor
+/// ML o del chat), que no puede recibir reseñas.
 class DestinoResenaEntity {
   final String id; // targetId real (UUID) para la API de reseñas
   final String nombre;
@@ -12,7 +16,8 @@ class DestinoResenaEntity {
   final bool esPopular;
   final double calificacion;
   final int totalResenas;
-  final String tipo; // 'Naturaleza' | 'Cultura' | 'Restaurante' | 'Hotel' ...
+  final String tipo; // Etiqueta de categoría, solo para mostrar en UI.
+  final String targetType; // 'destination' | 'business' | 'location'
 
   const DestinoResenaEntity({
     required this.id,
@@ -22,13 +27,7 @@ class DestinoResenaEntity {
     required this.calificacion,
     required this.totalResenas,
     required this.tipo,
+    required this.targetType,
     this.esPopular = false,
   });
-
-  /// La API de reseñas distingue destino turístico vs negocio.
-  /// Restaurante/Hotel (y similares) son negocios; el resto son destinos.
-  String get targetType {
-    const tiposNegocio = {'Restaurante', 'Hotel'};
-    return tiposNegocio.contains(tipo) ? 'business' : 'destination';
-  }
 }

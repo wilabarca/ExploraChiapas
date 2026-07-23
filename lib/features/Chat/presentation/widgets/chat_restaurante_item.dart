@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
+import '../../../../core/theme/app_colors.dart';
+
 class ChatRestauranteItem extends StatelessWidget {
   final String nombre;
   final String tipo;
@@ -21,11 +23,13 @@ class ChatRestauranteItem extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface(context),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(
+              alpha: AppColors.isDark(context) ? 0.3 : 0.05,
+            ),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -44,11 +48,12 @@ class ChatRestauranteItem extends StatelessWidget {
                     placeholder: (_, __) => Container(
                       width: 70,
                       height: 70,
-                      color: const Color(0xFFD8F5D8),
+                      color: AppColors.primaryContainer(context),
                     ),
-                    errorWidget: (_, __, ___) => _PlaceholderRestaurante(),
+                    errorWidget: (_, __, ___) =>
+                        _buildPlaceholderRestaurante(context),
                   )
-                : _PlaceholderRestaurante(),
+                : _buildPlaceholderRestaurante(context),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -57,26 +62,26 @@ class ChatRestauranteItem extends StatelessWidget {
               children: [
                 Text(
                   nombre,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1B1B1B),
+                    color: AppColors.textPrimary(context),
                   ),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   tipo,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
-                    color: Color(0xFF888888),
+                    color: AppColors.textSecondary(context),
                   ),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   precio,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
-                    color: Color(0xFF2E7D32),
+                    color: AppColors.primary(context),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -89,14 +94,11 @@ class ChatRestauranteItem extends StatelessWidget {
   }
 }
 
-class _PlaceholderRestaurante extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 70,
-      height: 70,
-      color: const Color(0xFFD8F5D8),
-      child: const Icon(Icons.restaurant, color: Colors.white54),
-    );
-  }
+Widget _buildPlaceholderRestaurante(BuildContext context) {
+  return Container(
+    width: 70,
+    height: 70,
+    color: AppColors.primaryContainer(context),
+    child: Icon(Icons.restaurant, color: AppColors.primary(context)),
+  );
 }

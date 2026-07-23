@@ -13,8 +13,9 @@ const int _maxCaracteresComentario = 500;
 
 // Igual que en Recomendar Lugar: bloquea símbolos de código/inyección
 // mientras se permite puntuación normal de español.
-final RegExp _caracteresNoPermitidosComentario =
-    RegExp(r"[^a-zA-Z0-9À-ÿñÑ\s.,'\-()°/¿?¡!:\n]");
+final RegExp _caracteresNoPermitidosComentario = RegExp(
+  r"[^a-zA-Z0-9À-ÿñÑ\s.,'\-()°/¿?¡!:\n]",
+);
 
 class EscribirResenaPage extends StatefulWidget {
   final DestinoResenaEntity destino;
@@ -62,9 +63,11 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
 
     if (ProfanityFilter.contiene(comentario)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Tu comentario contiene lenguaje inapropiado, revísalo.'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text(
+            'Tu comentario contiene lenguaje inapropiado, revísalo.',
+          ),
+          backgroundColor: AppColors.error(context),
         ),
       );
       return;
@@ -95,7 +98,7 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
           content: Text(
             provider.publicarError ?? 'No fue posible publicar la reseña',
           ),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.error(context),
         ),
       );
       provider.resetPublicarStatus();
@@ -131,7 +134,7 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
                       imageUrl: widget.destino.imageUrl,
                       fit: BoxFit.cover,
                       placeholder: (_, __) =>
-                          Container(color: const Color(0xFFD8F5D8)),
+                          Container(color: AppColors.primaryContainer(context)),
                     ),
                     Container(
                       decoration: BoxDecoration(
@@ -223,7 +226,10 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
             Text(
               'Califica tu experiencia para ayudar a otros eco-viajeros.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary(context)),
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary(context),
+              ),
             ),
 
             SizedBox(height: size.height * 0.03),
@@ -275,7 +281,10 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
                     _caracteresNoPermitidosComentario,
                   ),
                 ],
-                style: TextStyle(fontSize: 14, color: AppColors.textPrimary(context)),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textPrimary(context),
+                ),
                 decoration: InputDecoration(
                   hintText:
                       'Comparte tu experiencia...\n¿Cómo estuvo el agua? ¿Viste fauna local?',
@@ -292,8 +301,8 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF4CAF50),
+                    borderSide: BorderSide(
+                      color: AppColors.primary(context),
                       width: 1.5,
                     ),
                   ),
@@ -312,26 +321,28 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
                 child: ElevatedButton.icon(
                   onPressed: publicando ? null : _publicarResena,
                   icon: publicando
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
-                            color: Colors.white,
+                            color: AppColors.onPrimary(context),
                             strokeWidth: 2.5,
                           ),
                         )
-                      : const Icon(Icons.send_rounded, color: Colors.white),
+                      : Icon(
+                          Icons.send_rounded,
+                          color: AppColors.onPrimary(context),
+                        ),
                   label: Text(
                     publicando ? 'Publicando...' : 'Publicar Reseña',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: AppColors.onPrimary(context),
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary(context),
-                    disabledBackgroundColor: const Color(0xFFB0BEC5),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),

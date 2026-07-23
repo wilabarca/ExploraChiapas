@@ -4,6 +4,7 @@ import 'package:injectable/injectable.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
 import '../../domain/entities/evento.dart';
+import '../../domain/entities/ubicacion_evento.dart';
 import '../../domain/repositories/eventos_repository.dart';
 import '../datasource/eventos_remote_datasource.dart';
 
@@ -14,46 +15,35 @@ class EventosRepositoryImpl implements EventosRepository {
   const EventosRepositoryImpl(this._remoteDataSource);
 
   @override
-  Future<Either<Failure, List<Evento>>> getEventos({
-    bool? proximas,
-  }) {
+  Future<Either<Failure, List<Evento>>> getEventos({bool? proximas}) {
     return _execute<List<Evento>>(
-      () => _remoteDataSource.getEventos(
-        proximas: proximas,
-      ),
+      () => _remoteDataSource.getEventos(proximas: proximas),
     );
   }
 
   @override
-  Future<Either<Failure, Evento>> getEventoById({
+  Future<Either<Failure, Evento>> getEventoById({required String id}) {
+    return _execute<Evento>(() => _remoteDataSource.getEventoById(id: id));
+  }
+
+  @override
+  Future<Either<Failure, UbicacionEvento>> getUbicacionById({
     required String id,
   }) {
-    return _execute<Evento>(
-      () => _remoteDataSource.getEventoById(
-        id: id,
-      ),
+    return _execute<UbicacionEvento>(
+      () => _remoteDataSource.getUbicacionById(id: id),
     );
   }
 
-  Future<Either<Failure, T>> _execute<T>(
-    Future<T> Function() operation,
-  ) async {
+  Future<Either<Failure, T>> _execute<T>(Future<T> Function() operation) async {
     try {
       final result = await operation();
 
       return Right<Failure, T>(result);
     } on UnauthorizedException catch (exception) {
-      return Left<Failure, T>(
-        UnauthorizedFailure(
-          message: exception.message,
-        ),
-      );
+      return Left<Failure, T>(UnauthorizedFailure(message: exception.message));
     } on NetworkException catch (exception) {
-      return Left<Failure, T>(
-        NetworkFailure(
-          message: exception.message,
-        ),
-      );
+      return Left<Failure, T>(NetworkFailure(message: exception.message));
     } on ServerException catch (exception) {
       return Left<Failure, T>(
         ServerFailure(
@@ -71,9 +61,7 @@ class EventosRepositoryImpl implements EventosRepository {
       );
     } catch (exception) {
       return Left<Failure, T>(
-        ServerFailure(
-          message: 'Ocurrió un error inesperado: $exception',
-        ),
+        ServerFailure(message: 'Ocurrió un error inesperado: $exception'),
       );
     }
   }

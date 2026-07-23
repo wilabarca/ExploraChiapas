@@ -76,13 +76,15 @@ class _ChatRoutesPageState extends State<ChatRoutesPage> {
   // Devuelve widgets listos para insertarse en el ListView.
   List<Widget> _parsearConCards(String texto, String hora) {
     final widgets = <Widget>[];
-    final regex   = RegExp(r'```card\s*([\s\S]*?)```');
-    int lastEnd   = 0;
+    final regex = RegExp(r'```card\s*([\s\S]*?)```');
+    int lastEnd = 0;
 
     for (final match in regex.allMatches(texto)) {
       final antes = texto.substring(lastEnd, match.start).trim();
       if (antes.isNotEmpty) {
-        widgets.add(ChatBubble(mensaje: antes, hora: hora, tipo: BubbleType.bot));
+        widgets.add(
+          ChatBubble(mensaje: antes, hora: hora, tipo: BubbleType.bot),
+        );
       }
 
       try {
@@ -90,7 +92,13 @@ class _ChatRoutesPageState extends State<ChatRoutesPage> {
         widgets.add(ChatPlaceCard(data: data));
       } catch (_) {
         // JSON inválido: mostrar como texto normal
-        widgets.add(ChatBubble(mensaje: match.group(0)!, hora: hora, tipo: BubbleType.bot));
+        widgets.add(
+          ChatBubble(
+            mensaje: match.group(0)!,
+            hora: hora,
+            tipo: BubbleType.bot,
+          ),
+        );
       }
 
       lastEnd = match.end;
@@ -98,7 +106,9 @@ class _ChatRoutesPageState extends State<ChatRoutesPage> {
 
     final despues = texto.substring(lastEnd).trim();
     if (despues.isNotEmpty) {
-      widgets.add(ChatBubble(mensaje: despues, hora: hora, tipo: BubbleType.bot));
+      widgets.add(
+        ChatBubble(mensaje: despues, hora: hora, tipo: BubbleType.bot),
+      );
     }
 
     if (widgets.isEmpty) {
@@ -113,11 +123,13 @@ class _ChatRoutesPageState extends State<ChatRoutesPage> {
 
     for (final mensaje in provider.mensajes) {
       if (mensaje.tipo == BubbleType.user) {
-        items.add(ChatBubble(
-          mensaje: mensaje.contenido,
-          hora:    mensaje.hora,
-          tipo:    BubbleType.user,
-        ));
+        items.add(
+          ChatBubble(
+            mensaje: mensaje.contenido,
+            hora: mensaje.hora,
+            tipo: BubbleType.user,
+          ),
+        );
         continue;
       }
 
@@ -131,17 +143,22 @@ class _ChatRoutesPageState extends State<ChatRoutesPage> {
       if (!tieneCards) {
         for (final actividad in mensaje.itinerario) {
           if (actividad.esDestino) {
-            items.add(ChatDestinoCard(
-              nombre:   actividad.nombre,
-              duracion: '${actividad.tiempoHoras.toStringAsFixed(0)} h',
-              precio:   '\$${actividad.costoTotalGrupo.toStringAsFixed(0)} MXN',
-            ));
+            items.add(
+              ChatDestinoCard(
+                nombre: actividad.nombre,
+                duracion: '${actividad.tiempoHoras.toStringAsFixed(0)} h',
+                precio: '\$${actividad.costoTotalGrupo.toStringAsFixed(0)} MXN',
+              ),
+            );
           } else if (actividad.esRestaurante) {
-            items.add(ChatRestauranteItem(
-              nombre: actividad.nombre,
-              tipo:   actividad.tipoComida ?? 'Restaurante',
-              precio: '\$${actividad.costoEstimado.toStringAsFixed(0)} MXN pp',
-            ));
+            items.add(
+              ChatRestauranteItem(
+                nombre: actividad.nombre,
+                tipo: actividad.tipoComida ?? 'Restaurante',
+                precio:
+                    '\$${actividad.costoEstimado.toStringAsFixed(0)} MXN pp',
+              ),
+            );
           }
         }
       }
@@ -209,7 +226,9 @@ class _TypingIndicator extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.06),
+                color: Colors.black.withValues(
+                  alpha: AppColors.isDark(context) ? 0.3 : 0.06,
+                ),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),

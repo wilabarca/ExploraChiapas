@@ -15,6 +15,9 @@ import 'features/auth/presentation/pages/interests_page.dart';
 import 'features/auth/presentation/pages/permitir_acceso_page.dart';
 
 import 'features/auth/presentation/providers/auth_provider.dart';
+import 'features/biometric_auth/presentation/pages/biometric_unavailable_page.dart';
+import 'features/biometric_auth/presentation/pages/fingerprint_gate_page.dart';
+import 'features/biometric_auth/presentation/providers/biometric_auth_provider.dart';
 import 'features/profile/presentation/providers/profile_provider.dart';
 import 'features/Chat/presentation/providers/chat_provider.dart';
 import 'features/destinos/presentation/providers/destinos_provider.dart';
@@ -55,7 +58,7 @@ class ExploraChiapasApp extends StatefulWidget {
 }
 
 class _ExploraChiapasAppState extends State<ExploraChiapasApp> {
-  final _prefsProvider  = PreferencesProvider();
+  final _prefsProvider = PreferencesProvider();
   final _localeProvider = LocaleProvider();
 
   @override
@@ -71,6 +74,9 @@ class _ExploraChiapasAppState extends State<ExploraChiapasApp> {
       providers: [
         ChangeNotifierProvider<AuthProvider>(
           create: (_) => getIt<AuthProvider>(),
+        ),
+        ChangeNotifierProvider<BiometricAuthProvider>(
+          create: (_) => getIt<BiometricAuthProvider>(),
         ),
         ChangeNotifierProvider<ProfileProvider>(
           create: (_) => getIt<ProfileProvider>(),
@@ -99,14 +105,13 @@ class _ExploraChiapasAppState extends State<ExploraChiapasApp> {
         ChangeNotifierProvider<PreferencesProvider>.value(
           value: _prefsProvider,
         ),
-        ChangeNotifierProvider<LocaleProvider>.value(
-          value: _localeProvider,
-        ),
+        ChangeNotifierProvider<LocaleProvider>.value(value: _localeProvider),
       ],
       child: Consumer2<PreferencesProvider, LocaleProvider>(
         builder: (context, prefs, locale, _) {
           return MaterialApp(
             navigatorKey: AppNavigator.key,
+            navigatorObservers: [AppNavigator.routeObserver],
             title: 'ExploraChiapas',
             debugShowCheckedModeBanner: false,
             locale: locale.locale,
@@ -154,6 +159,18 @@ class _ExploraChiapasAppState extends State<ExploraChiapasApp> {
                     settings: settings,
                   );
 
+                case '/huella':
+                  return MaterialPageRoute(
+                    builder: (_) => const FingerprintGatePage(),
+                    settings: settings,
+                  );
+
+                case '/biometria-no-disponible':
+                  return MaterialPageRoute(
+                    builder: (_) => const BiometricUnavailablePage(),
+                    settings: settings,
+                  );
+
                 case '/home':
                   return MaterialPageRoute(
                     builder: (_) => const HomePage(),
@@ -162,10 +179,11 @@ class _ExploraChiapasAppState extends State<ExploraChiapasApp> {
 
                 case '/perfil':
                   return MaterialPageRoute(
-                    builder: (ctx) => ChangeNotifierProvider<ProfileProvider>.value(
-                      value: getIt<ProfileProvider>(),
-                      child: const ProfilePage(),
-                    ),
+                    builder: (ctx) =>
+                        ChangeNotifierProvider<ProfileProvider>.value(
+                          value: getIt<ProfileProvider>(),
+                          child: const ProfilePage(),
+                        ),
                     settings: settings,
                   );
 
@@ -238,7 +256,7 @@ class _ExploraChiapasAppState extends State<ExploraChiapasApp> {
                   return MaterialPageRoute(
                     builder: (_) => NegocioListaPage(
                       tipoNegocioId: args['tipoNegocioId'] as String,
-                      tituloTipo:    args['tituloTipo'] as String,
+                      tituloTipo: args['tituloTipo'] as String,
                     ),
                     settings: settings,
                   );

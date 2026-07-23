@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../../core/theme/app_colors.dart';
 import '../providers/promociones_provider.dart';
 
 class PromocionesFiltroBar extends StatelessWidget {
@@ -33,12 +35,14 @@ class PromocionesFiltroBar extends StatelessWidget {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
             decoration: BoxDecoration(
-              color: activo ? const Color(0xFF2E7D32) : Colors.white,
+              color: activo
+                  ? AppColors.primary(context)
+                  : AppColors.surface(context),
               borderRadius: BorderRadius.circular(30),
               border: Border.all(
                 color: activo
-                    ? const Color(0xFF2E7D32)
-                    : const Color(0xFFDDDDDD),
+                    ? AppColors.primary(context)
+                    : AppColors.border(context),
               ),
             ),
             child: Text(
@@ -46,7 +50,9 @@ class PromocionesFiltroBar extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: activo ? Colors.white : const Color(0xFF555555),
+                color: activo
+                    ? AppColors.onPrimary(context)
+                    : AppColors.textSecondary(context),
               ),
             ),
           ),

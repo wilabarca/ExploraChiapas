@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_colors.dart';
+
 class StarRating extends StatelessWidget {
   final double rating;
   final double size;
@@ -27,7 +29,9 @@ class StarRating extends StatelessWidget {
             onTap: () => onRatingChanged?.call((i + 1).toDouble()),
             child: Icon(
               filled ? Icons.star : Icons.star_border,
-              color: filled ? const Color(0xFFFFC107) : const Color(0xFFDDDDDD),
+              color: filled
+                  ? const Color(0xFFFFC107)
+                  : AppColors.borderSubtle(context),
               size: size,
             ),
           );
@@ -41,7 +45,7 @@ class StarRating extends StatelessWidget {
               : Icons.star_border,
           color: (filled || half)
               ? const Color(0xFFFFC107)
-              : const Color(0xFFDDDDDD),
+              : AppColors.borderSubtle(context),
           size: size,
         );
       }),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
+import '../../../../core/theme/app_colors.dart';
+
 class ChatDestinoCard extends StatelessWidget {
   final String nombre;
   final String duracion;
@@ -22,11 +24,13 @@ class ChatDestinoCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface(context),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.07),
+            color: Colors.black.withValues(
+              alpha: AppColors.isDark(context) ? 0.3 : 0.07,
+            ),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -40,7 +44,8 @@ class ChatDestinoCard extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(20)),
+                  top: Radius.circular(20),
+                ),
                 child: imageUrl != null
                     ? CachedNetworkImage(
                         imageUrl: imageUrl!,
@@ -49,11 +54,12 @@ class ChatDestinoCard extends StatelessWidget {
                         fit: BoxFit.cover,
                         placeholder: (_, __) => Container(
                           height: 200,
-                          color: const Color(0xFFD8F5D8),
+                          color: AppColors.primaryContainer(context),
                         ),
-                        errorWidget: (_, __, ___) => _PlaceholderImagen(),
+                        errorWidget: (_, __, ___) =>
+                            _buildPlaceholderImagen(context),
                       )
-                    : _PlaceholderImagen(),
+                    : _buildPlaceholderImagen(context),
               ),
               if (calificacion != null)
                 Positioned(
@@ -61,23 +67,28 @@ class ChatDestinoCard extends StatelessWidget {
                   right: 12,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 6),
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.surface(context),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.star,
-                            color: Color(0xFFFFC107), size: 14),
+                        const Icon(
+                          Icons.star,
+                          color: Color(0xFFFFC107),
+                          size: 14,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           '$calificacion',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1B1B1B),
+                            color: AppColors.textPrimary(context),
                           ),
                         ),
                       ],
@@ -95,10 +106,10 @@ class ChatDestinoCard extends StatelessWidget {
               children: [
                 Text(
                   nombre,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1B1B1B),
+                    color: AppColors.textPrimary(context),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -107,24 +118,27 @@ class ChatDestinoCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.access_time_outlined,
-                            size: 16, color: Color(0xFF888888)),
+                        Icon(
+                          Icons.access_time_outlined,
+                          size: 16,
+                          color: AppColors.textSecondary(context),
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           duracion,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
-                            color: Color(0xFF888888),
+                            color: AppColors.textSecondary(context),
                           ),
                         ),
                       ],
                     ),
                     Text(
                       precio,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1B1B1B),
+                        color: AppColors.textPrimary(context),
                       ),
                     ),
                   ],
@@ -135,17 +149,17 @@ class ChatDestinoCard extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () {},
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2E7D32),
+                      backgroundColor: AppColors.primary(context),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       elevation: 0,
                     ),
-                    child: const Text(
+                    child: Text(
                       'Reservar Entrada',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.onPrimary(context),
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
@@ -161,14 +175,11 @@ class ChatDestinoCard extends StatelessWidget {
   }
 }
 
-class _PlaceholderImagen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 200,
-      width: double.infinity,
-      color: const Color(0xFFD8F5D8),
-      child: const Icon(Icons.landscape, color: Colors.white54, size: 40),
-    );
-  }
+Widget _buildPlaceholderImagen(BuildContext context) {
+  return Container(
+    height: 200,
+    width: double.infinity,
+    color: AppColors.primaryContainer(context),
+    child: Icon(Icons.landscape, color: AppColors.primary(context), size: 40),
+  );
 }

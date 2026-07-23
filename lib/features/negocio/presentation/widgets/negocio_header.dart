@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/negocio.dart';
 
 class NegocioHeader extends StatelessWidget {
@@ -29,7 +30,7 @@ class NegocioHeader extends StatelessWidget {
                   negocio.imagenPrincipal,
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) =>
-                      Container(color: const Color(0xFFD8F5D8)),
+                      Container(color: AppColors.primaryContainer(context)),
                 ),
               ),
             ),
@@ -46,7 +47,7 @@ class NegocioHeader extends StatelessWidget {
                   ),
                   child: Icon(
                     esFavorito ? Icons.favorite : Icons.favorite_border,
-                    color: const Color(0xFF2E7D32),
+                    color: AppColors.primary(context),
                     size: 20,
                   ),
                 ),
@@ -60,15 +61,15 @@ class NegocioHeader extends StatelessWidget {
             Expanded(
               child: Text(
                 negocio.nombre,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1B1B1B),
+                  color: AppColors.textPrimary(context),
                 ),
               ),
             ),
             if (negocio.verificado)
-              const Icon(Icons.verified, color: Color(0xFF2E7D32), size: 20),
+              Icon(Icons.verified, color: AppColors.primary(context), size: 20),
           ],
         ),
         const SizedBox(height: 6),
@@ -88,22 +89,22 @@ class NegocioHeader extends StatelessWidget {
                 ),
                 Text(
                   ' (${negocio.numeroResenas} reseñas)',
-                  style: const TextStyle(color: Color(0xFF888888)),
+                  style: TextStyle(color: AppColors.textHint(context)),
                 ),
               ],
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
               decoration: BoxDecoration(
-                color: const Color(0xFFE8F5E9),
+                color: AppColors.primaryContainer(context),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 negocio.tipoNegocioNombre,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF2E7D32),
+                  color: AppColors.primary(context),
                 ),
               ),
             ),

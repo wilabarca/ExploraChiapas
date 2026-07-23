@@ -73,7 +73,7 @@ class _MapFilterBarState extends State<MapFilterBar> {
                     f['icon'] as IconData,
                     size: 16,
                     color: isActive
-                        ? (AppColors.isDark(context) ? Colors.black : Colors.white)
+                        ? AppColors.onPrimary(context)
                         : AppColors.primary(context),
                   ),
                   const SizedBox(width: 6),
@@ -83,7 +83,7 @@ class _MapFilterBarState extends State<MapFilterBar> {
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: isActive
-                          ? (AppColors.isDark(context) ? Colors.black : Colors.white)
+                          ? AppColors.onPrimary(context)
                           : AppColors.textPrimary(context),
                     ),
                   ),

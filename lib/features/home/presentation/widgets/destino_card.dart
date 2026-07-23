@@ -26,147 +26,156 @@ class DestinoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 200,
-        margin: const EdgeInsets.only(right: 12),
-        decoration: BoxDecoration(
-          color: AppColors.surface(context),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.borderSubtle(context)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.07),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+    return Container(
+      width: 200,
+      margin: const EdgeInsets.only(right: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(
+              alpha: AppColors.isDark(context) ? 0.3 : 0.07,
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(16),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: AppColors.surface(context),
+        borderRadius: BorderRadius.circular(20),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(20),
+                    ),
+                    child: _buildImage(context),
                   ),
-                  child: _buildImage(),
-                ),
-                if (esFavorito || onFavoritoTap != null)
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: GestureDetector(
-                      onTap: onFavoritoTap,
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          esFavorito ? Icons.favorite : Icons.favorite_border,
-                          color: esFavorito ? Colors.red : Colors.grey,
-                          size: 16,
+                  if (esFavorito || onFavoritoTap != null)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: GestureDetector(
+                        onTap: onFavoritoTap,
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            esFavorito ? Icons.favorite : Icons.favorite_border,
+                            color: esFavorito ? Colors.red : Colors.grey,
+                            size: 16,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                if (esSostenible)
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                  if (esSostenible)
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary(context),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.eco,
+                              color: AppColors.onPrimary(context),
+                              size: 12,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Eco',
+                              style: TextStyle(
+                                color: AppColors.onPrimary(context),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2E7D32),
-                        borderRadius: BorderRadius.circular(20),
+                    ),
+                ],
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        nombre,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary(context),
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
+                      const Spacer(),
+                      Row(
                         children: [
-                          Icon(Icons.eco, color: Colors.white, size: 12),
-                          SizedBox(width: 4),
-                          Text(
-                            'Eco',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
+                          Expanded(
+                            child: Text(
+                              categoria,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary(context),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      nombre,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary(context),
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const Spacer(),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            categoria,
+                          const SizedBox(width: 4),
+                          Text(
+                            calificacion.toStringAsFixed(1),
                             style: TextStyle(
                               fontSize: 12,
                               color: AppColors.textSecondary(context),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          calificacion.toStringAsFixed(1),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary(context),
+                          const SizedBox(width: 3),
+                          const Icon(
+                            Icons.star,
+                            size: 12,
+                            color: Color(0xFFFFC107),
                           ),
-                        ),
-                        const SizedBox(width: 3),
-                        const Icon(
-                          Icons.star,
-                          size: 12,
-                          color: Color(0xFFFFC107),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildImage() {
+  Widget _buildImage(BuildContext context) {
     final normalizedImageUrl = imageUrl?.trim();
 
     if (normalizedImageUrl == null || normalizedImageUrl.isEmpty) {
-      return _buildPlaceholder();
+      return _buildPlaceholder(context);
     }
 
     return CachedNetworkImage(
@@ -174,21 +183,21 @@ class DestinoCard extends StatelessWidget {
       height: 130,
       width: double.infinity,
       fit: BoxFit.cover,
-      placeholder: (_, _) => _buildPlaceholder(),
-      errorWidget: (_, _, _) => _buildPlaceholder(),
+      placeholder: (_, _) => _buildPlaceholder(context),
+      errorWidget: (_, _, _) => _buildPlaceholder(context),
     );
   }
 
-  Widget _buildPlaceholder() {
+  Widget _buildPlaceholder(BuildContext context) {
     return Container(
       height: 130,
       width: double.infinity,
-      color: const Color(0xFFD8F5D8),
-      child: const Center(
+      color: AppColors.primaryContainer(context),
+      child: Center(
         child: Icon(
           Icons.landscape_outlined,
           size: 42,
-          color: Color(0xFF81C784),
+          color: AppColors.primary(context),
         ),
       ),
     );

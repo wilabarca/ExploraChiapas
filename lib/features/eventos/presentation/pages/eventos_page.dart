@@ -61,6 +61,7 @@ class _EventosPageState extends State<EventosPage> {
           ? e.imagenUrl!
           : _imagenPorCategoria(e.categoriaNombre),
       activo: e.activo,
+      ubicacionId: e.ubicacionId,
     );
   }
 
@@ -148,7 +149,10 @@ class _EventosPageState extends State<EventosPage> {
               child: TextField(
                 controller: _searchCtrl,
                 onChanged: (v) => setState(() => _busqueda = v),
-                style: TextStyle(fontSize: 15, color: AppColors.textPrimary(context)),
+                style: TextStyle(
+                  fontSize: 15,
+                  color: AppColors.textPrimary(context),
+                ),
                 decoration: InputDecoration(
                   hintText: s('buscar_eventos'),
                   hintStyle: TextStyle(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/negocio_horario.dart';
 
 class NegocioHorarios extends StatelessWidget {
@@ -13,21 +14,21 @@ class NegocioHorarios extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Horarios',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF1B1B1B),
+            color: AppColors.textPrimary(context),
           ),
         ),
         const SizedBox(height: 10),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface(context),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFEEEEEE)),
+            border: Border.all(color: AppColors.borderSubtle(context)),
           ),
           child: Column(
             children: horarios.map((h) {
@@ -38,10 +39,10 @@ class NegocioHorarios extends StatelessWidget {
                     Expanded(
                       child: Text(
                         h.diaSemana,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13.5,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF1B1B1B),
+                          color: AppColors.textPrimary(context),
                         ),
                       ),
                     ),
@@ -52,8 +53,8 @@ class NegocioHorarios extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 13,
                         color: h.cerrado
-                            ? const Color(0xFFC62828)
-                            : const Color(0xFF666666),
+                            ? AppColors.error(context)
+                            : AppColors.textSecondary(context),
                       ),
                     ),
                   ],

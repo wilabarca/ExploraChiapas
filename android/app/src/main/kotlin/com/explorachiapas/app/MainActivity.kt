@@ -1,5 +1,7 @@
 package com.explorachiapas.app
 
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 
-class MainActivity : FlutterActivity()
+// FlutterFragmentActivity (no FlutterActivity): requerido por local_auth para
+// mostrar el diálogo nativo de autenticación biométrica en Android.
+class MainActivity : FlutterFragmentActivity()

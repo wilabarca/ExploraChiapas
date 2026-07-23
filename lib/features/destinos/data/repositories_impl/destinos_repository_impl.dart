@@ -4,6 +4,7 @@ import 'package:injectable/injectable.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
 import '../../domain/entities/destino.dart';
+import '../../domain/entities/ubicacion_destino.dart';
 import '../datasource/destinos_remote_datasource.dart';
 import '../../domain/repositories/destinos_repository.dart';
 
@@ -35,33 +36,28 @@ class DestinoRepositoryImpl implements DestinoRepository {
   }
 
   @override
-  Future<Either<Failure, Destino>> getDestinoById({
+  Future<Either<Failure, Destino>> getDestinoById({required String id}) {
+    return _execute<Destino>(() => _remoteDataSource.getDestinoById(id: id));
+  }
+
+  @override
+  Future<Either<Failure, UbicacionDestino>> getUbicacionById({
     required String id,
   }) {
-    return _execute<Destino>(
-      () => _remoteDataSource.getDestinoById(id: id),
+    return _execute<UbicacionDestino>(
+      () => _remoteDataSource.getUbicacionById(id: id),
     );
   }
 
-  Future<Either<Failure, T>> _execute<T>(
-    Future<T> Function() operation,
-  ) async {
+  Future<Either<Failure, T>> _execute<T>(Future<T> Function() operation) async {
     try {
       final result = await operation();
 
       return Right<Failure, T>(result);
     } on UnauthorizedException catch (exception) {
-      return Left<Failure, T>(
-        UnauthorizedFailure(
-          message: exception.message,
-        ),
-      );
+      return Left<Failure, T>(UnauthorizedFailure(message: exception.message));
     } on NetworkException catch (exception) {
-      return Left<Failure, T>(
-        NetworkFailure(
-          message: exception.message,
-        ),
-      );
+      return Left<Failure, T>(NetworkFailure(message: exception.message));
     } on ServerException catch (exception) {
       return Left<Failure, T>(
         ServerFailure(
@@ -71,9 +67,7 @@ class DestinoRepositoryImpl implements DestinoRepository {
       );
     } catch (exception) {
       return Left<Failure, T>(
-        ServerFailure(
-          message: 'Ocurrió un error inesperado: $exception',
-        ),
+        ServerFailure(message: 'Ocurrió un error inesperado: $exception'),
       );
     }
   }

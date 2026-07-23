@@ -49,10 +49,20 @@ class ProfileRepositoryImpl implements IProfileRepository {
     try {
       await _datasource.deleteProfile();
       return const Right(null);
+    } on UnauthorizedException catch (e) {
+      return Left(UnauthorizedFailure(message: e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(message: e.message));
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+    } catch (_) {
+      // Excepción no anticipada (ni de red, ni de auth, ni del servidor):
+      // se devuelve un mensaje amigable en vez de filtrar detalles internos.
+      return const Left(
+        ServerFailure(
+          message: 'Ocurrió un error inesperado. Inténtalo de nuevo.',
+        ),
+      );
     }
   }
 

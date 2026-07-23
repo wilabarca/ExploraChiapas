@@ -53,13 +53,13 @@ class Favorito extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        userId,
-        targetType,
-        targetId,
-        targetName,
-        targetImageUrl,
-        createdAt,
-        updatedAt,
-      ];
+    id,
+    userId,
+    targetType,
+    targetId,
+    targetName,
+    targetImageUrl,
+    createdAt,
+    updatedAt,
+  ];
 }

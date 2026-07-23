@@ -3,8 +3,7 @@ class AppConstants {
 
   static const String serverBaseUrl = 'https://explora-chiapas.onrender.com';
 
-  static const String baseUrl =
-      'https://explora-chiapas.onrender.com/v1/api';
+  static const String baseUrl = 'https://explora-chiapas.onrender.com/v1/api';
 
   // Endpoints de autenticación y usuarios
   static const String registerEndpoint = '/users/register';
@@ -20,17 +19,40 @@ class AppConstants {
   static const String eventsEndpoint = '/events';
   static const String favoritesEndpoint = '/favorites';
 
-  
+  // Endpoint de ubicaciones sugeridas por el usuario (pantalla "Recomendar
+  // lugar"). POST requiere Authorization: Bearer TOKEN; el backend marca
+  // automáticamente origen="usuario" y estado de revisión="pendiente" —
+  // no hay forma de enviarlas ya aprobadas desde el cliente.
+  static const String locationsEndpoint = '/locations';
+
+  // Proveedor de mapa real usado por la app (OpenStreetMap vía flutter_map
+  // + tiles de tile.openstreetmap.org) — se envía tal cual al backend al
+  // crear una ubicación, nunca un valor inventado.
+  static const String mapProviderOpenStreetMap = 'openstreetmap';
+
+  // Endpoint de propuestas de destino ("Recomendar lugar"). El usuario
+  // propone un nuevo destino turístico; queda "pendiente" hasta que un
+  // admin_plataforma la aprueba o rechaza. Todos requieren
+  // Authorization: Bearer TOKEN.
+  //   POST   {destinationProposalsEndpoint}                -> crear propuesta
+  //   GET    {destinationProposalsEndpoint}/mine            -> mis propuestas
+  //   POST   {destinationProposalsEndpoint}/{id}/images     -> subir fotos
+  //   DELETE {destinationProposalsEndpoint}/{id}/images/{imageId}
+  static const String destinationProposalsEndpoint = '/destination-proposals';
+
+  // Nombre exacto del campo multipart para las fotos de una propuesta de
+  // destino (plural — distinto del campo 'imagen' singular que usa la
+  // foto de perfil). Se puede repetir hasta 5 veces en la misma petición.
+  static const String destinationProposalImagesField = 'imagenes';
+  static const int destinationProposalMaxImages = 5;
+  static const int destinationProposalMinImages = 1;
+
   // Uso: GET {baseUrl}{promotionsEndpoint}?negocioId=UUID_NEGOCIO
   static const String promotionsEndpoint = '/promotions';
 
-// Endpoint de subida de foto de perfil (multipart/form-data, campo 'file')
-// Requiere Authorization: Bearer TOKEN
-static const String uploadPerfilFotoEndpoint = '/uploads/usuarios/perfil';
-
-  // Endpoints de "Recomendar lugar"
-  static const String locationsEndpoint = '/locations';
-  static const String destinationProposalsEndpoint = '/destination-proposals';
+  // Endpoint de subida de foto de perfil (multipart/form-data, campo 'file')
+  // Requiere Authorization: Bearer TOKEN
+  static const String uploadPerfilFotoEndpoint = '/uploads/usuarios/perfil';
 
   // Endpoint de reseñas
   // Uso: GET {baseUrl}{reviewsEndpoint}?targetType=business&targetId=UUID
@@ -52,15 +74,15 @@ static const String uploadPerfilFotoEndpoint = '/uploads/usuarios/perfil';
   static const String preferencesEndpoint = '/users/preferences';
 
   // Cloudinary — solo Cloud Name y Upload Preset (sin API Secret en la app)
-  static const String cloudinaryCloudName    = 'otx0evtj';
+  static const String cloudinaryCloudName = 'otx0evtj';
   static const String cloudinaryUploadPreset = 'explorachiapas_unsigned';
-  static const String cloudinaryBaseUrl      =
+  static const String cloudinaryBaseUrl =
       'https://api.cloudinary.com/v1_1/otx0evtj/image/upload';
 
   // Carpetas en Cloudinary
-  static const String cloudFolderAvatares  = 'explorachiapas/avatares';
-  static const String cloudFolderNegocios  = 'explorachiapas/negocios';
-  static const String cloudFolderDestinos  = 'explorachiapas/destinos';
+  static const String cloudFolderAvatares = 'explorachiapas/avatares';
+  static const String cloudFolderNegocios = 'explorachiapas/negocios';
+  static const String cloudFolderDestinos = 'explorachiapas/destinos';
 
   // SharedPreferences keys
   static const String jwtTokenKey = 'jwt_token';
@@ -69,15 +91,15 @@ static const String uploadPerfilFotoEndpoint = '/uploads/usuarios/perfil';
   static const String interesesKey = 'intereses';
   static const String ubicacionKey = 'ubicacion_concedida';
   static const String fotoPerfil = 'foto_perfil';
-  static const String userNameKey   = 'user_name';
-  static const String userEmailKey  = 'user_email';
+  static const String userNameKey = 'user_name';
+  static const String userEmailKey = 'user_email';
 
   // Preference keys (persistidas localmente)
-  static const String prefIdioma   = 'pref_idioma';
+  static const String prefIdioma = 'pref_idioma';
   static const String prefUnidades = 'pref_unidades';
-  static const String prefTema     = 'pref_tema';
-  static const String prefMoneda   = 'pref_moneda';
-  static const String prefLocale   = 'pref_locale';
+  static const String prefTema = 'pref_tema';
+  static const String prefMoneda = 'pref_moneda';
+  static const String prefLocale = 'pref_locale';
 
   // Tipos de usuario
   static const String tipoTuristaNacional = 'turista_nacional';

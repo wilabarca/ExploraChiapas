@@ -53,10 +53,13 @@ class _DetalleResenaPageState extends State<DetalleResenaPage> {
           if (publicado == true && mounted) _cargar();
         },
         backgroundColor: AppColors.primary(context),
-        icon: const Icon(Icons.edit, color: Colors.white),
-        label: const Text(
+        icon: Icon(Icons.edit, color: AppColors.onPrimary(context)),
+        label: Text(
           'Escribir Reseña',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            color: AppColors.onPrimary(context),
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       body: ListView(
@@ -71,9 +74,9 @@ class _DetalleResenaPageState extends State<DetalleResenaPage> {
                   imageUrl: destino.imageUrl,
                   fit: BoxFit.cover,
                   placeholder: (_, __) =>
-                      Container(color: const Color(0xFFD8F5D8)),
+                      Container(color: AppColors.primaryContainer(context)),
                   errorWidget: (_, __, ___) => Container(
-                    color: const Color(0xFFD8F5D8),
+                    color: AppColors.primaryContainer(context),
                     child: const Icon(
                       Icons.image_not_supported,
                       color: Colors.white54,
@@ -167,7 +170,9 @@ class _DetalleResenaPageState extends State<DetalleResenaPage> {
                 return Padding(
                   padding: const EdgeInsets.all(32),
                   child: Center(
-                    child: CircularProgressIndicator(color: AppColors.primary(context)),
+                    child: CircularProgressIndicator(
+                      color: AppColors.primary(context),
+                    ),
                   ),
                 );
               }
@@ -247,10 +252,9 @@ class _DetalleResenaPageState extends State<DetalleResenaPage> {
                                         backgroundColor: const Color(
                                           0xFFEEEEEE,
                                         ),
-                                        valueColor:
-                                            AlwaysStoppedAnimation(
-                                              AppColors.primary(context),
-                                            ),
+                                        valueColor: AlwaysStoppedAnimation(
+                                          AppColors.primary(context),
+                                        ),
                                         minHeight: 8,
                                       ),
                                     ),
@@ -349,7 +353,7 @@ class _ErrorResenas extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFFFCDD2)),
+        border: Border.all(color: AppColors.errorContainer(context)),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -363,7 +367,10 @@ class _ErrorResenas extends StatelessWidget {
           Text(
             message,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: AppColors.textSecondary(context)),
+            style: TextStyle(
+              fontSize: 13,
+              color: AppColors.textSecondary(context),
+            ),
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(

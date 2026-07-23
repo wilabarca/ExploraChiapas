@@ -1,5 +1,6 @@
 import 'package:explorachiapas/features/resena/domain/entities/DestinoResenaEntity.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'star_rating.dart';
 
@@ -32,11 +33,13 @@ class DestinoResenaCard extends StatelessWidget {
           onTap: onTap,
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface(context),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.07),
+                  color: Colors.black.withValues(
+                    alpha: AppColors.isDark(context) ? 0.3 : 0.07,
+                  ),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -58,10 +61,11 @@ class DestinoResenaCard extends StatelessWidget {
                         child: CachedNetworkImage(
                           imageUrl: destino.imageUrl,
                           fit: BoxFit.cover,
-                          placeholder: (_, __) =>
-                              Container(color: const Color(0xFFD8F5D8)),
+                          placeholder: (_, __) => Container(
+                            color: AppColors.primaryContainer(context),
+                          ),
                           errorWidget: (_, __, ___) => Container(
-                            color: const Color(0xFFD8F5D8),
+                            color: AppColors.primaryContainer(context),
                             child: const Icon(
                               Icons.image_not_supported,
                               color: Colors.white54,
@@ -131,10 +135,10 @@ class DestinoResenaCard extends StatelessWidget {
                         // ✓ Flexible evita overflow en nombres largos
                         Text(
                           destino.nombre,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1B1B1B),
+                            color: AppColors.textPrimary(context),
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -144,18 +148,18 @@ class DestinoResenaCard extends StatelessWidget {
 
                         Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.location_on_outlined,
                               size: 11,
-                              color: Color(0xFF888888),
+                              color: AppColors.textHint(context),
                             ),
                             const SizedBox(width: 2),
                             Expanded(
                               child: Text(
                                 destino.ubicacion,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
-                                  color: Color(0xFF888888),
+                                  color: AppColors.textHint(context),
                                 ),
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: 1,
@@ -177,9 +181,9 @@ class DestinoResenaCard extends StatelessWidget {
                               child: Text(
                                 '${destino.calificacion} · '
                                 '${destino.totalResenas} res.',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
-                                  color: Color(0xFF888888),
+                                  color: AppColors.textHint(context),
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),

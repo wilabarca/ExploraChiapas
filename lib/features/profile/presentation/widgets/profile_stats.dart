@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/fade_slide_in.dart';
 
 class ProfileStats extends StatelessWidget {
-  final String rutasCreadas;
   final String favoritos;
   final String resenas;
 
   const ProfileStats({
     super.key,
-    required this.rutasCreadas,
     required this.favoritos,
     required this.resenas,
   });
@@ -17,19 +16,20 @@ class ProfileStats extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final gap = constraints.maxWidth * 0.025;
+        final gap = constraints.maxWidth * 0.04;
         return Row(
           children: [
             Expanded(
-              child: _StatCard(valor: rutasCreadas, label: 'Rutas\ncreadas'),
+              child: FadeSlideIn(
+                child: _StatCard(valor: favoritos, label: 'Favoritos'),
+              ),
             ),
             SizedBox(width: gap),
             Expanded(
-              child: _StatCard(valor: favoritos, label: 'Favoritos'),
-            ),
-            SizedBox(width: gap),
-            Expanded(
-              child: _StatCard(valor: resenas, label: 'Reseñas'),
+              child: FadeSlideIn(
+                delay: const Duration(milliseconds: 60),
+                child: _StatCard(valor: resenas, label: 'Reseñas'),
+              ),
             ),
           ],
         );

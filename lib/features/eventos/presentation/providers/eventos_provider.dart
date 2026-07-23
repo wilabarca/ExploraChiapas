@@ -26,6 +26,24 @@ class EventosProvider extends ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
+  /// Eventos reales (activos) cuya fecha de inicio cae en sábado o
+  /// domingo, ordenados por fecha más próxima primero. No hace ninguna
+  /// petición nueva: filtra sobre lo que ya haya cargado [cargarEventos]
+  /// — pensado para secciones tipo "Actividades de fin de semana" que no
+  /// necesitan (ni deben) depender de un endpoint propio en el backend.
+  List<Evento> get eventosFinDeSemana {
+    final lista = _eventos
+        .where(
+          (e) =>
+              e.activo &&
+              (e.fechaInicio.weekday == DateTime.saturday ||
+                  e.fechaInicio.weekday == DateTime.sunday),
+        )
+        .toList();
+    lista.sort((a, b) => a.fechaInicio.compareTo(b.fechaInicio));
+    return lista;
+  }
+
   Future<bool> cargarEventos({bool? proximas}) async {
     _setLoading();
     final result = await _getEventos(proximas: proximas);
