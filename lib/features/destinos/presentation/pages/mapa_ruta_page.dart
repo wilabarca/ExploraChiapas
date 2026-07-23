@@ -10,6 +10,48 @@ import 'package:latlong2/latlong.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 
+enum _ModoTransporte { carro, moto, caminando, bicicleta }
+
+String _osrmPerfil(_ModoTransporte m) {
+  switch (m) {
+    case _ModoTransporte.carro:
+    case _ModoTransporte.moto:
+      return 'driving';
+    case _ModoTransporte.caminando:
+      return 'foot';
+    case _ModoTransporte.bicicleta:
+      return 'cycling';
+  }
+}
+
+// Minutos por kilómetro para el fallback de línea recta
+double _factorFallback(_ModoTransporte m) {
+  switch (m) {
+    case _ModoTransporte.carro: return 1.4;
+    case _ModoTransporte.moto: return 1.0;
+    case _ModoTransporte.caminando: return 12.0;
+    case _ModoTransporte.bicicleta: return 5.0;
+  }
+}
+
+IconData _iconoModo(_ModoTransporte m) {
+  switch (m) {
+    case _ModoTransporte.carro: return Icons.directions_car_filled;
+    case _ModoTransporte.moto: return Icons.two_wheeler;
+    case _ModoTransporte.caminando: return Icons.directions_walk;
+    case _ModoTransporte.bicicleta: return Icons.pedal_bike;
+  }
+}
+
+String _labelModo(_ModoTransporte m) {
+  switch (m) {
+    case _ModoTransporte.carro: return 'Carro';
+    case _ModoTransporte.moto: return 'Moto';
+    case _ModoTransporte.caminando: return 'A pie';
+    case _ModoTransporte.bicicleta: return 'Bici';
+  }
+}
+
 class MapaRutaPage extends StatefulWidget {
   final String nombre;
   final double destLat;
@@ -28,6 +70,8 @@ class MapaRutaPage extends StatefulWidget {
 
 class _MapaRutaPageState extends State<MapaRutaPage> {
   final _mapCtrl = MapController();
+
+  _ModoTransporte _modo = _ModoTransporte.carro;
 
   Position? _pos;
   List<LatLng> _ruta = [];
@@ -72,10 +116,20 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
     _iniciarTracking();
   }
 
+  void _cambiarModo(_ModoTransporte modo) {
+    if (_modo == modo) return;
+    setState(() {
+      _modo = modo;
+      _cargando = true;
+    });
+    if (_pos != null) _calcularOSRM(_pos!);
+  }
+
   Future<void> _calcularOSRM(Position pos) async {
+    final perfil = _osrmPerfil(_modo);
     try {
       final resp = await Dio().get(
-        'https://router.project-osrm.org/route/v1/driving/'
+        'https://router.project-osrm.org/route/v1/$perfil/'
         '${pos.longitude},${pos.latitude};${widget.destLng},${widget.destLat}',
         queryParameters: {'overview': 'full', 'geometries': 'geojson'},
         options: Options(receiveTimeout: const Duration(seconds: 12)),
@@ -116,7 +170,7 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
           LatLng(widget.destLat, widget.destLng),
         ];
         _distKm = dist;
-        _durMin = dist * 1.4;
+        _durMin = dist * _factorFallback(_modo);
         _cargando = false;
         _esEstimado = true;
       });
@@ -174,7 +228,7 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
             _enVivo = true;
             _enMovimiento = moviendose;
             _distKm = dist;
-            _durMin = dist * 1.4;
+            _durMin = dist * _factorFallback(_modo);
             // Actualizar primer punto de la ruta con posición actual
             if (_ruta.isNotEmpty) {
               _ruta = [LatLng(pos.latitude, pos.longitude), ..._ruta.skip(1)];
@@ -450,36 +504,17 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
   Widget _panelRuta() => Column(
     mainAxisSize: MainAxisSize.min,
     children: [
-      // Modo de ruta — siempre en carro (ruta calculada con OSRM driving).
-      AnimatedOpacity(
-        opacity: 1,
-        duration: const Duration(milliseconds: 300),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: AppColors.primaryContainer(context),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.directions_car_filled,
-                size: 14,
-                color: AppColors.primary(context),
-              ),
-              const SizedBox(width: 5),
-              Text(
-                'Ruta en carro',
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary(context),
-                ),
-              ),
-            ],
-          ),
-        ),
+      // Selector de modo de transporte
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: _ModoTransporte.values.map((m) => _ChipModo(
+          icono: _iconoModo(m),
+          label: _labelModo(m),
+          seleccionado: _modo == m,
+          onTap: () => _cambiarModo(m),
+          color: AppColors.primary(context),
+          colorContainer: AppColors.primaryContainer(context),
+        )).toList(),
       ),
       const SizedBox(height: 12),
       // Métricas
@@ -488,14 +523,14 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
         children: [
           _Metrica(
             icono: Icons.access_time_outlined,
-            valor: _fmtTiempo(_durMin),
-            etiqueta: 'Tiempo restante',
+            valor: _cargando ? '...' : _fmtTiempo(_durMin),
+            etiqueta: 'Tiempo estimado',
           ),
           Container(width: 1, height: 48, color: Colors.grey[200]),
           _Metrica(
             icono: Icons.straighten_outlined,
             valor: _fmtDist(_distKm),
-            etiqueta: 'Distancia restante',
+            etiqueta: 'Distancia',
           ),
         ],
       ),
@@ -659,6 +694,59 @@ class _PulsingRingState extends State<_PulsingRing>
           ),
         );
       },
+    );
+  }
+}
+
+class _ChipModo extends StatelessWidget {
+  final IconData icono;
+  final String label;
+  final bool seleccionado;
+  final VoidCallback onTap;
+  final Color color;
+  final Color colorContainer;
+
+  const _ChipModo({
+    required this.icono,
+    required this.label,
+    required this.seleccionado,
+    required this.onTap,
+    required this.color,
+    required this.colorContainer,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tintColor = seleccionado ? color : Colors.grey[500]!;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: seleccionado ? colorContainer : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: seleccionado ? color : Colors.grey[300]!,
+            width: seleccionado ? 1.5 : 1,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icono, size: 22, color: tintColor),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                color: tintColor,
+                fontWeight: seleccionado ? FontWeight.w700 : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
