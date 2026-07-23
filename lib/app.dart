@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'core/di/injector.dart';
 import 'core/navigation/app_navigator.dart';
+import 'core/services/notifications/onesignal_service.dart';
 import 'core/providers/preferences_provider.dart';
 import 'core/providers/locale_provider.dart';
 import 'core/theme/app_theme.dart';
@@ -66,6 +67,11 @@ class _ExploraChiapasAppState extends State<ExploraChiapasApp> {
     super.initState();
     _prefsProvider.cargar();
     _localeProvider.cargar();
+    // Execute any notification tap navigation that arrived before the
+    // navigator was mounted (cold-start from a push tap).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      OneSignalService.flushPendingNavigation();
+    });
   }
 
   @override
