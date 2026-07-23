@@ -32,8 +32,11 @@ class PreferencesProvider extends ChangeNotifier {
   String get presupuesto => _presupuesto;
   String get tiempoViaje => _tiempoViaje;
 
-  ThemeMode get themeMode =>
-      _tema == 'Oscuro' ? ThemeMode.dark : ThemeMode.light;
+  ThemeMode get themeMode {
+    if (_tema == 'Oscuro') return ThemeMode.dark;
+    if (_tema == 'Sistema') return ThemeMode.system;
+    return ThemeMode.light;
+  }
 
   Future<void> cargar() async {
     final prefs = await SharedPreferences.getInstance();

@@ -31,6 +31,7 @@ class AppStrings {
       'moneda': 'Moneda',
       'claro': 'Claro',
       'oscuro': 'Oscuro',
+      'sistema': 'Sistema',
 
       // Privacidad
       'privacidad': 'Privacidad',
@@ -136,6 +137,7 @@ class AppStrings {
       'moneda': 'Currency',
       'claro': 'Light',
       'oscuro': 'Dark',
+      'sistema': 'System',
 
       // Privacy
       'privacidad': 'Privacy',
