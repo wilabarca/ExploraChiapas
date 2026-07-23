@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -6,6 +7,14 @@ import '../../domain/entities/DestinoResenaEntity.dart';
 import '../providers/ResenasProvider.dart';
 import '../../../home/presentation/widgets/home_app_bar.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/profanity_filter.dart';
+
+const int _maxCaracteresComentario = 500;
+
+// Igual que en Recomendar Lugar: bloquea símbolos de código/inyección
+// mientras se permite puntuación normal de español.
+final RegExp _caracteresNoPermitidosComentario =
+    RegExp(r"[^a-zA-Z0-9À-ÿñÑ\s.,'\-()°/¿?¡!:\n]");
 
 class EscribirResenaPage extends StatefulWidget {
   final DestinoResenaEntity destino;
@@ -37,11 +46,25 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
       return;
     }
 
-    if (_comentarioCtrl.text.trim().isEmpty) {
+    final comentario = _comentarioCtrl.text.trim();
+
+    if (comentario.length < 5) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Por favor escribe un comentario'),
+          content: const Text(
+            'Escribe un comentario un poco más detallado (mínimo 5 caracteres)',
+          ),
           backgroundColor: AppColors.primary(context),
+        ),
+      );
+      return;
+    }
+
+    if (ProfanityFilter.contiene(comentario)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tu comentario contiene lenguaje inapropiado, revísalo.'),
+          backgroundColor: Colors.red,
         ),
       );
       return;
@@ -53,7 +76,7 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
       targetType: widget.destino.targetType,
       targetId: widget.destino.id,
       rating: _calificacion.toInt(),
-      comment: _comentarioCtrl.text.trim(),
+      comment: comentario,
     );
 
     if (!mounted) return;
@@ -246,6 +269,12 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
               child: TextField(
                 controller: _comentarioCtrl,
                 maxLines: null,
+                maxLength: _maxCaracteresComentario,
+                inputFormatters: [
+                  FilteringTextInputFormatter.deny(
+                    _caracteresNoPermitidosComentario,
+                  ),
+                ],
                 style: TextStyle(fontSize: 14, color: AppColors.textPrimary(context)),
                 decoration: InputDecoration(
                   hintText:

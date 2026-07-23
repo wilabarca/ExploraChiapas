@@ -1,21 +1,53 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../domain/entities/resena_entity.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../../core/theme/app_colors.dart';
 import 'star_rating.dart';
 
-/// ⚠️ Este archivo reemplaza tanto a tu `resena_card.dart` como a
-/// `ResenaCard.dart` — tenías los dos en el árbol y eso puede causar
-/// conflictos de clase duplicada. Borra el otro (el de mayúscula) y deja
-/// solo este.
-///
-/// La API solo devuelve `userId`, no nombre ni foto del usuario, así que
-/// mostramos un ícono genérico.
+/// ⚠️ La API solo devuelve `userId`, no nombre ni foto del usuario
+/// (confirmado en el código del backend: los reviews nunca hacen JOIN
+/// contra la tabla `usuario`). Por eso no se puede mostrar un nombre
+/// real todavía — se distingue a cada autor con un color/identificador
+/// consistente en vez de un ícono genérico igual para todos, y se
+/// marca "Tú" cuando la reseña es del usuario actual.
 class ResenaCard extends StatelessWidget {
   final Resena resena;
 
   const ResenaCard({super.key, required this.resena});
 
-  String _formatearFecha(DateTime fecha) {
+  static const _coloresAvatar = [
+    Color(0xFF2E7D32),
+    Color(0xFF1565C0),
+    Color(0xFF6A1B9A),
+    Color(0xFFEF6C00),
+    Color(0xFFC2185B),
+    Color(0xFF00838F),
+  ];
+
+  Color _colorPorUsuario(String userId) {
+    final hash = userId.codeUnits.fold<int>(0, (acc, c) => acc + c);
+    return _coloresAvatar[hash % _coloresAvatar.length];
+  }
+
+  String _iniciales(String userId) {
+    final limpio = userId.replaceAll('-', '');
+    return limpio.isEmpty ? '?' : limpio.substring(0, 2).toUpperCase();
+  }
+
+  String _tiempoRelativo(DateTime fecha) {
+    final diferencia = DateTime.now().difference(fecha);
+
+    if (diferencia.inMinutes < 1) return 'Justo ahora';
+    if (diferencia.inMinutes < 60) return 'Hace ${diferencia.inMinutes} min';
+    if (diferencia.inHours < 24) return 'Hace ${diferencia.inHours} h';
+    if (diferencia.inDays == 1) return 'Ayer';
+    if (diferencia.inDays < 7) return 'Hace ${diferencia.inDays} días';
+    if (diferencia.inDays < 30) {
+      return 'Hace ${(diferencia.inDays / 7).floor()} sem';
+    }
+
     const meses = [
       'ene', 'feb', 'mar', 'abr', 'may', 'jun',
       'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
@@ -25,11 +57,15 @@ class ResenaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final miId = context.watch<AuthProvider>().usuario?.id;
+    final esMia = miId != null && miId == resena.userId;
+    final colorAvatar = _colorPorUsuario(resena.userId);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface(context),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
@@ -44,24 +80,51 @@ class ResenaCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 18,
-                backgroundColor: Color(0xFFD8F5D8),
-                child: Icon(Icons.person, color: Color(0xFF2E7D32), size: 20),
+                backgroundColor: colorAvatar.withValues(alpha: 0.15),
+                child: Text(
+                  _iniciales(resena.userId),
+                  style: TextStyle(
+                    color: colorAvatar,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    StarRating(rating: resena.rating.toDouble(), size: 14),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            esMia ? 'Tú' : 'Viajero ExploraChiapas',
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary(context),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 2),
-                    Text(
-                      _formatearFecha(resena.createdAt),
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF888888),
-                      ),
+                    Row(
+                      children: [
+                        StarRating(rating: resena.rating.toDouble(), size: 13),
+                        const SizedBox(width: 6),
+                        Text(
+                          '· ${_tiempoRelativo(resena.createdAt)}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textHint(context),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -72,9 +135,9 @@ class ResenaCard extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               resena.comment!,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13.5,
-                color: Color(0xFF444444),
+                color: AppColors.textSecondary(context),
                 height: 1.4,
               ),
             ),

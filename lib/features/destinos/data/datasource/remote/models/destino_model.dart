@@ -1,3 +1,4 @@
+import '../../../../../../core/utils/media_url_resolver.dart';
 import '../../../../domain/entities/destino.dart';
 
 class DestinoModel extends Destino {
@@ -27,7 +28,7 @@ class DestinoModel extends Destino {
       averageRating: _parseDouble(json['averageRating']),
       totalReviews: _parseInt(json['totalReviews']),
       isSaturated: _parseBool(json['isSaturated']),
-      imageUrl: json['imageUrl']?.toString(),
+      imageUrl: resolveMediaUrl(json['imageUrl']?.toString()),
     );
   }
 

@@ -8,6 +8,7 @@ class DestinationEntity {
   final double calificacion;
   final int afluencia;      // 1-100, usado para alertas de saturación
   final bool esSostenible;
+  final bool esMock;        // true si viene del fallback local, no del backend
 
   const DestinationEntity({
     required this.id,
@@ -19,5 +20,6 @@ class DestinationEntity {
     required this.calificacion,
     required this.afluencia,
     required this.esSostenible,
+    this.esMock = false,
   });
 }

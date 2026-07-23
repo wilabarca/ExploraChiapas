@@ -1,4 +1,4 @@
-import '../../../../../../core/utils/app_constants.dart';
+import '../../../../../../core/utils/media_url_resolver.dart';
 import '../../../../domain/entities/perfil_entity.dart';
 
 class PerfilModel extends PerfilEntity {
@@ -16,7 +16,7 @@ class PerfilModel extends PerfilEntity {
 
   factory PerfilModel.fromJson(Map<String, dynamic> json) => PerfilModel(
     id: json['id'] as String,
-    ImgUrl: _resolveImgUrl(json['imgUrl'] as String?),
+    ImgUrl: resolveMediaUrl(json['imgUrl'] as String?) ?? '',
     nombre: json['name'] as String,
     email: json['email'] as String,
     telefono: json['phone'] as String?,
@@ -25,10 +25,4 @@ class PerfilModel extends PerfilEntity {
     active: json['active'] as bool? ?? true,
     registeredAt: DateTime.parse(json['registeredAt'] as String),
   );
-
-  static String _resolveImgUrl(String? url) {
-    if (url == null || url.isEmpty) return '';
-    if (url.startsWith('http')) return url;
-    return '${AppConstants.serverBaseUrl}$url';
-  }
 }

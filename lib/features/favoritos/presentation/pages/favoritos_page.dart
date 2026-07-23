@@ -1,11 +1,15 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/favoritos_provider.dart';
 import '../widgets/favorito_card.dart';
+import '../widgets/favorito_destino_card.dart';
 import '../../domain/entities/favorito.dart';
 import '../../../home/presentation/widgets/home_app_bar.dart';
 import '../../../destinos/presentation/providers/destinos_provider.dart';
+import '../../../destinos/presentation/pages/lugar_detail_page.dart';
+import '../../../destinos/domain/entities/destino.dart';
+import '../../../categorias/presentation/providers/categorias_provider.dart';
 import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/providers/locale_provider.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -13,10 +17,10 @@ import '../../../../core/widgets/skeleton_loader.dart';
 
 /// ⚠️ La API de favoritos solo da targetType/targetId/addedAt. Para
 /// destinos, cruzamos contra `DestinoProvider.destinos` (si ya está
-/// cargado) para mostrar nombre/calificación reales. Para negocios no
-/// hay todavía un NegocioProvider conectado a la UI, así que se muestran
-/// con una tarjeta genérica — dime si quieres que construyamos ese
-/// provider para completar esto.
+/// cargado, o lo cargamos aquí mismo) para mostrar nombre/imagen/
+/// calificación/categoría reales. Para negocios no hay todavía un
+/// NegocioProvider conectado a la UI, así que se muestran con una
+/// tarjeta genérica.
 class FavoritosPage extends StatefulWidget {
   const FavoritosPage({super.key});
 
@@ -33,6 +37,12 @@ class _FavoritosPageState extends State<FavoritosPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<FavoritosProvider>().cargarFavoritos();
+      context.read<CategoriasProvider>().cargarSiHaceFalta();
+
+      final destinoProvider = context.read<DestinoProvider>();
+      if (!destinoProvider.hasDestinos) {
+        destinoProvider.loadDestinos();
+      }
     });
   }
 
@@ -47,13 +57,80 @@ class _FavoritosPageState extends State<FavoritosPage> {
     }
   }
 
-  /// Busca el destino real en DestinoProvider por id, si existe.
-  dynamic _buscarDestino(BuildContext context, String targetId) {
+  /// Busca el destino real en DestinoProvider por id, si ya se cargó.
+  Destino? _buscarDestino(BuildContext context, String targetId) {
     final destinos = context.read<DestinoProvider>().destinos;
     try {
       return destinos.firstWhere((d) => d.id == targetId);
     } catch (_) {
       return null;
+    }
+  }
+
+  /// Agrupa los favoritos de tipo destino por el nombre real de su
+  /// categoría (traída del backend, no hardcodeada). Los favoritos cuyo
+  /// destino todavía no se ha resuelto (no está en DestinoProvider) se
+  /// omiten de momento — se completan solos cuando termine de cargar.
+  Map<String, List<MapEntry<Favorito, Destino>>> _agruparPorCategoria(
+    BuildContext context,
+    List<Favorito> favoritosDestinos,
+    CategoriasProvider categoriasProvider,
+  ) {
+    final agrupados = <String, List<MapEntry<Favorito, Destino>>>{};
+    for (final favorito in favoritosDestinos) {
+      final destino = _buscarDestino(context, favorito.targetId);
+      if (destino == null) continue;
+      final categoria = categoriasProvider.nombrePorId(destino.categoryId);
+      agrupados.putIfAbsent(categoria, () => []).add(
+            MapEntry(favorito, destino),
+          );
+    }
+    return agrupados;
+  }
+
+  void _abrirDetalle(
+    BuildContext context, {
+    required Destino destino,
+    required String categoriaNombre,
+  }) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LugarDetailPage(
+          id: destino.id,
+          nombre: destino.name,
+          categoria: categoriaNombre,
+          calificacion: destino.averageRating,
+          imageUrl: destino.imageUrl ?? '',
+          descripcion: destino.description,
+          totalResenas: destino.totalReviews,
+        ),
+      ),
+    );
+  }
+
+  void _irAPlanificarRuta(BuildContext context) {
+    Navigator.pushNamed(context, '/mapa');
+  }
+
+  Future<void> _quitarFavorito(
+    BuildContext context,
+    FavoritosProvider provider,
+    String targetType,
+    String targetId,
+    String Function(String) s,
+  ) async {
+    final ok = await provider.quitarFavorito(
+      targetType: targetType,
+      targetId: targetId,
+    );
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(provider.errorMessage ?? s('error_quitar_favorito')),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -142,8 +219,8 @@ class _FavoritosPageState extends State<FavoritosPage> {
 
           // Expanded: la lista ocupa el resto del alto disponible.
           Expanded(
-            child: Consumer<FavoritosProvider>(
-              builder: (context, provider, child) {
+            child: Consumer2<FavoritosProvider, CategoriasProvider>(
+              builder: (context, provider, categoriasProvider, child) {
                 if (provider.status == FavoritosStatus.loading) {
                   return const SkeletonFavoritosGrid(count: 4);
                 }
@@ -197,8 +274,37 @@ class _FavoritosPageState extends State<FavoritosPage> {
                   );
                 }
 
+                if (_filtroActivo == 'Destinos') {
+                  return _ListaDestinosPorCategoria(
+                    agrupados: _agruparPorCategoria(
+                      context,
+                      items,
+                      categoriasProvider,
+                    ),
+                    procesando: (targetId) =>
+                        provider.estaProcesando(
+                          FavoritoTargetType.destination,
+                          targetId,
+                        ),
+                    onTap: (destino, categoriaNombre) => _abrirDetalle(
+                      context,
+                      destino: destino,
+                      categoriaNombre: categoriaNombre,
+                    ),
+                    onQuitar: (targetId) => _quitarFavorito(
+                      context,
+                      provider,
+                      FavoritoTargetType.destination,
+                      targetId,
+                      s,
+                    ),
+                    onPlanificarRuta: () => _irAPlanificarRuta(context),
+                  );
+                }
+
                 // ✓ GridView.builder: 2 columnas en móvil, 3 en tablet
-                // (LayoutBuilder + MediaQuery combinados).
+                // (LayoutBuilder + MediaQuery combinados). Se mantiene
+                // para "General" y "Negocios".
                 return LayoutBuilder(
                   builder: (context, constraints) {
                     final crossAxisCount = isTablet ? 3 : 2;
@@ -224,31 +330,28 @@ class _FavoritosPageState extends State<FavoritosPage> {
                         return FavoritoCard(
                           targetType: favorito.targetType,
                           targetId: favorito.targetId,
-                          nombre: destinoReal?.name as String?,
-                          calificacion:
-                              (destinoReal?.averageRating as num?)
-                                  ?.toDouble(),
+                          nombre: destinoReal?.name,
+                          imageUrl: destinoReal?.imageUrl,
+                          calificacion: destinoReal?.averageRating,
                           procesando: provider.estaProcesando(
                             favorito.targetType,
                             favorito.targetId,
                           ),
-                          onQuitar: () async {
-                            final ok = await provider.quitarFavorito(
-                              targetType: favorito.targetType,
-                              targetId: favorito.targetId,
-                            );
-                            if (!ok && context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    provider.errorMessage ??
-                                        s('error_quitar_favorito'),
-                                  ),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                            }
-                          },
+                          onTap: destinoReal != null
+                              ? () => _abrirDetalle(
+                                    context,
+                                    destino: destinoReal,
+                                    categoriaNombre: categoriasProvider
+                                        .nombrePorId(destinoReal.categoryId),
+                                  )
+                              : null,
+                          onQuitar: () => _quitarFavorito(
+                            context,
+                            provider,
+                            favorito.targetType,
+                            favorito.targetId,
+                            s,
+                          ),
                         );
                       },
                     );
@@ -259,6 +362,80 @@ class _FavoritosPageState extends State<FavoritosPage> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Lista de destinos favoritos agrupados por categoría real, con
+/// encabezado de sección por cada una (estilo "Mis Favoritos").
+class _ListaDestinosPorCategoria extends StatelessWidget {
+  final Map<String, List<MapEntry<Favorito, Destino>>> agrupados;
+  final bool Function(String targetId) procesando;
+  final void Function(Destino destino, String categoriaNombre) onTap;
+  final void Function(String targetId) onQuitar;
+  final VoidCallback onPlanificarRuta;
+
+  const _ListaDestinosPorCategoria({
+    required this.agrupados,
+    required this.procesando,
+    required this.onTap,
+    required this.onQuitar,
+    required this.onPlanificarRuta,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (agrupados.isEmpty) {
+      // Los favoritos existen en el servidor pero sus destinos aún no
+      // se resolvieron localmente (DestinoProvider sigue cargando).
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    final categorias = agrupados.keys.toList()..sort();
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      itemCount: categorias.length,
+      itemBuilder: (context, index) {
+        final categoria = categorias[index];
+        final favoritosDeCategoria = agrupados[categoria]!;
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10, left: 2),
+                child: Text(
+                  categoria,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary(context),
+                  ),
+                ),
+              ),
+              ...favoritosDeCategoria.map((entry) {
+                final favorito = entry.key;
+                final destino = entry.value;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: FavoritoDestinoCard(
+                    destino: destino,
+                    categoriaNombre: categoria,
+                    guardadoEl: favorito.createdAt,
+                    procesandoFavorito: procesando(favorito.targetId),
+                    onTap: () => onTap(destino, categoria),
+                    onQuitarFavorito: () => onQuitar(favorito.targetId),
+                    onPlanificarRuta: onPlanificarRuta,
+                  ),
+                );
+              }),
+            ],
+          ),
+        );
+      },
     );
   }
 }

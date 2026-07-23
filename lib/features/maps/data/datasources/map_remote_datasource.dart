@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/utils/app_constants.dart';
 import 'remote/models/destination_model.dart';
@@ -142,12 +143,18 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
         return filtered;
       }
       return all;
-    } catch (_) {
+    } catch (e, st) {
+      debugPrint(
+        '[MapRemoteDatasource] getDestinations($tipo) falló, usando mock: $e',
+      );
+      debugPrintStack(stackTrace: st);
       await Future.delayed(const Duration(milliseconds: 300));
       final data = tipo == null
           ? _mockDestinations
           : _mockDestinations.where((d) => d['tipo'] == tipo).toList();
-      return data.map(DestinationModel.fromJson).toList();
+      return data
+          .map((json) => DestinationModel.fromJson(json, esMock: true))
+          .toList();
     }
   }
 
@@ -158,7 +165,9 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
     required double radioKm,
   }) async {
     await Future.delayed(const Duration(milliseconds: 500));
-    return _mockDestinations.map(DestinationModel.fromJson).toList();
+    return _mockDestinations
+        .map((json) => DestinationModel.fromJson(json, esMock: true))
+        .toList();
   }
 
   @override
@@ -168,20 +177,49 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
     required double destLat,
     required double destLng,
   }) async {
-    final dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 10)));
-
-    final response = await dio.get<Map<String, dynamic>>(
-      'https://router.project-osrm.org/route/v1/driving/'
-      '$originLng,$originLat;$destLng,$destLat',
-      queryParameters: {
-        'overview': 'full',
-        'geometries': 'geojson',
-        'alternatives': 'true',
-      },
+    final dio = Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 10),
+      ),
     );
 
-    final routes = response.data!['routes'] as List<dynamic>;
-    if (routes.isEmpty) throw Exception('No se encontró ruta');
+    Response<Map<String, dynamic>> response;
+    try {
+      response = await dio.get<Map<String, dynamic>>(
+        'https://router.project-osrm.org/route/v1/driving/'
+        '$originLng,$originLat;$destLng,$destLat',
+        queryParameters: {
+          'overview': 'full',
+          'geometries': 'geojson',
+          // Pedir un número explícito (en vez de 'true') hace que OSRM
+          // intente más en serio devolver rutas alternas reales; aun así
+          // no está garantizado — depende de que existan caminos
+          // realmente distintos entre origen y destino.
+          'alternatives': '2',
+        },
+      );
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout) {
+        throw Exception(
+          'El servicio de rutas tardó demasiado en responder. Intenta de nuevo.',
+        );
+      }
+      if (e.type == DioExceptionType.connectionError) {
+        throw Exception('Sin conexión a internet. Verifica tu red.');
+      }
+      throw Exception('No se pudo calcular la ruta. Intenta de nuevo.');
+    }
+
+    final body = response.data;
+    final routes = body?['routes'] as List<dynamic>?;
+    if (routes == null || routes.isEmpty) {
+      throw Exception(
+        'No se encontró una ruta hacia ese destino por carretera.',
+      );
+    }
 
     return routes.map((route) {
       final coords =

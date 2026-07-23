@@ -17,6 +17,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "13.0.0"
+  animated_stack_widget:
+    dependency: transitive
+    description:
+      name: animated_stack_widget
+      sha256: ce4788dd158768c9d4388354b6fb72600b78e041a37afc4c279c63ecafcb9408
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.4"
   ansicolor:
     dependency: transitive
     description:
@@ -395,6 +403,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.2"
+  flutter_map_marker_cluster:
+    dependency: "direct main"
+    description:
+      name: flutter_map_marker_cluster
+      sha256: "2c1fb4d7a2105c4bbeb89be215320507f4b71b2036df4341fab9d2aa677d3ae9"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.4.0"
+  flutter_map_marker_popup:
+    dependency: transitive
+    description:
+      name: flutter_map_marker_popup
+      sha256: a7540538114b5d1627ab67b498273d66bc36090385412ae49ef215af4a2861c5
+      url: "https://pub.dev"
+    source: hosted
+    version: "7.0.0"
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:
@@ -817,10 +841,10 @@ packages:
     dependency: transitive
     description:
       name: matcher
-      sha256: "31bd099b47c10cd1aeb55146a2d46ce0277630ecef3f7dae54ad7873f36696cd"
+      sha256: dc0b7dc7651697ea4ff3e69ef44b0407ea32c487a39fff6a4004fa585e901861
       url: "https://pub.dev"
     source: hosted
-    version: "0.12.20"
+    version: "0.12.19"
   material_color_utilities:
     dependency: transitive
     description:
@@ -833,10 +857,10 @@ packages:
     dependency: transitive
     description:
       name: meta
-      sha256: "307249ce4ff29d58a18e97f6345f539382eb9c9c29ecda628900f31de0443dd9"
+      sha256: "1741988757a65eb6b36abe716829688cf01910bbf91c34354ff7ec1c3de2b349"
       url: "https://pub.dev"
     source: hosted
-    version: "1.19.0"
+    version: "1.18.0"
   mgrs_dart:
     dependency: transitive
     description:
@@ -1270,10 +1294,10 @@ packages:
     dependency: transitive
     description:
       name: test_api
-      sha256: "2a122cbe059f8b610d3a5415f42e255b6c17b1f21eee1d960f31080237fb4f11"
+      sha256: "949a932224383300f01be9221c39180316445ecb8e7547f70a41a35bf421fb9e"
       url: "https://pub.dev"
     source: hosted
-    version: "0.7.12"
+    version: "0.7.11"
   typed_data:
     dependency: transitive
     description:
@@ -1366,10 +1390,10 @@ packages:
     dependency: transitive
     description:
       name: vector_math
-      sha256: "1d774bbdf6b72a0b12122fc1560c9c2d2a67db5a4a4cc2bd8a5c990ab20e3188"
+      sha256: d530bd74fea330e6e364cda7a85019c434070188383e1cd8d9777ee586914c5b
       url: "https://pub.dev"
     source: hosted
-    version: "2.4.0"
+    version: "2.2.0"
   vm_service:
     dependency: transitive
     description:

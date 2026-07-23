@@ -7,18 +7,15 @@ import '../../../../core/widgets/skeleton_loader.dart';
 import '../widgets/destino_resena_card.dart';
 import '../../../home/presentation/widgets/home_app_bar.dart';
 import '../../../destinos/presentation/providers/destinos_provider.dart';
+import '../../../destinos/domain/entities/destino.dart';
+import '../../../categorias/presentation/providers/categorias_provider.dart';
 import '../pages/detalle_resena_page.dart';
 
-/// ⚠️ IMPORTANTE: como eliminaste resenas_fake_data.dart, ahora esta
-/// pantalla arma la lista de "lugares reseñables" a partir de
-/// `DestinoProvider.destinos` (ya cargado por HomeTuristaPage).
-///
-/// LIMITACIÓN ACTUAL: tu app todavía no tiene un `NegocioProvider`
-/// registrado en el DI (revisamos injector.config.dart antes y solo
-/// existen los usecases de negocio, no un provider conectado a la UI).
-/// Por eso, por ahora, quité los chips de "Restaurante"/"Hotel" — solo
-/// muestro destinos turísticos. Si quieres esas categorías de vuelta,
-/// dime y construyo el NegocioProvider igual que hicimos con Eventos.
+/// ⚠️ La API de reseñas no da un conteo agregado por destino, y
+/// `GET /destinations` hoy puede devolver una lista vacía si todavía no
+/// hay destinos cargados en producción — por eso el estado "sin
+/// destinos" es real, no un bug: se maneja con su propio diseño en vez
+/// de un mensaje genérico.
 class HomeResenasPage extends StatefulWidget {
   const HomeResenasPage({super.key});
 
@@ -27,6 +24,8 @@ class HomeResenasPage extends StatefulWidget {
 }
 
 class _HomeResenasPageState extends State<HomeResenasPage> {
+  String? _categoriaSeleccionada; // null = "Todas"
+
   @override
   void initState() {
     super.initState();
@@ -35,34 +34,28 @@ class _HomeResenasPageState extends State<HomeResenasPage> {
       if (destinoProvider.listStatus == DestinoStatus.idle) {
         destinoProvider.loadDestinos(limit: 20);
       }
+      context.read<CategoriasProvider>().cargarSiHaceFalta();
     });
   }
 
-  /// Convierte el modelo de DestinoProvider a la entidad que usan las
-  /// tarjetas/páginas de reseñas.
-  ///
-  /// ⚠️ Verifica que tu modelo de destino realmente tenga `.id` — lo
-  /// necesitamos para llamar a la API de reseñas (targetId). Si el campo
-  /// se llama distinto, ajusta aquí.
-  DestinoResenaEntity _mapDestino(dynamic destino) {
+  DestinoResenaEntity _mapDestino(Destino destino, String categoriaNombre) {
     return DestinoResenaEntity(
-      id: destino.id as String,
-      nombre: destino.name as String,
-      // TODO: reemplaza cuando tu modelo de destino tenga ubicación real.
-      ubicacion: 'Chiapas',
-      // TODO: reemplaza cuando tu modelo de destino exponga imageUrl real.
-      imageUrl:
-          'https://images.unsplash.com/photo-1518638150340-f706e86654de?w=800&q=80',
-      calificacion: (destino.averageRating as num).toDouble(),
+      id: destino.id,
+      nombre: destino.name,
+      ubicacion: categoriaNombre,
+      imageUrl: (destino.imageUrl != null && destino.imageUrl!.isNotEmpty)
+          ? destino.imageUrl!
+          : 'https://images.unsplash.com/photo-1518638150340-f706e86654de?w=800&q=80',
+      calificacion: destino.averageRating,
       // La API de reseñas no da un conteo agregado por destino todavía.
-      totalResenas: 0,
-      tipo: 'General',
+      totalResenas: destino.totalReviews,
+      tipo: categoriaNombre,
+      esPopular: destino.averageRating >= 4.7,
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // ✓ MediaQuery.sizeOf evita rebuilds innecesarios.
     final size = MediaQuery.sizeOf(context);
 
     return Scaffold(
@@ -73,7 +66,7 @@ class _HomeResenasPageState extends State<HomeResenasPage> {
         children: [
           Container(
             color: AppColors.surface(context),
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -90,53 +83,69 @@ class _HomeResenasPageState extends State<HomeResenasPage> {
                   'Descubre experiencias reales de otros viajeros',
                   style: TextStyle(fontSize: 13, color: AppColors.textSecondary(context)),
                 ),
+                const SizedBox(height: 14),
+                Consumer<CategoriasProvider>(
+                  builder: (context, categoriasProvider, __) {
+                    final categorias = categoriasProvider.categoriasDeDestinos;
+                    return SizedBox(
+                      height: 36,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          _ChipCategoria(
+                            texto: 'Todas',
+                            activo: _categoriaSeleccionada == null,
+                            onTap: () =>
+                                setState(() => _categoriaSeleccionada = null),
+                          ),
+                          for (final categoria in categorias) ...[
+                            const SizedBox(width: 8),
+                            _ChipCategoria(
+                              texto: categoria.nombre,
+                              activo: _categoriaSeleccionada == categoria.id,
+                              onTap: () => setState(
+                                () => _categoriaSeleccionada = categoria.id,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ],
             ),
           ),
 
           // Expanded: el grid ocupa todo el espacio vertical restante.
           Expanded(
-            child: Consumer<DestinoProvider>(
-              builder: (context, destinoProvider, child) {
+            child: Consumer2<DestinoProvider, CategoriasProvider>(
+              builder: (context, destinoProvider, categoriasProvider, child) {
                 if (destinoProvider.listStatus == DestinoStatus.loading) {
                   return const SkeletonList(count: 4);
                 }
 
                 if (destinoProvider.listStatus == DestinoStatus.error) {
-                  return Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Center(
-                      child: Text(
-                        destinoProvider.listErrorMessage ??
-                            'No fue posible obtener los destinos',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: AppColors.textSecondary(context)),
-                      ),
-                    ),
+                  return _EstadoError(
+                    mensaje: destinoProvider.listErrorMessage ??
+                        'No fue posible obtener los destinos',
+                    onReintentar: () =>
+                        destinoProvider.loadDestinos(limit: 20),
                   );
                 }
 
-                final destinos = destinoProvider.destinos
-                    .map(_mapDestino)
-                    .toList();
+                List<Destino> destinosFiltrados = destinoProvider.destinos;
+                if (_categoriaSeleccionada != null) {
+                  destinosFiltrados = destinosFiltrados
+                      .where((d) => d.categoryId == _categoriaSeleccionada)
+                      .toList();
+                }
 
-                if (destinos.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.search_off,
-                          size: 48,
-                          color: AppColors.textHint(context),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'No hay destinos disponibles',
-                          style: TextStyle(color: AppColors.textSecondary(context)),
-                        ),
-                      ],
-                    ),
+                if (destinosFiltrados.isEmpty) {
+                  return _EstadoVacio(
+                    filtrando: _categoriaSeleccionada != null,
+                    onVerTodas: () =>
+                        setState(() => _categoriaSeleccionada = null),
                   );
                 }
 
@@ -151,9 +160,14 @@ class _HomeResenasPageState extends State<HomeResenasPage> {
                     childAspectRatio:
                         (size.width / 2 - 22) / (size.height * 0.38),
                   ),
-                  itemCount: destinos.length,
+                  itemCount: destinosFiltrados.length,
                   itemBuilder: (context, i) {
-                    final destino = destinos[i];
+                    final destinoOriginal = destinosFiltrados[i];
+                    final categoriaNombre = categoriasProvider.nombrePorId(
+                      destinoOriginal.categoryId,
+                    );
+                    final destino =
+                        _mapDestino(destinoOriginal, categoriaNombre);
                     return DestinoResenaCard(
                       destino: destino,
                       onTap: () => Navigator.push(
@@ -169,6 +183,139 @@ class _HomeResenasPageState extends State<HomeResenasPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ChipCategoria extends StatelessWidget {
+  final String texto;
+  final bool activo;
+  final VoidCallback onTap;
+
+  const _ChipCategoria({
+    required this.texto,
+    required this.activo,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: activo ? AppColors.primary(context) : AppColors.background(context),
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(
+            color: activo ? AppColors.primary(context) : AppColors.border(context),
+          ),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          texto,
+          style: TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+            color: activo ? Colors.white : AppColors.textSecondary(context),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EstadoVacio extends StatelessWidget {
+  final bool filtrando;
+  final VoidCallback onVerTodas;
+
+  const _EstadoVacio({required this.filtrando, required this.onVerTodas});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              filtrando ? Icons.filter_alt_off_outlined : Icons.explore_off_outlined,
+              size: 52,
+              color: AppColors.textHint(context),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              filtrando
+                  ? 'Sin destinos en esta categoría'
+                  : 'Todavía no hay destinos para reseñar',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary(context),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              filtrando
+                  ? 'Prueba con otra categoría o mira todos los destinos disponibles.'
+                  : 'En cuanto haya destinos publicados en ExploraChiapas, aparecerán aquí para que compartas tu experiencia.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: AppColors.textSecondary(context)),
+            ),
+            if (filtrando) ...[
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: onVerTodas,
+                icon: const Icon(Icons.apps, size: 18),
+                label: const Text('Ver todas las categorías'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.primary(context),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EstadoError extends StatelessWidget {
+  final String mensaje;
+  final VoidCallback onReintentar;
+
+  const _EstadoError({required this.mensaje, required this.onReintentar});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.cloud_off_outlined, size: 48, color: AppColors.error(context)),
+            const SizedBox(height: 12),
+            Text(
+              mensaje,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textSecondary(context)),
+            ),
+            const SizedBox(height: 14),
+            OutlinedButton.icon(
+              onPressed: onReintentar,
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('Reintentar'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primary(context),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
