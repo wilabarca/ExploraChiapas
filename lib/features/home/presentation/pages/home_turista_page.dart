@@ -5,8 +5,6 @@ import '../widgets/home_app_bar.dart';
 import '../widgets/planifica_banner.dart';
 import '../widgets/section_header.dart';
 import '../widgets/destino_card.dart';
-import '../widgets/restaurante_item.dart';
-import '../widgets/hotel_card.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import '../../../destinos/domain/entities/destino.dart';
 import '../../../destinos/presentation/pages/lugar_detail_page.dart';
@@ -16,6 +14,9 @@ import '../../../favoritos/domain/entities/favorito.dart';
 import '../../../eventos/domain/entities/evento.dart';
 import '../../../eventos/presentation/providers/eventos_provider.dart';
 import '../../data/home_api_service.dart';
+import '../widgets/negocio_home_card.dart';
+import '../../../negocio/domain/entities/negocio.dart';
+import '../../../negocio/domain/usecases/obtener_negocio.dart';
 import '../../../../core/di/injector.dart';
 import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/network/ml_api_client.dart';
@@ -35,6 +36,10 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
 
   List<PromocionItem> _promociones = [];
   List<Map<String, dynamic>> _destacadosML = [];
+  List<Negocio> _restaurantes = [];
+  List<Negocio> _hoteles = [];
+  bool _cargandoRestaurantes = false;
+  bool _cargandoHoteles = false;
 
   @override
   void initState() {
@@ -42,6 +47,8 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
 
     _cargarPromociones();
     _cargarDestacadosML();
+    _cargarRestaurantes();
+    _cargarHoteles();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -72,6 +79,29 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
     final resultados = await getIt<MlApiClient>().fetchDestacados(limite: 10);
     if (!mounted) return;
     setState(() => _destacadosML = resultados);
+  }
+
+  Future<void> _cargarRestaurantes() async {
+    setState(() => _cargandoRestaurantes = true);
+    final result =
+        await getIt<ObtenerNegocios>()(tipoNegocioId: 'restaurante');
+    if (!mounted) return;
+    result.fold(
+      (_) {},
+      (lista) => setState(() => _restaurantes = lista),
+    );
+    if (mounted) setState(() => _cargandoRestaurantes = false);
+  }
+
+  Future<void> _cargarHoteles() async {
+    setState(() => _cargandoHoteles = true);
+    final result = await getIt<ObtenerNegocios>()(tipoNegocioId: 'hotel');
+    if (!mounted) return;
+    result.fold(
+      (_) {},
+      (lista) => setState(() => _hoteles = lista),
+    );
+    if (mounted) setState(() => _cargandoHoteles = false);
   }
 
   void _onNavTap(BottomNavTab tab) {
@@ -123,40 +153,6 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
   void _irAPromociones() {
     Navigator.pushNamed(context, '/promociones');
   }
-
-  static const _restaurantes = [
-    _RestauranteData(
-      nombre: 'El Fogón de Jovel',
-      calificacion: 4.7,
-      distanciaKm: 2.4,
-      descripcion: 'Especialidad en cocina de autor regional.',
-      imageUrl:
-          'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80',
-    ),
-    _RestauranteData(
-      nombre: 'Café Maya Luxury',
-      calificacion: 4.9,
-      distanciaKm: 0.8,
-      descripcion: 'El mejor café de altura de San Cristóbal.',
-      imageUrl:
-          'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&q=80',
-    ),
-  ];
-
-  static const _hoteles = [
-    _HotelData(
-      nombre: 'Selva Verde Eco-Resort',
-      precioPorNoche: 2400.0,
-      imageUrl:
-          'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=400&q=80',
-    ),
-    _HotelData(
-      nombre: 'Boutique Casa Lum',
-      precioPorNoche: 3100.0,
-      imageUrl:
-          'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&q=80',
-    ),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -461,139 +457,54 @@ class _HomeTuristaPageState extends State<HomeTuristaPage> {
   }
 
   Widget _buildRestaurantes(bool isTablet, String Function(String) s) {
-    if (isTablet) {
-      return GridView.count(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 2.6,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        children: _restaurantes
-            .map(
-              (r) => GestureDetector(
-                onTap: () => _irANegocios('restaurante', s('restaurantes')),
-                child: RestauranteItem(
-                  nombre: r.nombre,
-                  calificacion: r.calificacion,
-                  distanciaKm: r.distanciaKm,
-                  descripcion: r.descripcion,
-                  imageUrl: r.imageUrl,
-                ),
-              ),
-            )
-            .toList(),
+    if (_cargandoRestaurantes) {
+      return const SizedBox(
+        height: 200,
+        child: Center(child: CircularProgressIndicator()),
       );
     }
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        children: _restaurantes
-            .map(
-              (r) => GestureDetector(
-                onTap: () => _irANegocios('restaurante', s('restaurantes')),
-                child: RestauranteItem(
-                  nombre: r.nombre,
-                  calificacion: r.calificacion,
-                  distanciaKm: r.distanciaKm,
-                  descripcion: r.descripcion,
-                  imageUrl: r.imageUrl,
-                ),
-              ),
-            )
-            .toList(),
+    if (_restaurantes.isEmpty) return const SizedBox.shrink();
+
+    return SizedBox(
+      height: 200,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        itemCount: _restaurantes.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (_, i) => NegocioHomeCard(
+          negocio: _restaurantes[i],
+          onTap: () => _irANegocios('restaurante', s('restaurantes')),
+        ),
       ),
     );
   }
 
   Widget _buildHoteles(bool isTablet, bool isLarge, String Function(String) s) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final maxWidth = constraints.maxWidth;
+    if (_cargandoHoteles) {
+      return const SizedBox(
+        height: 200,
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (_hoteles.isEmpty) return const SizedBox.shrink();
 
-        if (isTablet) {
-          return GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: isLarge ? 3 : 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 0.95,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            children: _hoteles
-                .map(
-                  (h) => GestureDetector(
-                    onTap: () => _irANegocios('hotel', s('hoteles')),
-                    child: HotelCard(
-                      nombre: h.nombre,
-                      precioPorNoche: h.precioPorNoche,
-                      imageUrl: h.imageUrl,
-                    ),
-                  ),
-                )
-                .toList(),
-          );
-        }
-
-        return SizedBox(
-          height: 212,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: _hoteles.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 14),
-            itemBuilder: (context, index) {
-              final h = _hoteles[index];
-              return ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: maxWidth),
-                child: FractionallySizedBox(
-                  widthFactor: 0.5,
-                  child: GestureDetector(
-                    onTap: () => _irANegocios('hotel', s('hoteles')),
-                    child: HotelCard(
-                      nombre: h.nombre,
-                      precioPorNoche: h.precioPorNoche,
-                      imageUrl: h.imageUrl,
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        );
-      },
+    return SizedBox(
+      height: 200,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        itemCount: _hoteles.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (_, i) => NegocioHomeCard(
+          negocio: _hoteles[i],
+          onTap: () => _irANegocios('hotel', s('hoteles')),
+        ),
+      ),
     );
   }
 }
 
-class _RestauranteData {
-  final String nombre;
-  final double calificacion;
-  final double distanciaKm;
-  final String descripcion;
-  final String imageUrl;
-
-  const _RestauranteData({
-    required this.nombre,
-    required this.calificacion,
-    required this.distanciaKm,
-    required this.descripcion,
-    required this.imageUrl,
-  });
-}
-
-class _HotelData {
-  final String nombre;
-  final double precioPorNoche;
-  final String imageUrl;
-
-  const _HotelData({
-    required this.nombre,
-    required this.precioPorNoche,
-    required this.imageUrl,
-  });
-}
 
 class _SeccionError extends StatelessWidget {
   final String message;
