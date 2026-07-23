@@ -11,25 +11,17 @@ import '../widgets/eventos_banner.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/promociones_fuego_banner.dart';
 import '../widgets/promociones_activas_section.dart';
-import '../widgets/negocio_home_card.dart';
 import '../../../../core/navigation/app_navigator.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/fade_slide_in.dart';
 import '../../../../core/widgets/skeleton_loader.dart';
 import '../../../../core/di/injector.dart';
 import '../../../../core/network/ml_api_client.dart';
-import '../../../destinos/domain/entities/destino.dart';
-import '../../../destinos/domain/usecases/get_ubicacion_destino_usecase.dart';
 import '../../../destinos/presentation/pages/lugar_detail_page.dart';
-import '../../../destinos/presentation/providers/destinos_provider.dart';
 import '../../../eventos/domain/entities/envento_entity.dart';
 import '../../../eventos/domain/entities/evento.dart';
 import '../../../eventos/presentation/pages/detalle_evento_page.dart';
 import '../../../eventos/presentation/providers/eventos_provider.dart';
-import '../../../favoritos/domain/entities/favorito.dart';
-import '../../../favoritos/presentation/providers/favoritos_provider.dart';
-import '../../../negocio/domain/entities/negocio.dart';
-import '../../../negocio/domain/usecases/obtener_negocio.dart';
 import '../../../promociones/presentation/providers/promociones_provider.dart';
 
 class HomeLocalPage extends StatefulWidget {
@@ -46,10 +38,6 @@ class _HomeLocalPageState extends State<HomeLocalPage>
   bool _isRefreshingHome = false;
 
   List<Map<String, dynamic>> _destacadosML = [];
-  List<Negocio> _restaurantes = [];
-  List<Negocio> _hoteles = [];
-  bool _cargandoRestaurantes = false;
-  bool _cargandoHoteles = false;
   Position? _userPos;
   final Map<String, double> _distancias = {};
 
@@ -59,15 +47,10 @@ class _HomeLocalPageState extends State<HomeLocalPage>
     WidgetsBinding.instance.addObserver(this);
 
     _cargarDestacadosML();
-    _cargarRestaurantes();
-    _cargarHoteles();
     _cargarPosicion();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final dp = context.read<DestinoProvider>();
-      if (dp.listStatus == DestinoStatus.idle) dp.loadDestinos(limit: 10);
-      dp.addListener(_onDestinosCargados);
 
       final ep = context.read<EventosProvider>();
       if (ep.status == EventosStatus.idle) ep.cargarEventos(proximas: true);
@@ -92,7 +75,6 @@ class _HomeLocalPageState extends State<HomeLocalPage>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     AppNavigator.routeObserver.unsubscribe(this);
-    context.read<DestinoProvider>().removeListener(_onDestinosCargados);
     super.dispose();
   }
 
@@ -131,33 +113,8 @@ class _HomeLocalPageState extends State<HomeLocalPage>
       );
       if (!mounted) return;
       _userPos = pos;
-      final dp = context.read<DestinoProvider>();
-      if (dp.destinos.isNotEmpty) _fetchDistanciasAPI(dp.destinos);
       _calcularDistanciasML(_destacadosML);
     } catch (_) {}
-  }
-
-  void _onDestinosCargados() {
-    final dp = context.read<DestinoProvider>();
-    if (_userPos != null && dp.destinos.isNotEmpty) {
-      _fetchDistanciasAPI(dp.destinos);
-    }
-  }
-
-  void _fetchDistanciasAPI(List<Destino> destinos) {
-    for (final d in destinos) {
-      if (_distancias.containsKey(d.id)) continue;
-      _fetchDistanciaUna(d.id, d.locationId);
-    }
-  }
-
-  Future<void> _fetchDistanciaUna(String destinoId, String locationId) async {
-    final result = await getIt<GetUbicacionDestinoUseCase>()(id: locationId);
-    result.fold((_) {}, (ub) {
-      if (!ub.tieneCoordenadasValidas || _userPos == null || !mounted) return;
-      final km = _haversine(_userPos!.latitude, _userPos!.longitude, ub.latitude, ub.longitude);
-      setState(() => _distancias[destinoId] = km);
-    });
   }
 
   void _calcularDistanciasML(List<Map<String, dynamic>> ml) {
@@ -181,23 +138,6 @@ class _HomeLocalPageState extends State<HomeLocalPage>
     return r * 2 * atan2(sqrt(a), sqrt(1 - a));
   }
 
-  Future<void> _cargarRestaurantes() async {
-    setState(() => _cargandoRestaurantes = true);
-    final result =
-        await getIt<ObtenerNegocios>()(tipoNegocioId: 'restaurante');
-    if (!mounted) return;
-    result.fold((_) {}, (l) => setState(() => _restaurantes = l));
-    if (mounted) setState(() => _cargandoRestaurantes = false);
-  }
-
-  Future<void> _cargarHoteles() async {
-    setState(() => _cargandoHoteles = true);
-    final result = await getIt<ObtenerNegocios>()(tipoNegocioId: 'hotel');
-    if (!mounted) return;
-    result.fold((_) {}, (l) => setState(() => _hoteles = l));
-    if (mounted) setState(() => _cargandoHoteles = false);
-  }
-
   void _onNavTap(BottomNavTab tab) {
     switch (tab) {
       case BottomNavTab.mapa:
@@ -217,41 +157,10 @@ class _HomeLocalPageState extends State<HomeLocalPage>
     }
   }
 
-  // ── Navegación a la vista de promociones ─────────────────────────────────
   void _irAPromociones() {
     Navigator.pushNamed(context, '/promociones');
   }
 
-  void _irANegocios(String tipoNegocioId, String titulo) {
-    Navigator.pushNamed(
-      context,
-      '/negocios',
-      arguments: {'tipoNegocioId': tipoNegocioId, 'tituloTipo': titulo},
-    );
-  }
-
-  void _openDestinoDetail(Destino destino) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => LugarDetailPage(
-          id: destino.id,
-          nombre: destino.name,
-          categoria: 'Destino turístico',
-          calificacion: destino.averageRating,
-          imageUrl: destino.imageUrl ?? '',
-          descripcion: destino.description,
-          totalResenas: destino.totalReviews,
-          targetType: 'destination',
-          categoryId: destino.categoryId,
-          locationId: destino.locationId,
-          isSaturated: destino.isSaturated,
-        ),
-      ),
-    );
-  }
-
-  // ── Navegación a eventos: la misma vista con categorías filtrables ──────
   void _irAEventos() {
     Navigator.pushNamed(context, '/eventos');
   }
@@ -284,11 +193,7 @@ class _HomeLocalPageState extends State<HomeLocalPage>
   }
 
   /// Refresca únicamente los datos dinámicos del Home (promociones y
-  /// próximos eventos). Se usa tanto al reanudar la app (`resumed`) como
-  /// al regresar al Home desde otra pantalla y en el pull-to-refresh
-  /// manual. No limpia los datos visibles antes de la respuesta: si la
-  /// petición falla, la sección conserva lo último que se mostró
-  /// correctamente.
+  /// próximos eventos). No limpia los datos visibles antes de la respuesta.
   Future<void> _refreshDynamicHomeData() async {
     if (!mounted || _isRefreshingHome) return;
     _isRefreshingHome = true;
@@ -342,16 +247,9 @@ class _HomeLocalPageState extends State<HomeLocalPage>
 
                 // ── Destinos para ti ───────────────────────────────────────
                 FadeSlideIn(
-                  child: SectionHeader(
+                  child: const SectionHeader(
                     icon: Icons.place_outlined,
                     titulo: 'Destinos para ti',
-                    mostrarVerTodos: true,
-                    onVerTodos: () {
-                      final dp = context.read<DestinoProvider>();
-                      if (dp.hasMore && !dp.isLoadingMore) {
-                        dp.loadMoreDestinos();
-                      }
-                    },
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -359,7 +257,6 @@ class _HomeLocalPageState extends State<HomeLocalPage>
                   child: _SeccionDestinos(
                     destacadosML: _destacadosML,
                     cardHeight: size.height * 0.30,
-                    onDestinoTap: _openDestinoDetail,
                     distancias: _distancias,
                   ),
                 ),
@@ -474,39 +371,13 @@ class _HomeLocalPageState extends State<HomeLocalPage>
 
                 const SizedBox(height: 24),
 
-                // ── Restaurantes destacados ────────────────────────────────
+                // ── Eventos y Actividades ───────────────────────────────────
                 FadeSlideIn(
                   delay: const Duration(milliseconds: 200),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SectionHeader(
-                        icon: Icons.restaurant_outlined,
-                        titulo: 'Restaurantes destacados',
-                        mostrarVerTodos: true,
-                        onVerTodos: () =>
-                            _irANegocios('restaurante', 'Restaurantes'),
-                      ),
-                      const SizedBox(height: 14),
-                      _buildNegocioCarrusel(
-                        loading: _cargandoRestaurantes,
-                        negocios: _restaurantes,
-                        onTap: () =>
-                            _irANegocios('restaurante', 'Restaurantes'),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // ── Eventos y Actividades ───────────────────────────────────
-                FadeSlideIn(
-                  delay: const Duration(milliseconds: 240),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SectionHeader(
+                      const SectionHeader(
                         icon: Icons.calendar_today_outlined,
                         titulo: 'Eventos y Actividades',
                       ),
@@ -523,7 +394,7 @@ class _HomeLocalPageState extends State<HomeLocalPage>
 
                 // ── Crear ruta corta local ──────────────────────────────────
                 FadeSlideIn(
-                  delay: const Duration(milliseconds: 280),
+                  delay: const Duration(milliseconds: 240),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: GestureDetector(
@@ -597,7 +468,7 @@ class _HomeLocalPageState extends State<HomeLocalPage>
                 // domingo), sin endpoint propio: filtra client-side sobre
                 // lo que ya cargó EventosProvider.
                 FadeSlideIn(
-                  delay: const Duration(milliseconds: 320),
+                  delay: const Duration(milliseconds: 280),
                   child: Consumer<EventosProvider>(
                     builder: (context, eventosProvider, _) {
                       final actividades = eventosProvider.eventosFinDeSemana;
@@ -660,30 +531,6 @@ class _HomeLocalPageState extends State<HomeLocalPage>
                 ),
 
                 const SizedBox(height: 24),
-
-                // ── Hoteles recomendados ────────────────────────────────────
-                FadeSlideIn(
-                  delay: const Duration(milliseconds: 360),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SectionHeader(
-                        icon: Icons.hotel_outlined,
-                        titulo: 'Hoteles recomendados',
-                        mostrarVerTodos: true,
-                        onVerTodos: () => _irANegocios('hotel', 'Hoteles'),
-                      ),
-                      const SizedBox(height: 14),
-                      _buildNegocioCarrusel(
-                        loading: _cargandoHoteles,
-                        negocios: _hoteles,
-                        onTap: () => _irANegocios('hotel', 'Hoteles'),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 24),
               ],
             ),
           ),
@@ -696,157 +543,60 @@ class _HomeLocalPageState extends State<HomeLocalPage>
       ),
     );
   }
-
-  Widget _buildNegocioCarrusel({
-    required bool loading,
-    required List<Negocio> negocios,
-    required VoidCallback onTap,
-  }) {
-    if (loading) {
-      return const SizedBox(
-        height: 200,
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-    if (negocios.isEmpty) return const SizedBox.shrink();
-
-    return SizedBox(
-      height: 200,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: negocios.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
-        itemBuilder: (_, i) =>
-            NegocioHomeCard(negocio: negocios[i], onTap: onTap),
-      ),
-    );
-  }
 }
 
-// ── Sección de destinos: DestinoProvider + ML fallback ──────────────────────
+// ── Sección de destinos: solo motor ML ──────────────────────────────────────
 class _SeccionDestinos extends StatelessWidget {
   final List<Map<String, dynamic>> destacadosML;
   final double cardHeight;
-  final void Function(Destino) onDestinoTap;
   final Map<String, double> distancias;
 
   const _SeccionDestinos({
     required this.destacadosML,
     required this.cardHeight,
-    required this.onDestinoTap,
     required this.distancias,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<DestinoProvider>(
-      builder: (context, dp, _) {
-        final favProvider = context.watch<FavoritosProvider>();
+    if (destacadosML.isEmpty) {
+      return SkeletonCardRow(count: 3, cardHeight: cardHeight, cardWidth: 180);
+    }
 
-        if (dp.listStatus == DestinoStatus.loading) {
-          return SkeletonCardRow(
-            count: 3,
-            cardHeight: cardHeight,
-            cardWidth: 180,
-          );
-        }
-
-        // Fuente: API backend
-        if (dp.destinos.isNotEmpty) {
-          return SizedBox(
-            height: cardHeight,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              itemCount: dp.destinos.length + (dp.isLoadingMore ? 1 : 0),
-              separatorBuilder: (_, __) => const SizedBox(width: 12),
-              itemBuilder: (_, i) {
-                if (i == dp.destinos.length) {
-                  return SizedBox(
-                    width: 80,
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primary(context),
-                      ),
-                    ),
-                  );
-                }
-                final d = dp.destinos[i];
-                final esFav = favProvider.esFavorito(
-                  FavoritoTargetType.destination,
-                  d.id,
-                );
-                return DestinoCard(
-                  nombre: d.name,
-                  categoria: 'Destino turístico',
-                  calificacion: d.averageRating,
-                  imageUrl: d.imageUrl,
-                  esFavorito: esFav,
-                  distanciaKm: distancias[d.id],
-                  onTap: () => onDestinoTap(d),
-                  onFavoritoTap: () => favProvider.toggleFavorito(
-                    targetType: FavoritoTargetType.destination,
-                    targetId: d.id,
-                  ),
-                );
-              },
-            ),
-          );
-        }
-
-        // Fallback: motor ML
-        if (destacadosML.isNotEmpty) {
-          return SizedBox(
-            height: cardHeight,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              itemCount: destacadosML.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 12),
-              itemBuilder: (_, i) {
-                final d = destacadosML[i];
-                return DestinoCard(
+    return SizedBox(
+      height: cardHeight,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        itemCount: destacadosML.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (_, i) {
+          final d = destacadosML[i];
+          return DestinoCard(
+            nombre: d['nombre'] as String? ?? '',
+            categoria: d['categoria'] as String? ?? 'destino',
+            calificacion: 0,
+            imageUrl: d['foto_principal'] as String?,
+            esFavorito: false,
+            distanciaKm: distancias[d['id']?.toString()],
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => LugarDetailPage(
+                  id: d['id']?.toString() ?? '',
                   nombre: d['nombre'] as String? ?? '',
                   categoria: d['categoria'] as String? ?? 'destino',
                   calificacion: 0,
-                  imageUrl: d['foto_principal'] as String?,
-                  esFavorito: false,
-                  distanciaKm: distancias[d['id']?.toString()],
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => LugarDetailPage(
-                        id: d['id']?.toString() ?? '',
-                        nombre: d['nombre'] as String? ?? '',
-                        categoria: d['categoria'] as String? ?? 'destino',
-                        calificacion: 0,
-                        imageUrl: d['foto_principal'] as String? ?? '',
-                        lat: (d['lat'] as num?)?.toDouble(),
-                        lng: (d['lng'] as num?)?.toDouble(),
-                        targetType: null,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          );
-        }
-
-        return SizedBox(
-          height: cardHeight,
-          child: Center(
-            child: Text(
-              'No hay destinos disponibles',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary(context),
+                  imageUrl: d['foto_principal'] as String? ?? '',
+                  lat: (d['lat'] as num?)?.toDouble(),
+                  lng: (d['lng'] as num?)?.toDouble(),
+                  targetType: null,
+                ),
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }
@@ -958,8 +708,6 @@ class _ActividadCard extends StatelessWidget {
 }
 
 // ── Envoltura táctil: reduce ligeramente de tamaño al presionar ───────────
-// (mismo patrón usado en ExplorarCercaPage — Listener puro para no
-// interferir con la detección de tap del GestureDetector interno).
 class _ActividadCardPressable extends StatefulWidget {
   final VoidCallback onTap;
   final Widget child;
