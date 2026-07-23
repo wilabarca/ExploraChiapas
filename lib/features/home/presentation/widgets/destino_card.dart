@@ -11,6 +11,7 @@ class DestinoCard extends StatelessWidget {
   final bool esSostenible;
   final VoidCallback? onTap;
   final VoidCallback? onFavoritoTap;
+  final double? distanciaKm;
 
   const DestinoCard({
     super.key,
@@ -22,6 +23,7 @@ class DestinoCard extends StatelessWidget {
     this.esSostenible = false,
     this.onTap,
     this.onFavoritoTap,
+    this.distanciaKm,
   });
 
   @override
@@ -116,7 +118,7 @@ class DestinoCard extends StatelessWidget {
               ),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -127,17 +129,18 @@ class DestinoCard extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                           color: AppColors.textPrimary(context),
                         ),
-                        maxLines: 2,
+                        maxLines: distanciaKm != null ? 1 : 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const Spacer(),
+                      if (distanciaKm == null) const Spacer(),
+                      if (distanciaKm != null) const SizedBox(height: 4),
                       Row(
                         children: [
                           Expanded(
                             child: Text(
                               categoria,
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: 11,
                                 color: AppColors.textSecondary(context),
                               ),
                               maxLines: 1,
@@ -148,18 +151,22 @@ class DestinoCard extends StatelessWidget {
                           Text(
                             calificacion.toStringAsFixed(1),
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 11,
                               color: AppColors.textSecondary(context),
                             ),
                           ),
                           const SizedBox(width: 3),
                           const Icon(
                             Icons.star,
-                            size: 12,
+                            size: 11,
                             color: Color(0xFFFFC107),
                           ),
                         ],
                       ),
+                      if (distanciaKm != null) ...[
+                        const SizedBox(height: 8),
+                        _buildTransportRow(context),
+                      ],
                     ],
                   ),
                 ),
@@ -168,6 +175,18 @@ class DestinoCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTransportRow(BuildContext context) {
+    final km = distanciaKm!;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _TiempoChip(icono: Icons.directions_car, minutos: km * 1.4),
+        _TiempoChip(icono: Icons.two_wheeler, minutos: km * 1.0),
+        _TiempoChip(icono: Icons.directions_walk, minutos: km * 12.0),
+      ],
     );
   }
 
@@ -200,6 +219,34 @@ class DestinoCard extends StatelessWidget {
           color: AppColors.primary(context),
         ),
       ),
+    );
+  }
+}
+
+class _TiempoChip extends StatelessWidget {
+  final IconData icono;
+  final double minutos;
+
+  const _TiempoChip({required this.icono, required this.minutos});
+
+  String get _texto {
+    final t = minutos.round().clamp(1, 9999);
+    if (t < 60) return '$t m';
+    final h = t ~/ 60;
+    final m = t % 60;
+    return m == 0 ? '${h}h' : '${h}h${m}m';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = AppColors.textSecondary(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icono, size: 13, color: color),
+        const SizedBox(height: 1),
+        Text(_texto, style: TextStyle(fontSize: 9, color: color, fontWeight: FontWeight.w600)),
+      ],
     );
   }
 }
