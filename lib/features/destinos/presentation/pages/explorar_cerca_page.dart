@@ -3,6 +3,7 @@ import '../../../home/presentation/widgets/home_app_bar.dart';
 import '../../../home/presentation/widgets/custom_bottom_nav_bar.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/fade_slide_in.dart';
+import 'rutas_urbanas_page.dart';
 
 class ExplorarCercaPage extends StatefulWidget {
   const ExplorarCercaPage({super.key});
@@ -35,6 +36,13 @@ class _ExplorarCercaPageState extends State<ExplorarCercaPage> {
   void _irAMapa() => Navigator.pushNamed(context, '/mapa');
 
   void _irARecomendar() => Navigator.pushNamed(context, '/recomendar');
+
+  void _irARutasUrbanas() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const RutasUrbanasPage()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,14 +83,18 @@ class _ExplorarCercaPageState extends State<ExplorarCercaPage> {
                               child: _DescubrimientoCard(onVerMapa: _irAMapa),
                             ),
                             const SizedBox(width: 16),
-                            const Expanded(child: _RutasUrbanasCard()),
+                            Expanded(
+                              child: _RutasUrbanasCard(
+                                onExplorar: _irARutasUrbanas,
+                              ),
+                            ),
                           ],
                         )
                       : Column(
                           children: [
                             _DescubrimientoCard(onVerMapa: _irAMapa),
                             const SizedBox(height: 16),
-                            const _RutasUrbanasCard(),
+                            _RutasUrbanasCard(onExplorar: _irARutasUrbanas),
                           ],
                         ),
                 ),
@@ -374,86 +386,103 @@ class _DescubrimientoCard extends StatelessWidget {
 // Tarjeta plana y minimalista (sin foto de stock): reduce peticiones de
 // red en esta pantalla y se alinea con el lenguaje visual de referencia.
 class _RutasUrbanasCard extends StatelessWidget {
-  const _RutasUrbanasCard();
+  final VoidCallback onExplorar;
+
+  const _RutasUrbanasCard({required this.onExplorar});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
+    return _PressableScale(
+      child: Material(
         color: AppColors.primaryContainer(context),
         borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _EtiquetaCategoria(
-            icon: Icons.directions_walk_outlined,
-            texto: 'CAMINATA',
-            color: AppColors.onPrimaryContainer(context),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('🥾', style: TextStyle(fontSize: 18)),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  'Rutas Urbanas',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.onPrimaryContainer(context),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Micro-aventuras culturales diseñadas para recorrer a '
-            'pie. Conecta con la esencia de la ciudad.',
-            style: TextStyle(
-              fontSize: 13,
-              color: AppColors.onPrimaryContainer(
-                context,
-              ).withValues(alpha: 0.75),
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 18),
-          SizedBox(
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onExplorar,
+          child: Ink(
             width: double.infinity,
-            child: OutlinedButton(
-              // Sin destino todavía: se conserva el mismo comportamiento
-              // (sin acción) que tenía el botón original.
-              onPressed: () {},
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                side: BorderSide(color: AppColors.primary(context)),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-              ),
+            padding: const EdgeInsets.all(20),
+            child: _RutasUrbanasContenido(onExplorar: onExplorar),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RutasUrbanasContenido extends StatelessWidget {
+  final VoidCallback onExplorar;
+
+  const _RutasUrbanasContenido({required this.onExplorar});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _EtiquetaCategoria(
+          icon: Icons.directions_walk_outlined,
+          texto: 'CAMINATA',
+          color: AppColors.onPrimaryContainer(context),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('🥾', style: TextStyle(fontSize: 18)),
+            const SizedBox(width: 6),
+            Flexible(
               child: Text(
-                'Explorar rutas',
+                'Rutas Urbanas',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: AppColors.primary(context),
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
+                  fontSize: 19,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.onPrimaryContainer(context),
                 ),
               ),
             ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Micro-aventuras culturales diseñadas para recorrer a '
+          'pie. Conecta con la esencia de la ciudad.',
+          style: TextStyle(
+            fontSize: 13,
+            color: AppColors.onPrimaryContainer(
+              context,
+            ).withValues(alpha: 0.75),
+            height: 1.4,
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 18),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: onExplorar,
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              side: BorderSide(color: AppColors.primary(context)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+            ),
+            child: Text(
+              'Explorar rutas',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: AppColors.primary(context),
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

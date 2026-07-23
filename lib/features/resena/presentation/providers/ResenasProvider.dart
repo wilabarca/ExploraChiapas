@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:injectable/injectable.dart';
 
+import '../../../../core/services/user_stats_local_service.dart';
 import '../../domain/entities/resena_entity.dart';
 import '../../domain/usecases/CrearResenaUseCase.dart';
 import '../../domain/usecases/GetResenasUseCase.dart';
@@ -13,8 +14,17 @@ enum PublicarStatus { idle, loading, success, error }
 class ResenasProvider extends ChangeNotifier {
   final GetResenasUseCase _getResenas;
   final CrearResenaUseCase _crearResena;
+  final UserStatsLocalService _statsLocal;
 
-  ResenasProvider(this._getResenas, this._crearResena);
+  ResenasProvider(this._getResenas, this._crearResena, this._statsLocal);
+
+  int _misResenasCount = 0;
+  int get misResenasCount => _misResenasCount;
+
+  Future<void> cargarMisResenasCount() async {
+    _misResenasCount = await _statsLocal.obtenerResenasCreadas();
+    notifyListeners();
+  }
 
   ResenasStatus _status = ResenasStatus.idle;
   ResenasStatus get status => _status;
@@ -94,15 +104,16 @@ class ResenasProvider extends ChangeNotifier {
     );
 
     return result.fold(
-      (failure) {
+      (failure) async {
         _publicarStatus = PublicarStatus.error;
         _publicarError = failure.message;
         notifyListeners();
         return false;
       },
-      (resena) {
+      (resena) async {
         _resenas = [resena, ..._resenas];
         _publicarStatus = PublicarStatus.success;
+        _misResenasCount = await _statsLocal.incrementarResenasCreadas();
         notifyListeners();
         return true;
       },

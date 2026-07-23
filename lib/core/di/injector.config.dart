@@ -179,6 +179,7 @@ import '../network/api_client.dart' as _i557;
 import '../network/ml_api_client.dart' as _i322;
 import '../services/avatar/avatar_service.dart' as _i45;
 import '../services/avatar/avatar_service_impl.dart' as _i149;
+import '../services/user_stats_local_service.dart' as _i16;
 import '../storage/secure_session_storage.dart' as _i757;
 
 extension GetItInjectableX on _i174.GetIt {
@@ -189,6 +190,9 @@ extension GetItInjectableX on _i174.GetIt {
   }) {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     gh.lazySingleton<_i322.MlApiClient>(() => _i322.MlApiClient());
+    gh.lazySingleton<_i16.UserStatsLocalService>(
+      () => _i16.UserStatsLocalService(),
+    );
     gh.lazySingleton<_i757.SecureSessionStorage>(
       () => _i757.SecureSessionStorage(),
     );
@@ -468,6 +472,7 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i112.ResenasProvider(
         gh<_i33.GetResenasUseCase>(),
         gh<_i392.CrearResenaUseCase>(),
+        gh<_i16.UserStatsLocalService>(),
       ),
     );
     return this;

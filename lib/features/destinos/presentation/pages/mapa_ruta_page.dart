@@ -450,6 +450,38 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
   Widget _panelRuta() => Column(
     mainAxisSize: MainAxisSize.min,
     children: [
+      // Modo de ruta — siempre en carro (ruta calculada con OSRM driving).
+      AnimatedOpacity(
+        opacity: 1,
+        duration: const Duration(milliseconds: 300),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: AppColors.primaryContainer(context),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.directions_car_filled,
+                size: 14,
+                color: AppColors.primary(context),
+              ),
+              const SizedBox(width: 5),
+              Text(
+                'Ruta en carro',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary(context),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      const SizedBox(height: 12),
       // Métricas
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -479,11 +511,13 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
   );
 }
 
-/// Marcador de "mi ubicación": punto azul con anillo pulsante (para
-/// reforzar visualmente que la posición se sigue actualizando en vivo) y
-/// una flecha de dirección que solo aparece y gira mientras el usuario
-/// está caminando/moviéndose.
-class _UserLocationMarker extends StatelessWidget {
+/// Marcador de "mi ubicación": siempre una flecha de dirección (nunca un
+/// punto), con anillo pulsante detrás que solo late mientras el usuario
+/// se mueve — para reforzar visualmente que la posición se sigue
+/// actualizando en vivo justo cuando el carro avanza. Gira suave hacia
+/// el rumbo real y da un pequeño "pop" cada vez que llega una posición
+/// nueva, para que cada actualización se sienta viva.
+class _UserLocationMarker extends StatefulWidget {
   final Color color;
   final double headingAcumulado;
   final bool enMovimiento;
@@ -495,37 +529,69 @@ class _UserLocationMarker extends StatelessWidget {
   });
 
   @override
+  State<_UserLocationMarker> createState() => _UserLocationMarkerState();
+}
+
+class _UserLocationMarkerState extends State<_UserLocationMarker>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _popCtrl = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 220),
+  );
+  late final Animation<double> _pop = Tween<double>(
+    begin: 1,
+    end: 1.16,
+  ).chain(CurveTween(curve: Curves.easeOut)).animate(_popCtrl);
+
+  @override
+  void didUpdateWidget(covariant _UserLocationMarker oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.headingAcumulado != widget.headingAcumulado) {
+      _popCtrl.forward(from: 0).then((_) => _popCtrl.reverse());
+    }
+  }
+
+  @override
+  void dispose() {
+    _popCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Stack(
       alignment: Alignment.center,
       children: [
-        _PulsingRing(color: color),
-        AnimatedOpacity(
-          opacity: enMovimiento ? 1 : 0,
-          duration: const Duration(milliseconds: 250),
-          child: AnimatedRotation(
-            turns: headingAcumulado / 360,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-            child: Transform.translate(
-              offset: const Offset(0, -22),
-              child: Icon(
+        _PulsingRing(color: widget.color, activo: widget.enMovimiento),
+        AnimatedRotation(
+          turns: widget.headingAcumulado / 360,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+          child: AnimatedBuilder(
+            animation: _pop,
+            builder: (context, child) =>
+                Transform.scale(scale: _pop.value, child: child),
+            child: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: widget.color,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 3),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black38,
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              child: const Icon(
                 Icons.navigation,
-                color: color,
-                size: 20,
-                shadows: const [Shadow(color: Colors.black26, blurRadius: 3)],
+                color: Colors.white,
+                size: 18,
               ),
             ),
-          ),
-        ),
-        Container(
-          width: 20,
-          height: 20,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 3),
-            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 6)],
           ),
         ),
       ],
@@ -539,7 +605,11 @@ class _UserLocationMarker extends StatelessWidget {
 class _PulsingRing extends StatefulWidget {
   final Color color;
 
-  const _PulsingRing({required this.color});
+  /// Solo late mientras el usuario se mueve; parado se queda como un
+  /// anillo tenue y fijo, en vez de seguir animando sin sentido.
+  final bool activo;
+
+  const _PulsingRing({required this.color, required this.activo});
 
   @override
   State<_PulsingRing> createState() => _PulsingRingState();
@@ -550,7 +620,23 @@ class _PulsingRingState extends State<_PulsingRing>
   late final AnimationController _ctrl = AnimationController(
     vsync: this,
     duration: const Duration(seconds: 2),
-  )..repeat();
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.activo) _ctrl.repeat();
+  }
+
+  @override
+  void didUpdateWidget(covariant _PulsingRing oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.activo && !_ctrl.isAnimating) {
+      _ctrl.repeat();
+    } else if (!widget.activo && _ctrl.isAnimating) {
+      _ctrl.animateTo(0, duration: const Duration(milliseconds: 300));
+    }
+  }
 
   @override
   void dispose() {
@@ -594,9 +680,17 @@ class _Metrica extends StatelessWidget {
       children: [
         Icon(icono, color: AppColors.primary(context), size: 26),
         const SizedBox(height: 4),
-        Text(
-          valor,
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 280),
+          transitionBuilder: (child, animation) => FadeTransition(
+            opacity: animation,
+            child: ScaleTransition(scale: animation, child: child),
+          ),
+          child: Text(
+            valor,
+            key: ValueKey(valor),
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
         ),
         Text(
           etiqueta,

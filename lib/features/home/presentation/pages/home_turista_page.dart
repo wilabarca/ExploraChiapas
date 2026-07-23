@@ -5,6 +5,7 @@ import '../widgets/home_app_bar.dart';
 import '../widgets/planifica_banner.dart';
 import '../widgets/section_header.dart';
 import '../widgets/destino_card.dart';
+import '../widgets/eventos_banner.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/promociones_fuego_banner.dart';
 import '../widgets/promociones_activas_section.dart';
@@ -15,7 +16,7 @@ import '../../../destinos/domain/entities/destino.dart';
 import '../../../destinos/presentation/pages/lugar_detail_page.dart';
 import '../../../destinos/presentation/providers/destinos_provider.dart';
 import '../../../eventos/presentation/providers/eventos_provider.dart';
-import '../../data/home_api_service.dart';
+import '../../../promociones/presentation/providers/promociones_provider.dart';
 import '../../../../core/di/injector.dart';
 import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/navigation/app_navigator.dart';
@@ -35,14 +36,16 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
     with WidgetsBindingObserver, RouteAware {
   List<Map<String, dynamic>> _destacadosML = [];
 
+  // Evita que dos refrescos (p. ej. `resumed` + retorno de navegación
+  // casi simultáneos) disparen peticiones duplicadas a la API.
+  bool _isRefreshingHome = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
     _cargarDestacadosML();
-    _cargarRestaurantes();
-    _cargarHoteles();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -95,6 +98,34 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
     setState(() => _destacadosML = resultados);
   }
 
+  /// Refresca únicamente los datos dinámicos del Home (promociones y
+  /// próximos eventos) sin tocar destinos ni el motor ML. Se usa tanto al
+  /// reanudar la app (`resumed`) como al regresar al Home desde otra
+  /// pantalla. No limpia los datos visibles antes de la respuesta: si la
+  /// petición falla, la sección conserva lo último que se mostró
+  /// correctamente (los providers ya no sobreescriben su lista en error).
+  Future<void> _refreshDynamicHomeData() async {
+    if (!mounted || _isRefreshingHome) return;
+    _isRefreshingHome = true;
+    try {
+      await Future.wait([
+        context.read<PromocionesProvider>().cargarPromociones(),
+        context.read<EventosProvider>().cargarEventos(proximas: true),
+      ]);
+    } finally {
+      _isRefreshingHome = false;
+    }
+  }
+
+  Future<void> _onRefresh() async {
+    if (!mounted) return;
+    await Future.wait([
+      context.read<DestinoProvider>().loadDestinos(limit: 10),
+      _cargarDestacadosML(),
+      _refreshDynamicHomeData(),
+    ]);
+  }
+
   void _onNavTap(BottomNavTab tab) {
     switch (tab) {
       case BottomNavTab.mapa:
@@ -140,39 +171,10 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
     Navigator.pushNamed(context, '/promociones');
   }
 
-  static const _restaurantes = [
-    _RestauranteData(
-      nombre: 'El Fogón de Jovel',
-      calificacion: 4.7,
-      distanciaKm: 2.4,
-      descripcion: 'Especialidad en cocina de autor regional.',
-      imageUrl:
-          'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80',
-    ),
-    _RestauranteData(
-      nombre: 'Café Maya Luxury',
-      calificacion: 4.9,
-      distanciaKm: 0.8,
-      descripcion: 'El mejor café de altura de San Cristóbal.',
-      imageUrl:
-          'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&q=80',
-    ),
-  ];
-
-  static const _hoteles = [
-    _HotelData(
-      nombre: 'Selva Verde Eco-Resort',
-      precioPorNoche: 2400.0,
-      imageUrl:
-          'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=400&q=80',
-    ),
-    _HotelData(
-      nombre: 'Boutique Casa Lum',
-      precioPorNoche: 3100.0,
-      imageUrl:
-          'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&q=80',
-    ),
-  ];
+  // ── Navegación a eventos: la misma vista con categorías filtrables ──────
+  void _irAEventos() {
+    Navigator.pushNamed(context, '/eventos');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -463,139 +465,6 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
     );
   }
 
-  Widget _buildRestaurantes(bool isTablet, String Function(String) s) {
-    if (isTablet) {
-      return GridView.count(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 2.6,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        children: _restaurantes
-            .map(
-              (r) => GestureDetector(
-                onTap: () => _irANegocios('restaurante', s('restaurantes')),
-                child: RestauranteItem(
-                  nombre: r.nombre,
-                  calificacion: r.calificacion,
-                  distanciaKm: r.distanciaKm,
-                  descripcion: r.descripcion,
-                  imageUrl: r.imageUrl,
-                ),
-              ),
-            )
-            .toList(),
-      );
-    }
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        children: _restaurantes
-            .map(
-              (r) => GestureDetector(
-                onTap: () => _irANegocios('restaurante', s('restaurantes')),
-                child: RestauranteItem(
-                  nombre: r.nombre,
-                  calificacion: r.calificacion,
-                  distanciaKm: r.distanciaKm,
-                  descripcion: r.descripcion,
-                  imageUrl: r.imageUrl,
-                ),
-              ),
-            )
-            .toList(),
-      ),
-    );
-  }
-
-  Widget _buildHoteles(bool isTablet, bool isLarge, String Function(String) s) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final maxWidth = constraints.maxWidth;
-
-        if (isTablet) {
-          return GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: isLarge ? 3 : 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 0.95,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            children: _hoteles
-                .map(
-                  (h) => GestureDetector(
-                    onTap: () => _irANegocios('hotel', s('hoteles')),
-                    child: HotelCard(
-                      nombre: h.nombre,
-                      precioPorNoche: h.precioPorNoche,
-                      imageUrl: h.imageUrl,
-                    ),
-                  ),
-                )
-                .toList(),
-          );
-        }
-
-        return SizedBox(
-          height: 212,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: _hoteles.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 14),
-            itemBuilder: (context, index) {
-              final h = _hoteles[index];
-              return ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: maxWidth),
-                child: FractionallySizedBox(
-                  widthFactor: 0.5,
-                  child: GestureDetector(
-                    onTap: () => _irANegocios('hotel', s('hoteles')),
-                    child: HotelCard(
-                      nombre: h.nombre,
-                      precioPorNoche: h.precioPorNoche,
-                      imageUrl: h.imageUrl,
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _RestauranteData {
-  final String nombre;
-  final double calificacion;
-  final double distanciaKm;
-  final String descripcion;
-  final String imageUrl;
-
-  const _RestauranteData({
-    required this.nombre,
-    required this.calificacion,
-    required this.distanciaKm,
-    required this.descripcion,
-    required this.imageUrl,
-  });
-}
-
-class _HotelData {
-  final String nombre;
-  final double precioPorNoche;
-  final String imageUrl;
-
-  const _HotelData({
-    required this.nombre,
-    required this.precioPorNoche,
-    required this.imageUrl,
-  });
 }
 
 class _SeccionError extends StatelessWidget {

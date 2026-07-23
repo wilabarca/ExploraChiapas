@@ -15,6 +15,7 @@ import '../../../home/presentation/widgets/custom_bottom_nav_bar.dart';
 import '../../../home/presentation/widgets/home_app_bar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../favoritos/presentation/providers/favoritos_provider.dart';
+import '../../../resena/presentation/providers/ResenasProvider.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -37,6 +38,7 @@ class _ProfilePageState extends State<ProfilePage> {
       if (favProvider.status == FavoritosStatus.idle) {
         favProvider.cargarFavoritos();
       }
+      context.read<ResenasProvider>().cargarMisResenasCount();
     });
   }
 
@@ -197,10 +199,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   SizedBox(height: screenH * 0.025),
 
-                  const ProfileStats(
-                    rutasCreadas: '0',
-                    favoritos:    '0',
-                    resenas:      '0',
+                  Consumer2<FavoritosProvider, ResenasProvider>(
+                    builder: (context, favProvider, resenasProvider, _) {
+                      return ProfileStats(
+                        favoritos: favProvider.favoritos.length.toString(),
+                        resenas: resenasProvider.misResenasCount.toString(),
+                      );
+                    },
                   ),
 
                   SizedBox(height: screenH * 0.016),

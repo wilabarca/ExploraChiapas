@@ -5,12 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/di/injector.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'mapa_ruta_page.dart';
 import 'alternativas_menos_concurridas_page.dart';
 import '../../../favoritos/domain/entities/favorito.dart';
 import '../../../favoritos/presentation/providers/favoritos_provider.dart';
 import '../../../../core/utils/uuid_utils.dart';
+import '../../domain/usecases/get_ubicacion_destino_usecase.dart';
 import '../../../resena/domain/entities/DestinoResenaEntity.dart';
 import '../../../resena/presentation/pages/escribir_resena_page.dart';
 import '../../../resena/presentation/providers/ResenasProvider.dart';
@@ -134,18 +136,64 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
 
   bool get _tieneCoords => widget.lat != null && widget.lng != null;
 
-  Future<void> _trazarRuta() async {
-    if (!_tieneCoords) return;
+  bool get _tieneLocationId =>
+      widget.locationId != null && widget.locationId!.trim().isNotEmpty;
+
+  bool get _puedeIrAlLugar => _tieneCoords || _tieneLocationId;
+
+  bool _ubicandoLugar = false;
+
+  /// Si ya vienen coordenadas directas (p. ej. recomendación ML) las usa
+  /// tal cual; si el lugar es real solo trae `locationId`, resuelve la
+  /// ubicación real vía `GET /locations/{id}` justo antes de navegar —
+  /// así el botón da feedback inmediato (spinner) y el mapa arranca en
+  /// cuanto llega la respuesta, sin diálogos bloqueantes intermedios.
+  Future<void> _irAlLugar() async {
+    if (_ubicandoLugar) return;
+
+    if (_tieneCoords) {
+      _abrirMapaRuta(widget.lat!, widget.lng!);
+      return;
+    }
+
+    if (!_tieneLocationId) return;
+
+    setState(() => _ubicandoLugar = true);
+    final result = await getIt<GetUbicacionDestinoUseCase>()(
+      id: widget.locationId!,
+    );
+    if (!mounted) return;
+    setState(() => _ubicandoLugar = false);
+
+    result.fold(
+      (failure) => _mostrarError(
+        'No se pudo obtener la ubicación de este lugar. Intenta de nuevo.',
+      ),
+      (ubicacion) {
+        if (!ubicacion.tieneCoordenadasValidas) {
+          _mostrarError('Este lugar todavía no tiene coordenadas registradas.');
+          return;
+        }
+        _abrirMapaRuta(ubicacion.latitude, ubicacion.longitude);
+      },
+    );
+  }
+
+  void _abrirMapaRuta(double lat, double lng) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => MapaRutaPage(
-          nombre: widget.nombre,
-          destLat: widget.lat!,
-          destLng: widget.lng!,
-        ),
+        builder: (_) =>
+            MapaRutaPage(nombre: widget.nombre, destLat: lat, destLng: lng),
       ),
     );
+  }
+
+  void _mostrarError(String mensaje) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(mensaje)));
   }
 
   @override
@@ -197,12 +245,7 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
             ],
             flexibleSpace: widget.imageUrl.isNotEmpty
                 ? FlexibleSpaceBar(
-                    background: Image.network(
-                      widget.imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                          Container(color: AppColors.primaryContainer(context)),
-                    ),
+                    background: _ImageCarousel(imageUrls: [widget.imageUrl]),
                   )
                 : null,
           ),
@@ -384,12 +427,21 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
   }
 
   Widget _buildBottomActions(BuildContext context) {
-    final trazarRutaButton = ElevatedButton.icon(
-      onPressed: _trazarRuta,
-      icon: const Icon(Icons.directions_outlined, color: Colors.white),
-      label: const Text(
-        'Trazar ruta',
-        style: TextStyle(
+    final irAlLugarButton = ElevatedButton.icon(
+      onPressed: _ubicandoLugar ? null : _irAlLugar,
+      icon: _ubicandoLugar
+          ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+          : const Icon(Icons.directions_outlined, color: Colors.white),
+      label: Text(
+        _ubicandoLugar ? 'Ubicando...' : 'Ir al lugar',
+        style: const TextStyle(
           color: Colors.white,
           fontSize: 15,
           fontWeight: FontWeight.w600,
@@ -422,26 +474,121 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
       ),
     );
 
-    if (_tieneCoords && _esResenable) {
+    if (_puedeIrAlLugar && _esResenable) {
       return Row(
         children: [
-          Expanded(child: trazarRutaButton),
+          Expanded(child: irAlLugarButton),
           const SizedBox(width: 12),
           Expanded(child: dejarResenaButton),
         ],
       );
     }
 
-    if (_tieneCoords && !_esResenable) {
-      return SizedBox(width: double.infinity, child: trazarRutaButton);
+    if (_puedeIrAlLugar && !_esResenable) {
+      return SizedBox(width: double.infinity, child: irAlLugarButton);
     }
 
-    if (!_tieneCoords && _esResenable) {
+    if (!_puedeIrAlLugar && _esResenable) {
       return SizedBox(width: double.infinity, child: dejarResenaButton);
     }
 
     // Ni ruta ni reseña disponibles: no hay acción útil que ofrecer.
     return const SizedBox.shrink();
+  }
+}
+
+// ── Carrusel de fotos del header ─────────────────────────────────────────────
+
+/// Header con scroll horizontal de fotos + indicadores de página. Recibe
+/// una lista de URLs reales (nunca inventadas): hoy la API de destinos
+/// solo expone una foto por lugar (`Destino.imageUrl`), así que normalmente
+/// se renderiza con un solo elemento — pero el widget ya está listo para
+/// mostrar varias en cuanto el backend las exponga, sin volver a tocarlo.
+class _ImageCarousel extends StatefulWidget {
+  final List<String> imageUrls;
+
+  const _ImageCarousel({required this.imageUrls});
+
+  @override
+  State<_ImageCarousel> createState() => _ImageCarouselState();
+}
+
+class _ImageCarouselState extends State<_ImageCarousel> {
+  final _pageCtrl = PageController();
+  int _pagina = 0;
+
+  @override
+  void dispose() {
+    _pageCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final imagenes = widget.imageUrls
+        .where((url) => url.trim().isNotEmpty)
+        .toList();
+
+    if (imagenes.isEmpty) {
+      return Container(color: AppColors.primaryContainer(context));
+    }
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        PageView.builder(
+          controller: _pageCtrl,
+          itemCount: imagenes.length,
+          onPageChanged: (index) => setState(() => _pagina = index),
+          itemBuilder: (context, index) {
+            return AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              child: Image.network(
+                imagenes[index],
+                key: ValueKey(imagenes[index]),
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, progress) {
+                  if (progress == null) return child;
+                  return Container(
+                    color: AppColors.primaryContainer(context),
+                    child: const Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  );
+                },
+                errorBuilder: (_, __, ___) =>
+                    Container(color: AppColors.primaryContainer(context)),
+              ),
+            );
+          },
+        ),
+        if (imagenes.length > 1)
+          Positioned(
+            bottom: 14,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(imagenes.length, (index) {
+                final activo = index == _pagina;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOut,
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: activo ? 18 : 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: activo
+                        ? Colors.white
+                        : Colors.white.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                );
+              }),
+            ),
+          ),
+      ],
+    );
   }
 }
 
