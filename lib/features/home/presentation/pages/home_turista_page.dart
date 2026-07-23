@@ -12,14 +12,12 @@ import '../widgets/eventos_banner.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/promociones_fuego_banner.dart';
 import '../widgets/promociones_activas_section.dart';
-import '../widgets/restaurantes_destacados_section.dart';
-import '../widgets/hoteles_recomendados_section.dart';
 import '../../../../core/widgets/fade_slide_in.dart';
-import '../../../destinos/domain/entities/destino.dart';
-import '../../../destinos/domain/usecases/get_ubicacion_destino_usecase.dart';
+import '../widgets/negocio_home_card.dart';
 import '../../../destinos/presentation/pages/lugar_detail_page.dart';
-import '../../../destinos/presentation/providers/destinos_provider.dart';
 import '../../../eventos/presentation/providers/eventos_provider.dart';
+import '../../../negocio/domain/entities/negocio.dart';
+import '../../../negocio/domain/usecases/obtener_negocio.dart';
 import '../../../promociones/presentation/providers/promociones_provider.dart';
 import '../../../../core/di/injector.dart';
 import '../../../../core/l10n/app_strings.dart';
@@ -39,6 +37,8 @@ class HomeTuristaPage extends StatefulWidget {
 class _HomeTuristaPageState extends State<HomeTuristaPage>
     with WidgetsBindingObserver, RouteAware {
   List<Map<String, dynamic>> _destacadosML = [];
+  List<Negocio> _negocios = [];
+  bool _cargandoNegocios = false;
   Position? _userPos;
   final Map<String, double> _distancias = {};
 
@@ -52,16 +52,11 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
     WidgetsBinding.instance.addObserver(this);
 
     _cargarDestacadosML();
+    _cargarNegocios();
     _cargarPosicion();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-
-      final destinoProvider = context.read<DestinoProvider>();
-      if (destinoProvider.listStatus == DestinoStatus.idle) {
-        destinoProvider.loadDestinos(limit: 10);
-      }
-      destinoProvider.addListener(_onDestinosCargados);
 
       final promocionesProvider = context.read<PromocionesProvider>();
       if (promocionesProvider.status == PromocionesStatus.idle) {
@@ -83,7 +78,6 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     AppNavigator.routeObserver.unsubscribe(this);
-    context.read<DestinoProvider>().removeListener(_onDestinosCargados);
     super.dispose();
   }
 
@@ -108,6 +102,14 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
     _calcularDistanciasML(resultados);
   }
 
+  Future<void> _cargarNegocios() async {
+    setState(() => _cargandoNegocios = true);
+    final result = await getIt<ObtenerNegocios>()();
+    if (!mounted) return;
+    result.fold((_) {}, (list) => setState(() => _negocios = list));
+    if (mounted) setState(() => _cargandoNegocios = false);
+  }
+
   Future<void> _cargarPosicion() async {
     try {
       if (!await Geolocator.isLocationServiceEnabled()) return;
@@ -122,33 +124,8 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
       );
       if (!mounted) return;
       _userPos = pos;
-      final dp = context.read<DestinoProvider>();
-      if (dp.destinos.isNotEmpty) _fetchDistanciasAPI(dp.destinos);
       _calcularDistanciasML(_destacadosML);
     } catch (_) {}
-  }
-
-  void _onDestinosCargados() {
-    final dp = context.read<DestinoProvider>();
-    if (_userPos != null && dp.destinos.isNotEmpty) {
-      _fetchDistanciasAPI(dp.destinos);
-    }
-  }
-
-  void _fetchDistanciasAPI(List<Destino> destinos) {
-    for (final d in destinos) {
-      if (_distancias.containsKey(d.id)) continue;
-      _fetchDistanciaUna(d.id, d.locationId);
-    }
-  }
-
-  Future<void> _fetchDistanciaUna(String destinoId, String locationId) async {
-    final result = await getIt<GetUbicacionDestinoUseCase>()(id: locationId);
-    result.fold((_) {}, (ub) {
-      if (!ub.tieneCoordenadasValidas || _userPos == null || !mounted) return;
-      final km = _haversine(_userPos!.latitude, _userPos!.longitude, ub.latitude, ub.longitude);
-      setState(() => _distancias[destinoId] = km);
-    });
   }
 
   void _calcularDistanciasML(List<Map<String, dynamic>> ml) {
@@ -173,11 +150,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
   }
 
   /// Refresca únicamente los datos dinámicos del Home (promociones y
-  /// próximos eventos) sin tocar destinos ni el motor ML. Se usa tanto al
-  /// reanudar la app (`resumed`) como al regresar al Home desde otra
-  /// pantalla. No limpia los datos visibles antes de la respuesta: si la
-  /// petición falla, la sección conserva lo último que se mostró
-  /// correctamente (los providers ya no sobreescriben su lista en error).
+  /// próximos eventos) sin tocar destinos ni el motor ML.
   Future<void> _refreshDynamicHomeData() async {
     if (!mounted || _isRefreshingHome) return;
     _isRefreshingHome = true;
@@ -194,7 +167,6 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
   Future<void> _onRefresh() async {
     if (!mounted) return;
     await Future.wait([
-      context.read<DestinoProvider>().loadDestinos(limit: 10),
       _cargarDestacadosML(),
       _refreshDynamicHomeData(),
     ]);
@@ -219,40 +191,16 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
     }
   }
 
-  void _openDestinoDetail(Destino destino) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => LugarDetailPage(
-          id: destino.id,
-          nombre: destino.name,
-          categoria: 'Destino turístico',
-          calificacion: destino.averageRating,
-          imageUrl: destino.imageUrl ?? '',
-          descripcion: destino.description,
-          totalResenas: destino.totalReviews,
-          targetType: 'destination',
-          categoryId: destino.categoryId,
-          locationId: destino.locationId,
-          isSaturated: destino.isSaturated,
-        ),
-      ),
-    );
-  }
-
-  // ── Navegación a la vista de promociones ─────────────────────────────────
   void _irAPromociones() {
     Navigator.pushNamed(context, '/promociones');
   }
 
-  // ── Navegación a eventos: la misma vista con categorías filtrables ──────
   void _irAEventos() {
     Navigator.pushNamed(context, '/eventos');
   }
 
   @override
   Widget build(BuildContext context) {
-    // ✅ MediaQuery SOLO dentro de build()
     final mq = MediaQuery.of(context);
     final screenW = mq.size.width;
     final isTablet = screenW >= 600;
@@ -287,14 +235,6 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
                   child: SectionHeader(
                     icon: Icons.location_on_outlined,
                     titulo: s('destinos_para_ti'),
-                    mostrarVerTodos: true,
-                    onVerTodos: () {
-                      final destinoProvider = context.read<DestinoProvider>();
-                      if (destinoProvider.hasMore &&
-                          !destinoProvider.isLoadingMore) {
-                        destinoProvider.loadMoreDestinos();
-                      }
-                    },
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -306,139 +246,48 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
                       final screenWidth = MediaQuery.of(context).size.width;
                       final cardHeight = screenWidth < 360 ? 255.0 : 240.0;
 
-                      return Consumer<DestinoProvider>(
-                        builder: (context, destinoProvider, child) {
-                          if (destinoProvider.listStatus ==
-                              DestinoStatus.loading) {
-                            return SkeletonCardRow(
-                              count: 3,
-                              cardHeight: cardHeight,
-                              cardWidth: 180,
-                            );
-                          }
+                      if (_destacadosML.isEmpty) {
+                        return SkeletonCardRow(
+                          count: 3,
+                          cardHeight: cardHeight,
+                          cardWidth: 180,
+                        );
+                      }
 
-                          if (destinoProvider.listStatus ==
-                              DestinoStatus.error) {
-                            return SizedBox(
-                              height: cardHeight,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                ),
-                                child: _SeccionError(
-                                  message:
-                                      destinoProvider.listErrorMessage ??
-                                      s('error_destinos'),
-                                  onRetry: () {
-                                    destinoProvider.loadDestinos(limit: 10);
-                                  },
-                                ),
-                              ),
-                            );
-                          }
-
-                          // Si el backend no tiene datos usa los del motor ML
-                          if (destinoProvider.destinos.isEmpty) {
-                            if (_destacadosML.isEmpty) {
-                              return SizedBox(
-                                height: cardHeight,
-                                child: Center(
-                                  child: Text(
-                                    s('sin_destinos'),
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: AppColors.textSecondary(context),
-                                    ),
+                      return SizedBox(
+                        height: cardHeight,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          itemCount: _destacadosML.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 12),
+                          itemBuilder: (context, index) {
+                            final d = _destacadosML[index];
+                            return DestinoCard(
+                              nombre: d['nombre'] as String? ?? '',
+                              categoria: d['categoria'] as String? ?? 'destino',
+                              calificacion: 0,
+                              imageUrl: d['foto_principal'] as String?,
+                              esFavorito: false,
+                              distanciaKm: _distancias[d['id']?.toString()],
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => LugarDetailPage(
+                                    id: d['id']?.toString() ?? '',
+                                    nombre: d['nombre'] as String? ?? '',
+                                    categoria: d['categoria'] as String? ?? 'destino',
+                                    calificacion: 0,
+                                    imageUrl: d['foto_principal'] as String? ?? '',
+                                    lat: (d['lat'] as num?)?.toDouble(),
+                                    lng: (d['lng'] as num?)?.toDouble(),
+                                    targetType: 'destination',
                                   ),
                                 ),
-                              );
-                            }
-                            return SizedBox(
-                              height: cardHeight,
-                              child: ListView.separated(
-                                scrollDirection: Axis.horizontal,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                ),
-                                itemCount: _destacadosML.length,
-                                separatorBuilder: (_, __) =>
-                                    const SizedBox(width: 12),
-                                itemBuilder: (context, index) {
-                                  final d = _destacadosML[index];
-                                  return DestinoCard(
-                                    nombre: d['nombre'] as String? ?? '',
-                                    categoria:
-                                        d['categoria'] as String? ?? 'destino',
-                                    calificacion: 0,
-                                    imageUrl: d['foto_principal'] as String?,
-                                    esFavorito: false,
-                                    distanciaKm: _distancias[d['id']?.toString()],
-                                    onTap: () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => LugarDetailPage(
-                                          id: d['id']?.toString() ?? '',
-                                          nombre: d['nombre'] as String? ?? '',
-                                          categoria:
-                                              d['categoria'] as String? ??
-                                              'destino',
-                                          calificacion: 0,
-                                          imageUrl:
-                                              d['foto_principal'] as String? ??
-                                              '',
-                                          lat: (d['lat'] as num?)?.toDouble(),
-                                          lng: (d['lng'] as num?)?.toDouble(),
-                                          targetType: null,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
                               ),
                             );
-                          }
-
-                          final itemCount =
-                              destinoProvider.destinos.length +
-                              (destinoProvider.isLoadingMore ? 1 : 0);
-
-                          return SizedBox(
-                            height: cardHeight,
-                            child: ListView.separated(
-                              scrollDirection: Axis.horizontal,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                              ),
-                              itemCount: itemCount,
-                              separatorBuilder: (context, index) =>
-                                  const SizedBox(width: 12),
-                              itemBuilder: (context, index) {
-                                if (index == destinoProvider.destinos.length) {
-                                  return SizedBox(
-                                    width: 80,
-                                    child: Center(
-                                      child: CircularProgressIndicator(
-                                        color: AppColors.primary(context),
-                                      ),
-                                    ),
-                                  );
-                                }
-
-                                final destino = destinoProvider.destinos[index];
-
-                                return DestinoCard(
-                                  nombre: destino.name,
-                                  categoria: s('destino_turistico'),
-                                  calificacion: destino.averageRating,
-                                  imageUrl: destino.imageUrl,
-                                  esFavorito: false,
-                                  distanciaKm: _distancias[destino.id],
-                                  onTap: () => _openDestinoDetail(destino),
-                                );
-                              },
-                            ),
-                          );
-                        },
+                          },
+                        ),
                       );
                     },
                   ),
@@ -489,33 +338,60 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
                 ),
                 const SizedBox(height: 24),
 
-                // ── Turismo Sostenible ────────────────────────────────────
+                // ── Negocios registrados ──────────────────────────────────
                 FadeSlideIn(
                   delay: const Duration(milliseconds: 240),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SectionHeader(
+                        icon: Icons.storefront_outlined,
+                        titulo: 'Negocios',
+                        mostrarVerTodos: true,
+                        onVerTodos: () =>
+                            Navigator.pushNamed(context, '/negocios'),
+                      ),
+                      const SizedBox(height: 14),
+                      if (_cargandoNegocios)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 20),
+                          child: SkeletonCardRow(
+                            count: 3,
+                            cardHeight: 170,
+                            cardWidth: 160,
+                          ),
+                        )
+                      else if (_negocios.isEmpty)
+                        const SizedBox.shrink()
+                      else
+                        SizedBox(
+                          height: 195,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 20),
+                            itemCount: _negocios.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: 12),
+                            itemBuilder: (context, i) => NegocioHomeCard(
+                              negocio: _negocios[i],
+                              onTap: () =>
+                                  Navigator.pushNamed(context, '/negocios'),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // ── Turismo Sostenible ────────────────────────────────────
+                FadeSlideIn(
+                  delay: const Duration(milliseconds: 280),
                   child: _SostenibleSection(
                     onVerMapa: () => Navigator.pushNamed(context, '/mapa'),
                   ),
                 ),
-                const SizedBox(height: 24),
-
-                FadeSlideIn(
-                  delay: const Duration(milliseconds: 280),
-                  child: RestaurantesDestacadosSection(
-                    titulo: s('restaurantes_destacados'),
-                    tituloTipo: s('restaurantes'),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                FadeSlideIn(
-                  delay: const Duration(milliseconds: 320),
-                  child: HotelesRecomendadosSection(
-                    titulo: s('hoteles_recomendados'),
-                    tituloTipo: s('hoteles'),
-                  ),
-                ),
-
                 const SizedBox(height: 24),
               ],
             ),
@@ -537,7 +413,6 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
       ),
     );
   }
-
 }
 
 class _SeccionError extends StatelessWidget {
