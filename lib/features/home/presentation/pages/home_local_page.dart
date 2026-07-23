@@ -652,7 +652,7 @@ class _SeccionDestinos extends StatelessWidget {
                   imageUrl: d['foto_principal'] as String? ?? '',
                   lat: (d['lat'] as num?)?.toDouble(),
                   lng: (d['lng'] as num?)?.toDouble(),
-                  targetType: null,
+                  targetType: 'destination',
                 ),
               ),
             ),
