@@ -12,11 +12,12 @@ import '../widgets/eventos_banner.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/promociones_fuego_banner.dart';
 import '../widgets/promociones_activas_section.dart';
-import '../widgets/restaurantes_destacados_section.dart';
-import '../widgets/hoteles_recomendados_section.dart';
+import '../widgets/negocio_home_card.dart';
 import '../../../../core/widgets/fade_slide_in.dart';
 import '../../../destinos/domain/entities/destino.dart';
 import '../../../destinos/domain/usecases/get_ubicacion_destino_usecase.dart';
+import '../../../negocio/domain/entities/negocio.dart';
+import '../../../negocio/domain/usecases/obtener_negocio.dart';
 import '../../../destinos/presentation/pages/lugar_detail_page.dart';
 import '../../../destinos/presentation/providers/destinos_provider.dart';
 import '../../../eventos/presentation/providers/eventos_provider.dart';
@@ -39,6 +40,10 @@ class HomeTuristaPage extends StatefulWidget {
 class _HomeTuristaPageState extends State<HomeTuristaPage>
     with WidgetsBindingObserver, RouteAware {
   List<Map<String, dynamic>> _destacadosML = [];
+  List<Negocio> _restaurantes = [];
+  List<Negocio> _hoteles = [];
+  bool _cargandoRestaurantes = false;
+  bool _cargandoHoteles = false;
   Position? _userPos;
   final Map<String, double> _distancias = {};
 
@@ -52,6 +57,8 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
     WidgetsBinding.instance.addObserver(this);
 
     _cargarDestacadosML();
+    _cargarRestaurantes();
+    _cargarHoteles();
     _cargarPosicion();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -106,6 +113,22 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
     if (!mounted) return;
     setState(() => _destacadosML = resultados);
     _calcularDistanciasML(resultados);
+  }
+
+  Future<void> _cargarRestaurantes() async {
+    setState(() => _cargandoRestaurantes = true);
+    final result = await getIt<ObtenerNegocios>()(tipoNegocioId: 'restaurante');
+    if (!mounted) return;
+    result.fold((_) {}, (l) => setState(() => _restaurantes = l));
+    if (mounted) setState(() => _cargandoRestaurantes = false);
+  }
+
+  Future<void> _cargarHoteles() async {
+    setState(() => _cargandoHoteles = true);
+    final result = await getIt<ObtenerNegocios>()(tipoNegocioId: 'hotel');
+    if (!mounted) return;
+    result.fold((_) {}, (l) => setState(() => _hoteles = l));
+    if (mounted) setState(() => _cargandoHoteles = false);
   }
 
   Future<void> _cargarPosicion() async {
@@ -500,9 +523,15 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
 
                 FadeSlideIn(
                   delay: const Duration(milliseconds: 280),
-                  child: RestaurantesDestacadosSection(
+                  child: _buildNegocioCarrusel(
+                    context: context,
                     titulo: s('restaurantes_destacados'),
+                    icono: Icons.restaurant_outlined,
+                    negocios: _restaurantes,
+                    cargando: _cargandoRestaurantes,
+                    tipoNegocioId: 'restaurante',
                     tituloTipo: s('restaurantes'),
+                    s: s,
                   ),
                 ),
 
@@ -510,9 +539,15 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
 
                 FadeSlideIn(
                   delay: const Duration(milliseconds: 320),
-                  child: HotelesRecomendadosSection(
+                  child: _buildNegocioCarrusel(
+                    context: context,
                     titulo: s('hoteles_recomendados'),
+                    icono: Icons.hotel_outlined,
+                    negocios: _hoteles,
+                    cargando: _cargandoHoteles,
+                    tipoNegocioId: 'hotel',
                     tituloTipo: s('hoteles'),
+                    s: s,
                   ),
                 ),
 
@@ -538,6 +573,59 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
     );
   }
 
+  Widget _buildNegocioCarrusel({
+    required BuildContext context,
+    required String titulo,
+    required IconData icono,
+    required List<Negocio> negocios,
+    required bool cargando,
+    required String tipoNegocioId,
+    required String tituloTipo,
+    required String Function(String) s,
+  }) {
+    void irANegocios() => Navigator.pushNamed(
+      context,
+      '/negocios',
+      arguments: {'tipoNegocioId': tipoNegocioId, 'tituloTipo': tituloTipo},
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: SectionHeader(
+            icon: icono,
+            titulo: titulo,
+            mostrarVerTodos: true,
+            onVerTodos: irANegocios,
+          ),
+        ),
+        const SizedBox(height: 14),
+        if (cargando)
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            child: SkeletonCardRow(count: 3, cardHeight: 170, cardWidth: 160),
+          )
+        else if (negocios.isEmpty)
+          const SizedBox.shrink()
+        else
+          SizedBox(
+            height: 195,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemCount: negocios.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (context, i) => NegocioHomeCard(
+                negocio: negocios[i],
+                onTap: irANegocios,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
 }
 
 class _SeccionError extends StatelessWidget {
