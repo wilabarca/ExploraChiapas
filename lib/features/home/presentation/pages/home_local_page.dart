@@ -8,15 +8,24 @@ import '../widgets/eventos_banner.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/promociones_fuego_banner.dart';
 import '../widgets/promociones_activas_section.dart';
-import '../widgets/restaurantes_destacados_section.dart';
-import '../widgets/hoteles_recomendados_section.dart';
+import '../widgets/negocio_home_card.dart';
 import '../../../../core/navigation/app_navigator.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/fade_slide_in.dart';
+import '../../../../core/widgets/skeleton_loader.dart';
+import '../../../../core/di/injector.dart';
+import '../../../../core/network/ml_api_client.dart';
+import '../../../destinos/domain/entities/destino.dart';
+import '../../../destinos/presentation/pages/lugar_detail_page.dart';
+import '../../../destinos/presentation/providers/destinos_provider.dart';
 import '../../../eventos/domain/entities/envento_entity.dart';
 import '../../../eventos/domain/entities/evento.dart';
 import '../../../eventos/presentation/pages/detalle_evento_page.dart';
 import '../../../eventos/presentation/providers/eventos_provider.dart';
+import '../../../favoritos/domain/entities/favorito.dart';
+import '../../../favoritos/presentation/providers/favoritos_provider.dart';
+import '../../../negocio/domain/entities/negocio.dart';
+import '../../../negocio/domain/usecases/obtener_negocio.dart';
 import '../../../promociones/presentation/providers/promociones_provider.dart';
 
 class HomeLocalPage extends StatefulWidget {
@@ -32,13 +41,29 @@ class _HomeLocalPageState extends State<HomeLocalPage>
   // casi simultáneos) disparen peticiones duplicadas a la API.
   bool _isRefreshingHome = false;
 
+  List<Map<String, dynamic>> _destacadosML = [];
+  List<Negocio> _restaurantes = [];
+  List<Negocio> _hoteles = [];
+  bool _cargandoRestaurantes = false;
+  bool _cargandoHoteles = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
+    _cargarDestacadosML();
+    _cargarRestaurantes();
+    _cargarHoteles();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      final dp = context.read<DestinoProvider>();
+      if (dp.listStatus == DestinoStatus.idle) dp.loadDestinos(limit: 10);
+
+      final ep = context.read<EventosProvider>();
+      if (ep.status == EventosStatus.idle) ep.cargarEventos(proximas: true);
+
       final promocionesProvider = context.read<PromocionesProvider>();
       if (promocionesProvider.status == PromocionesStatus.idle) {
         promocionesProvider.cargarPromociones();
@@ -76,6 +101,29 @@ class _HomeLocalPageState extends State<HomeLocalPage>
     _refreshDynamicHomeData();
   }
 
+  Future<void> _cargarDestacadosML() async {
+    final resultados = await getIt<MlApiClient>().fetchDestacados(limite: 10);
+    if (!mounted) return;
+    setState(() => _destacadosML = resultados);
+  }
+
+  Future<void> _cargarRestaurantes() async {
+    setState(() => _cargandoRestaurantes = true);
+    final result =
+        await getIt<ObtenerNegocios>()(tipoNegocioId: 'restaurante');
+    if (!mounted) return;
+    result.fold((_) {}, (l) => setState(() => _restaurantes = l));
+    if (mounted) setState(() => _cargandoRestaurantes = false);
+  }
+
+  Future<void> _cargarHoteles() async {
+    setState(() => _cargandoHoteles = true);
+    final result = await getIt<ObtenerNegocios>()(tipoNegocioId: 'hotel');
+    if (!mounted) return;
+    result.fold((_) {}, (l) => setState(() => _hoteles = l));
+    if (mounted) setState(() => _cargandoHoteles = false);
+  }
+
   void _onNavTap(BottomNavTab tab) {
     switch (tab) {
       case BottomNavTab.mapa:
@@ -91,13 +139,42 @@ class _HomeLocalPageState extends State<HomeLocalPage>
         Navigator.pushNamed(context, '/perfil');
         break;
       case BottomNavTab.explorar:
-        break; // ya estamos aquí
+        break;
     }
   }
 
   // ── Navegación a la vista de promociones ─────────────────────────────────
   void _irAPromociones() {
     Navigator.pushNamed(context, '/promociones');
+  }
+
+  void _irANegocios(String tipoNegocioId, String titulo) {
+    Navigator.pushNamed(
+      context,
+      '/negocios',
+      arguments: {'tipoNegocioId': tipoNegocioId, 'tituloTipo': titulo},
+    );
+  }
+
+  void _openDestinoDetail(Destino destino) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LugarDetailPage(
+          id: destino.id,
+          nombre: destino.name,
+          categoria: 'Destino turístico',
+          calificacion: destino.averageRating,
+          imageUrl: destino.imageUrl ?? '',
+          descripcion: destino.description,
+          totalResenas: destino.totalReviews,
+          targetType: 'destination',
+          categoryId: destino.categoryId,
+          locationId: destino.locationId,
+          isSaturated: destino.isSaturated,
+        ),
+      ),
+    );
   }
 
   // ── Navegación a eventos: la misma vista con categorías filtrables ──────
@@ -195,41 +272,20 @@ class _HomeLocalPageState extends State<HomeLocalPage>
                     icon: Icons.place_outlined,
                     titulo: 'Destinos para ti',
                     mostrarVerTodos: true,
-                    onVerTodos: () {},
+                    onVerTodos: () {
+                      final dp = context.read<DestinoProvider>();
+                      if (dp.hasMore && !dp.isLoadingMore) {
+                        dp.loadMoreDestinos();
+                      }
+                    },
                   ),
                 ),
                 const SizedBox(height: 14),
                 FadeSlideIn(
-                  child: SizedBox(
-                    height: size.height * 0.26,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      children: const [
-                        DestinoCard(
-                          nombre: 'Cascadas de Agua Azul',
-                          categoria: 'Naturaleza',
-                          calificacion: 4.9,
-                          imageUrl:
-                              'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
-                          esFavorito: true,
-                        ),
-                        DestinoCard(
-                          nombre: 'Zona Arqueológica Palenque',
-                          categoria: 'Cultura',
-                          calificacion: 4.8,
-                          imageUrl:
-                              'https://images.unsplash.com/photo-1518638150340-f706e86654de?w=800&q=80',
-                        ),
-                        DestinoCard(
-                          nombre: 'Cañón del Sumidero',
-                          categoria: 'Naturaleza',
-                          calificacion: 4.7,
-                          imageUrl:
-                              'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80',
-                        ),
-                      ],
-                    ),
+                  child: _SeccionDestinos(
+                    destacadosML: _destacadosML,
+                    cardHeight: size.height * 0.26,
+                    onDestinoTap: _openDestinoDetail,
                   ),
                 ),
 
@@ -341,12 +397,29 @@ class _HomeLocalPageState extends State<HomeLocalPage>
                   ),
                 ),
 
+                const SizedBox(height: 24),
+
                 // ── Restaurantes destacados ────────────────────────────────
                 FadeSlideIn(
                   delay: const Duration(milliseconds: 200),
-                  child: const RestaurantesDestacadosSection(
-                    titulo: 'Restaurantes destacados',
-                    tituloTipo: 'Restaurantes',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SectionHeader(
+                        icon: Icons.restaurant_outlined,
+                        titulo: 'Restaurantes destacados',
+                        mostrarVerTodos: true,
+                        onVerTodos: () =>
+                            _irANegocios('restaurante', 'Restaurantes'),
+                      ),
+                      const SizedBox(height: 14),
+                      _buildNegocioCarrusel(
+                        loading: _cargandoRestaurantes,
+                        negocios: _restaurantes,
+                        onTap: () =>
+                            _irANegocios('restaurante', 'Restaurantes'),
+                      ),
+                    ],
                   ),
                 ),
 
@@ -516,9 +589,22 @@ class _HomeLocalPageState extends State<HomeLocalPage>
                 // ── Hoteles recomendados ────────────────────────────────────
                 FadeSlideIn(
                   delay: const Duration(milliseconds: 360),
-                  child: const HotelesRecomendadosSection(
-                    titulo: 'Hoteles recomendados',
-                    tituloTipo: 'Hoteles',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SectionHeader(
+                        icon: Icons.hotel_outlined,
+                        titulo: 'Hoteles recomendados',
+                        mostrarVerTodos: true,
+                        onVerTodos: () => _irANegocios('hotel', 'Hoteles'),
+                      ),
+                      const SizedBox(height: 14),
+                      _buildNegocioCarrusel(
+                        loading: _cargandoHoteles,
+                        negocios: _hoteles,
+                        onTap: () => _irANegocios('hotel', 'Hoteles'),
+                      ),
+                    ],
                   ),
                 ),
 
@@ -533,6 +619,157 @@ class _HomeLocalPageState extends State<HomeLocalPage>
         currentTab: BottomNavTab.explorar,
         onTap: _onNavTap,
       ),
+    );
+  }
+
+  Widget _buildNegocioCarrusel({
+    required bool loading,
+    required List<Negocio> negocios,
+    required VoidCallback onTap,
+  }) {
+    if (loading) {
+      return const SizedBox(
+        height: 200,
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (negocios.isEmpty) return const SizedBox.shrink();
+
+    return SizedBox(
+      height: 200,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        itemCount: negocios.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (_, i) =>
+            NegocioHomeCard(negocio: negocios[i], onTap: onTap),
+      ),
+    );
+  }
+}
+
+// ── Sección de destinos: DestinoProvider + ML fallback ──────────────────────
+class _SeccionDestinos extends StatelessWidget {
+  final List<Map<String, dynamic>> destacadosML;
+  final double cardHeight;
+  final void Function(Destino) onDestinoTap;
+
+  const _SeccionDestinos({
+    required this.destacadosML,
+    required this.cardHeight,
+    required this.onDestinoTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<DestinoProvider>(
+      builder: (context, dp, _) {
+        final favProvider = context.watch<FavoritosProvider>();
+
+        if (dp.listStatus == DestinoStatus.loading) {
+          return SkeletonCardRow(
+            count: 3,
+            cardHeight: cardHeight,
+            cardWidth: 180,
+          );
+        }
+
+        // Fuente: API backend
+        if (dp.destinos.isNotEmpty) {
+          return SizedBox(
+            height: cardHeight,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemCount: dp.destinos.length + (dp.isLoadingMore ? 1 : 0),
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (_, i) {
+                if (i == dp.destinos.length) {
+                  return SizedBox(
+                    width: 80,
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary(context),
+                      ),
+                    ),
+                  );
+                }
+                final d = dp.destinos[i];
+                final esFav = favProvider.esFavorito(
+                  FavoritoTargetType.destination,
+                  d.id,
+                );
+                return DestinoCard(
+                  nombre: d.name,
+                  categoria: 'Destino turístico',
+                  calificacion: d.averageRating,
+                  imageUrl: d.imageUrl,
+                  esFavorito: esFav,
+                  onTap: () => onDestinoTap(d),
+                  onFavoritoTap: () => favProvider.toggleFavorito(
+                    targetType: FavoritoTargetType.destination,
+                    targetId: d.id,
+                  ),
+                );
+              },
+            ),
+          );
+        }
+
+        // Fallback: motor ML
+        if (destacadosML.isNotEmpty) {
+          return SizedBox(
+            height: cardHeight,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemCount: destacadosML.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (_, i) {
+                final d = destacadosML[i];
+                return DestinoCard(
+                  nombre: d['nombre'] as String? ?? '',
+                  categoria: d['categoria'] as String? ?? 'destino',
+                  calificacion: 0,
+                  imageUrl: d['foto_principal'] as String?,
+                  esFavorito: false,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => LugarDetailPage(
+                        id: d['id']?.toString() ?? '',
+                        nombre: d['nombre'] as String? ?? '',
+                        categoria: d['categoria'] as String? ?? 'destino',
+                        calificacion: 0,
+                        imageUrl: d['foto_principal'] as String? ?? '',
+                        lat: (d['lat'] as num?)?.toDouble(),
+                        lng: (d['lng'] as num?)?.toDouble(),
+                        // Viene del motor ML, no de una fila real del
+                        // backend: no puede recibir reseñas.
+                        targetType: null,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        }
+
+        return SizedBox(
+          height: cardHeight,
+          child: Center(
+            child: Text(
+              'No hay destinos disponibles',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary(context),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
