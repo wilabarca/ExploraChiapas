@@ -275,24 +275,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i810.ObtenerNegocioPorId>(
       () => _i810.ObtenerNegocioPorId(gh<_i252.NegocioRepository>()),
     );
-    gh.factory<_i116.ChatProvider>(
-      () => _i116.ChatProvider(
-        gh<_i301.EnviarMensajeUseCase>(),
-        gh<_i498.ConversacionRemoteDatasource>(),
-      ),
-    );
-    gh.factory<_i820.BuscarNegocios>(
-      () => _i820.BuscarNegocios(gh<_i252.NegocioRepository>()),
-    );
-    gh.factory<_i901.BuscarNegocios>(
-      () => _i901.BuscarNegocios(gh<_i252.NegocioRepository>()),
-    );
-    gh.factory<_i933.ObtenerNegocios>(
-      () => _i933.ObtenerNegocios(gh<_i252.NegocioRepository>()),
-    );
-    gh.factory<_i810.ObtenerNegocioPorId>(
-      () => _i810.ObtenerNegocioPorId(gh<_i252.NegocioRepository>()),
-    );
     gh.lazySingleton<_i743.FavoritosRepository>(
       () =>
           _i857.FavoritosRepositoryImpl(gh<_i768.FavoritosRemoteDataSource>()),
