@@ -1,5 +1,8 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import '../widgets/home_app_bar.dart';
 import '../widgets/section_header.dart';
@@ -16,6 +19,7 @@ import '../../../../core/widgets/skeleton_loader.dart';
 import '../../../../core/di/injector.dart';
 import '../../../../core/network/ml_api_client.dart';
 import '../../../destinos/domain/entities/destino.dart';
+import '../../../destinos/domain/usecases/get_ubicacion_destino_usecase.dart';
 import '../../../destinos/presentation/pages/lugar_detail_page.dart';
 import '../../../destinos/presentation/providers/destinos_provider.dart';
 import '../../../eventos/domain/entities/envento_entity.dart';
@@ -46,6 +50,8 @@ class _HomeLocalPageState extends State<HomeLocalPage>
   List<Negocio> _hoteles = [];
   bool _cargandoRestaurantes = false;
   bool _cargandoHoteles = false;
+  Position? _userPos;
+  final Map<String, double> _distancias = {};
 
   @override
   void initState() {
@@ -55,11 +61,13 @@ class _HomeLocalPageState extends State<HomeLocalPage>
     _cargarDestacadosML();
     _cargarRestaurantes();
     _cargarHoteles();
+    _cargarPosicion();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final dp = context.read<DestinoProvider>();
       if (dp.listStatus == DestinoStatus.idle) dp.loadDestinos(limit: 10);
+      dp.addListener(_onDestinosCargados);
 
       final ep = context.read<EventosProvider>();
       if (ep.status == EventosStatus.idle) ep.cargarEventos(proximas: true);
@@ -84,6 +92,7 @@ class _HomeLocalPageState extends State<HomeLocalPage>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     AppNavigator.routeObserver.unsubscribe(this);
+    context.read<DestinoProvider>().removeListener(_onDestinosCargados);
     super.dispose();
   }
 
@@ -105,6 +114,71 @@ class _HomeLocalPageState extends State<HomeLocalPage>
     final resultados = await getIt<MlApiClient>().fetchDestacados(limite: 10);
     if (!mounted) return;
     setState(() => _destacadosML = resultados);
+    _calcularDistanciasML(resultados);
+  }
+
+  Future<void> _cargarPosicion() async {
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) return;
+      var p = await Geolocator.checkPermission();
+      if (p == LocationPermission.denied) p = await Geolocator.requestPermission();
+      if (p == LocationPermission.denied || p == LocationPermission.deniedForever) return;
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.low,
+          timeLimit: Duration(seconds: 8),
+        ),
+      );
+      if (!mounted) return;
+      _userPos = pos;
+      final dp = context.read<DestinoProvider>();
+      if (dp.destinos.isNotEmpty) _fetchDistanciasAPI(dp.destinos);
+      _calcularDistanciasML(_destacadosML);
+    } catch (_) {}
+  }
+
+  void _onDestinosCargados() {
+    final dp = context.read<DestinoProvider>();
+    if (_userPos != null && dp.destinos.isNotEmpty) {
+      _fetchDistanciasAPI(dp.destinos);
+    }
+  }
+
+  void _fetchDistanciasAPI(List<Destino> destinos) {
+    for (final d in destinos) {
+      if (_distancias.containsKey(d.id)) continue;
+      _fetchDistanciaUna(d.id, d.locationId);
+    }
+  }
+
+  Future<void> _fetchDistanciaUna(String destinoId, String locationId) async {
+    final result = await getIt<GetUbicacionDestinoUseCase>()(id: locationId);
+    result.fold((_) {}, (ub) {
+      if (!ub.tieneCoordenadasValidas || _userPos == null || !mounted) return;
+      final km = _haversine(_userPos!.latitude, _userPos!.longitude, ub.latitude, ub.longitude);
+      setState(() => _distancias[destinoId] = km);
+    });
+  }
+
+  void _calcularDistanciasML(List<Map<String, dynamic>> ml) {
+    if (_userPos == null) return;
+    for (final d in ml) {
+      final id = d['id']?.toString();
+      final lat = (d['lat'] as num?)?.toDouble();
+      final lng = (d['lng'] as num?)?.toDouble();
+      if (id == null || lat == null || lng == null) continue;
+      final km = _haversine(_userPos!.latitude, _userPos!.longitude, lat, lng);
+      if (mounted) setState(() => _distancias[id] = km);
+    }
+  }
+
+  double _haversine(double lat1, double lon1, double lat2, double lon2) {
+    const r = 6371.0;
+    final dLat = (lat2 - lat1) * pi / 180;
+    final dLon = (lon2 - lon1) * pi / 180;
+    final a = sin(dLat / 2) * sin(dLat / 2) +
+        cos(lat1 * pi / 180) * cos(lat2 * pi / 180) * sin(dLon / 2) * sin(dLon / 2);
+    return r * 2 * atan2(sqrt(a), sqrt(1 - a));
   }
 
   Future<void> _cargarRestaurantes() async {
@@ -284,8 +358,9 @@ class _HomeLocalPageState extends State<HomeLocalPage>
                 FadeSlideIn(
                   child: _SeccionDestinos(
                     destacadosML: _destacadosML,
-                    cardHeight: size.height * 0.26,
+                    cardHeight: size.height * 0.30,
                     onDestinoTap: _openDestinoDetail,
+                    distancias: _distancias,
                   ),
                 ),
 
@@ -654,11 +729,13 @@ class _SeccionDestinos extends StatelessWidget {
   final List<Map<String, dynamic>> destacadosML;
   final double cardHeight;
   final void Function(Destino) onDestinoTap;
+  final Map<String, double> distancias;
 
   const _SeccionDestinos({
     required this.destacadosML,
     required this.cardHeight,
     required this.onDestinoTap,
+    required this.distancias,
   });
 
   @override
@@ -706,6 +783,7 @@ class _SeccionDestinos extends StatelessWidget {
                   calificacion: d.averageRating,
                   imageUrl: d.imageUrl,
                   esFavorito: esFav,
+                  distanciaKm: distancias[d.id],
                   onTap: () => onDestinoTap(d),
                   onFavoritoTap: () => favProvider.toggleFavorito(
                     targetType: FavoritoTargetType.destination,
@@ -734,6 +812,7 @@ class _SeccionDestinos extends StatelessWidget {
                   calificacion: 0,
                   imageUrl: d['foto_principal'] as String?,
                   esFavorito: false,
+                  distanciaKm: distancias[d['id']?.toString()],
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -745,8 +824,6 @@ class _SeccionDestinos extends StatelessWidget {
                         imageUrl: d['foto_principal'] as String? ?? '',
                         lat: (d['lat'] as num?)?.toDouble(),
                         lng: (d['lng'] as num?)?.toDouble(),
-                        // Viene del motor ML, no de una fila real del
-                        // backend: no puede recibir reseñas.
                         targetType: null,
                       ),
                     ),

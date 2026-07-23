@@ -286,14 +286,28 @@ class _ProfilePageState extends State<ProfilePage> {
                       _PreferenciaTile(
                         icon: Icons.brightness_6_outlined,
                         label: s('tema'),
-                        valor: s(prefs.tema == 'Claro' ? 'claro' : 'oscuro'),
+                        valor: s(prefs.tema == 'Oscuro'
+                            ? 'oscuro'
+                            : prefs.tema == 'Sistema'
+                                ? 'sistema'
+                                : 'claro'),
                         onTap: () => _seleccionarOpcion(
                           s('tema'),
-                          [s('claro'), s('oscuro')],
-                          s(prefs.tema == 'Claro' ? 'claro' : 'oscuro'),
-                          (v) => prefs.setTema(
-                            v == s('oscuro') ? 'Oscuro' : 'Claro',
-                          ),
+                          [s('claro'), s('oscuro'), s('sistema')],
+                          s(prefs.tema == 'Oscuro'
+                              ? 'oscuro'
+                              : prefs.tema == 'Sistema'
+                                  ? 'sistema'
+                                  : 'claro'),
+                          (v) {
+                            if (v == s('oscuro')) {
+                              prefs.setTema('Oscuro');
+                            } else if (v == s('sistema')) {
+                              prefs.setTema('Sistema');
+                            } else {
+                              prefs.setTema('Claro');
+                            }
+                          },
                         ),
                       ),
                       const SizedBox(height: 8),
