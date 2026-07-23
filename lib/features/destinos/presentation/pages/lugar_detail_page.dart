@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/di/injector.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/fade_slide_in.dart';
 import 'mapa_ruta_page.dart';
 import 'alternativas_menos_concurridas_page.dart';
 import '../../../favoritos/domain/entities/favorito.dart';
@@ -395,10 +396,17 @@ class _LugarDetailPageState extends State<LugarDetailPage> {
                             ),
                           );
                         }
+                        final resenas = provider.resenas;
                         return Column(
-                          children: provider.resenas
-                              .map((r) => ResenaCard(resena: r))
-                              .toList(),
+                          children: [
+                            for (var i = 0; i < resenas.length; i++) ...[
+                              if (i > 0) const SizedBox(height: 12),
+                              FadeSlideIn(
+                                delay: Duration(milliseconds: 40 * i),
+                                child: ResenaCard(resena: resenas[i]),
+                              ),
+                            ],
+                          ],
                         );
                       },
                     ),
@@ -548,7 +556,13 @@ class _ImageCarouselState extends State<_ImageCarousel> {
                 key: ValueKey(imagenes[index]),
                 fit: BoxFit.cover,
                 loadingBuilder: (context, child, progress) {
-                  if (progress == null) return child;
+                  if (progress == null) {
+                    // Ya cargó: fundido de entrada + zoom lento tipo
+                    // "Ken Burns" para que la foto se sienta viva aunque
+                    // sea una sola (hoy la API solo expone una por
+                    // destino), en vez de aparecer de golpe y estática.
+                    return _FotoConVida(child: child);
+                  }
                   return Container(
                     color: AppColors.primaryContainer(context),
                     child: const Center(
@@ -588,6 +602,54 @@ class _ImageCarouselState extends State<_ImageCarousel> {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// Fundido de entrada + zoom lento continuo ("Ken Burns") para que una
+/// foto de header se sienta viva en vez de estática, sin depender de
+/// tener varias imágenes para animar algo.
+class _FotoConVida extends StatefulWidget {
+  final Widget child;
+
+  const _FotoConVida({required this.child});
+
+  @override
+  State<_FotoConVida> createState() => _FotoConVidaState();
+}
+
+class _FotoConVidaState extends State<_FotoConVida>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 10),
+  )..forward();
+  late final Animation<double> _zoom = Tween<double>(
+    begin: 1.0,
+    end: 1.08,
+  ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 450),
+      curve: Curves.easeOut,
+      builder: (context, opacidad, child) {
+        return Opacity(opacity: opacidad, child: child);
+      },
+      child: AnimatedBuilder(
+        animation: _zoom,
+        builder: (context, child) =>
+            Transform.scale(scale: _zoom.value, child: child),
+        child: widget.child,
+      ),
     );
   }
 }
