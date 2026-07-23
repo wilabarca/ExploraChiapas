@@ -29,7 +29,7 @@ import '../../features/auth/presentation/providers/auth_provider.dart'
 import '../../features/Chat/data/datasource/chat_remote_datasource.dart'
     as _i730;
 import '../../features/Chat/data/datasource/conversacion_remote_datasource.dart'
-    as _i887;
+    as _i498;
 import '../../features/Chat/data/repositories/chat_repository_impl.dart'
     as _i1018;
 import '../../features/Chat/domain/repositories/i_chat_repository.dart'
@@ -119,6 +119,26 @@ import '../../features/promociones/domain/usecases/get_promociones_usecase.dart'
     as _i905;
 import '../../features/promociones/presentation/providers/promociones_provider.dart'
     as _i309;
+import '../../features/recomendar/data/datasources/recomendar_remote_datasource.dart'
+    as _i452;
+import '../../features/recomendar/data/repositories_impl/recomendar_repository_impl.dart'
+    as _i914;
+import '../../features/recomendar/domain/repositories/recomendar_repository.dart'
+    as _i546;
+import '../../features/recomendar/domain/usecases/crear_propuesta_usecase.dart'
+    as _i630;
+import '../../features/recomendar/domain/usecases/crear_ubicacion_usecase.dart'
+    as _i618;
+import '../../features/recomendar/domain/usecases/get_categorias_usecase.dart'
+    as _i2;
+import '../../features/recomendar/domain/usecases/get_mis_propuestas_usecase.dart'
+    as _i704;
+import '../../features/recomendar/domain/usecases/subir_imagenes_propuesta_usecase.dart'
+    as _i150;
+import '../../features/recomendar/presentation/providers/mis_propuestas_provider.dart'
+    as _i667;
+import '../../features/recomendar/presentation/providers/recomendar_provider.dart'
+    as _i243;
 import '../../features/resena/data/datasource/ResenasRemoteDataSource.dart'
     as _i402;
 import '../../features/resena/data/repositories/ResenasRepositoryImpl.dart'
@@ -144,29 +164,11 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i557.ApiClient>(() => _i557.ApiClient());
     gh.lazySingleton<_i322.MlApiClient>(() => _i322.MlApiClient());
     gh.lazySingleton<_i45.AvatarService>(() => _i149.AvatarServiceImpl());
-    gh.lazySingleton<_i907.NegocioRemoteDataSource>(
-      () => _i907.NegocioRemoteDataSourceImpl(gh<_i557.ApiClient>()),
-    );
-    gh.lazySingleton<_i252.NegocioRepository>(
-      () => _i722.NegocioRepositoryImpl(gh<_i907.NegocioRemoteDataSource>()),
+    gh.lazySingleton<_i498.ConversacionRemoteDatasource>(
+      () => _i498.ConversacionRemoteDatasource(gh<_i557.ApiClient>()),
     );
     gh.lazySingleton<_i730.IChatRemoteDatasource>(
       () => _i730.ChatRemoteDatasourceImpl(gh<_i322.MlApiClient>()),
-    );
-    gh.lazySingleton<_i887.ConversacionRemoteDatasource>(
-      () => _i887.ConversacionRemoteDatasource(gh<_i557.ApiClient>()),
-    );
-    gh.factory<_i820.BuscarNegocios>(
-      () => _i820.BuscarNegocios(gh<_i252.NegocioRepository>()),
-    );
-    gh.factory<_i901.BuscarNegocios>(
-      () => _i901.BuscarNegocios(gh<_i252.NegocioRepository>()),
-    );
-    gh.factory<_i933.ObtenerNegocios>(
-      () => _i933.ObtenerNegocios(gh<_i252.NegocioRepository>()),
-    );
-    gh.factory<_i810.ObtenerNegocioPorId>(
-      () => _i810.ObtenerNegocioPorId(gh<_i252.NegocioRepository>()),
     );
     gh.factory<_i1017.IHomeRemoteDatasource>(
       () => _i1017.HomeRemoteDatasourceImpl(),
@@ -183,6 +185,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i402.ResenasRemoteDataSource>(
       () => _i402.ResenasRemoteDataSourceImpl(gh<_i557.ApiClient>()),
     );
+    gh.lazySingleton<_i452.RecomendarRemoteDataSource>(
+      () => _i452.RecomendarRemoteDataSourceImpl(gh<_i557.ApiClient>()),
+    );
     gh.lazySingleton<_i484.DestinoRemoteDataSource>(
       () => _i484.DestinoRemoteDataSourceImpl(gh<_i557.ApiClient>()),
     );
@@ -195,8 +200,16 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i787.AuthRepository>(
       () => _i153.AuthRepositoryImpl(gh<_i175.AuthRemoteDataSource>()),
     );
+    gh.lazySingleton<_i907.NegocioRemoteDataSource>(
+      () => _i907.NegocioRemoteDataSourceImpl(gh<_i557.ApiClient>()),
+    );
     gh.factory<_i1031.IProfileRemoteDatasource>(
       () => _i1031.ProfileRemoteDatasourceImpl(gh<_i557.ApiClient>()),
+    );
+    gh.lazySingleton<_i546.RecomendarRepository>(
+      () => _i914.RecomendarRepositoryImpl(
+        gh<_i452.RecomendarRemoteDataSource>(),
+      ),
     );
     gh.lazySingleton<_i1.PromocionesRemoteDataSource>(
       () => _i1.PromocionesRemoteDataSourceImpl(gh<_i557.ApiClient>()),
@@ -214,8 +227,29 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i301.EnviarMensajeUseCase>(
       () => _i301.EnviarMensajeUseCase(gh<_i124.IChatRepository>()),
     );
+    gh.lazySingleton<_i252.NegocioRepository>(
+      () => _i722.NegocioRepositoryImpl(gh<_i907.NegocioRemoteDataSource>()),
+    );
     gh.factory<_i905.GetPromocionesUseCase>(
       () => _i905.GetPromocionesUseCase(gh<_i558.PromocionesRepository>()),
+    );
+    gh.factory<_i116.ChatProvider>(
+      () => _i116.ChatProvider(
+        gh<_i301.EnviarMensajeUseCase>(),
+        gh<_i498.ConversacionRemoteDatasource>(),
+      ),
+    );
+    gh.factory<_i820.BuscarNegocios>(
+      () => _i820.BuscarNegocios(gh<_i252.NegocioRepository>()),
+    );
+    gh.factory<_i901.BuscarNegocios>(
+      () => _i901.BuscarNegocios(gh<_i252.NegocioRepository>()),
+    );
+    gh.factory<_i933.ObtenerNegocios>(
+      () => _i933.ObtenerNegocios(gh<_i252.NegocioRepository>()),
+    );
+    gh.factory<_i810.ObtenerNegocioPorId>(
+      () => _i810.ObtenerNegocioPorId(gh<_i252.NegocioRepository>()),
     );
     gh.lazySingleton<_i743.FavoritosRepository>(
       () =>
@@ -227,11 +261,21 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i488.ListDestinosUseCase>(
       () => _i488.ListDestinosUseCase(gh<_i991.DestinoRepository>()),
     );
-    gh.factory<_i116.ChatProvider>(
-      () => _i116.ChatProvider(
-        gh<_i301.EnviarMensajeUseCase>(),
-        gh<_i887.ConversacionRemoteDatasource>(),
-      ),
+    gh.factory<_i630.CrearPropuestaUseCase>(
+      () => _i630.CrearPropuestaUseCase(gh<_i546.RecomendarRepository>()),
+    );
+    gh.factory<_i618.CrearUbicacionUseCase>(
+      () => _i618.CrearUbicacionUseCase(gh<_i546.RecomendarRepository>()),
+    );
+    gh.factory<_i2.GetCategoriasUseCase>(
+      () => _i2.GetCategoriasUseCase(gh<_i546.RecomendarRepository>()),
+    );
+    gh.factory<_i704.GetMisPropuestasUseCase>(
+      () => _i704.GetMisPropuestasUseCase(gh<_i546.RecomendarRepository>()),
+    );
+    gh.factory<_i150.SubirImagenesPropuestaUseCase>(
+      () =>
+          _i150.SubirImagenesPropuestaUseCase(gh<_i546.RecomendarRepository>()),
     );
     gh.factory<_i309.PromocionesProvider>(
       () => _i309.PromocionesProvider(gh<_i905.GetPromocionesUseCase>()),
@@ -267,6 +311,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i879.IProfileRepository>(
       () => _i334.ProfileRepositoryImpl(gh<_i1031.IProfileRemoteDatasource>()),
     );
+    gh.factory<_i667.MisPropuestasProvider>(
+      () => _i667.MisPropuestasProvider(gh<_i704.GetMisPropuestasUseCase>()),
+    );
     gh.factory<_i536.AddFavoritoUseCase>(
       () => _i536.AddFavoritoUseCase(gh<_i743.FavoritosRepository>()),
     );
@@ -284,6 +331,14 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i703.GetEventosUseCase>(
       () => _i703.GetEventosUseCase(gh<_i683.EventosRepository>()),
+    );
+    gh.factory<_i243.RecomendarProvider>(
+      () => _i243.RecomendarProvider(
+        gh<_i2.GetCategoriasUseCase>(),
+        gh<_i618.CrearUbicacionUseCase>(),
+        gh<_i630.CrearPropuestaUseCase>(),
+        gh<_i150.SubirImagenesPropuestaUseCase>(),
+      ),
     );
     gh.factory<_i331.DeletePerfilUseCase>(
       () => _i331.DeletePerfilUseCase(gh<_i879.IProfileRepository>()),

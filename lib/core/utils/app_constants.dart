@@ -28,6 +28,10 @@ class AppConstants {
 // Requiere Authorization: Bearer TOKEN
 static const String uploadPerfilFotoEndpoint = '/uploads/usuarios/perfil';
 
+  // Endpoints de "Recomendar lugar"
+  static const String locationsEndpoint = '/locations';
+  static const String destinationProposalsEndpoint = '/destination-proposals';
+
   // Endpoint de reseñas
   // Uso: GET {baseUrl}{reviewsEndpoint}?targetType=business&targetId=UUID
   // POST/PUT/DELETE requieren Authorization: Bearer TOKEN
