@@ -266,7 +266,7 @@ class _MapPageState extends State<MapPage> {
                       polylines: List.generate(
                         provider.allRoutes.length,
                         (i) => Polyline(
-                          points: provider.allRoutes[i]
+                          points: provider.allRoutes[i].points
                               .map((p) => LatLng(p[0], p[1]))
                               .toList(),
                           color: i == provider.selectedRouteIndex
@@ -700,6 +700,8 @@ class _MapPageState extends State<MapPage> {
                       ),
                     DestinationBottomSheet(
                       destino: selected,
+                      durationMinutes: provider.selectedRoute?.durationMinutes,
+                      distanceKm: provider.selectedRoute?.distanceKm,
                       onCerrar: provider.clearSelection,
                       onGuardar: () {
                         if (selected.esMock) {

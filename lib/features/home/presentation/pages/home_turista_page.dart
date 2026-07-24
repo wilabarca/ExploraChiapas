@@ -37,6 +37,8 @@ class HomeTuristaPage extends StatefulWidget {
 class _HomeTuristaPageState extends State<HomeTuristaPage>
     with WidgetsBindingObserver, RouteAware {
   List<Map<String, dynamic>> _destacadosML = [];
+  bool _cargandoDestacados = true;
+  bool _errorDestacados = false;
   List<Negocio> _negocios = [];
   bool _cargandoNegocios = false;
   Position? _userPos;
@@ -96,10 +98,27 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
   }
 
   Future<void> _cargarDestacadosML() async {
-    final resultados = await getIt<MlApiClient>().fetchDestacados(limite: 10);
     if (!mounted) return;
-    setState(() => _destacadosML = resultados);
-    _calcularDistanciasML(resultados);
+    setState(() {
+      _cargandoDestacados = true;
+      _errorDestacados = false;
+    });
+    try {
+      final resultados = await getIt<MlApiClient>().fetchDestacados(limite: 10);
+      if (!mounted) return;
+      setState(() {
+        _destacadosML = resultados;
+        _cargandoDestacados = false;
+        _errorDestacados = resultados.isEmpty;
+      });
+      _calcularDistanciasML(resultados);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _cargandoDestacados = false;
+        _errorDestacados = true;
+      });
+    }
   }
 
   Future<void> _cargarNegocios() async {
@@ -246,11 +265,21 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
                       final screenWidth = MediaQuery.of(context).size.width;
                       final cardHeight = screenWidth < 360 ? 255.0 : 240.0;
 
-                      if (_destacadosML.isEmpty) {
+                      if (_cargandoDestacados) {
                         return SkeletonCardRow(
                           count: 3,
                           cardHeight: cardHeight,
                           cardWidth: 180,
+                        );
+                      }
+
+                      if (_errorDestacados) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: _SeccionError(
+                            message: 'No se pudieron cargar los destinos.\nVerifica tu conexión.',
+                            onRetry: _cargarDestacadosML,
+                          ),
                         );
                       }
 

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../domain/entities/destination_entity.dart';
+import '../../domain/entities/route_info.dart';
 import '../../domain/usecases/get_destinations_usecase.dart';
 import '../../domain/usecases/get_routes_usecase.dart';
 
@@ -19,18 +20,20 @@ class MapProvider extends ChangeNotifier {
   List<DestinationEntity> _destinations = [];
   List<DestinationEntity> get destinations => _destinations;
 
-  // Todas las rutas disponibles (principal + alternativas)
-  List<List<List<double>>> _allRoutes = [];
-  List<List<List<double>>> get allRoutes => _allRoutes;
+  List<RouteInfo> _allRoutes = [];
+  List<RouteInfo> get allRoutes => _allRoutes;
 
   int _selectedRouteIndex = 0;
   int get selectedRouteIndex => _selectedRouteIndex;
 
-  // Ruta actualmente visible en el mapa
-  List<List<double>> get routePoints =>
-      _allRoutes.isEmpty ? [] : _allRoutes[_selectedRouteIndex];
-
   bool get hayAlternativas => _allRoutes.length > 1;
+
+  RouteInfo? get selectedRoute =>
+      _allRoutes.isEmpty ? null : _allRoutes[_selectedRouteIndex];
+
+  // Puntos del trayecto activo para dibujar en el mapa
+  List<List<double>> get routePoints =>
+      selectedRoute?.points ?? [];
 
   String? _routeError;
   String? get routeError => _routeError;
@@ -38,7 +41,6 @@ class MapProvider extends ChangeNotifier {
   DestinationEntity? _selected;
   DestinationEntity? get selected => _selected;
 
-  // Navegación en tiempo real
   bool _enNavegacion = false;
   bool get enNavegacion => _enNavegacion;
 
@@ -85,9 +87,6 @@ class MapProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Devuelve true si logró calcular al menos una ruta. Si falla, deja el
-  /// motivo en [routeError] y NO entra en modo navegación — antes el error
-  /// se tragaba en silencio y la app "navegaba" sin ninguna ruta dibujada.
   Future<bool> loadRouteTo(DestinationEntity destino) async {
     double originLat = 16.7521;
     double originLng = -93.1152;
@@ -110,7 +109,7 @@ class MapProvider extends ChangeNotifier {
         _userHeading = pos.heading;
       }
     } catch (_) {
-      // Sin GPS disponible: se sigue con el origen por defecto (Tuxtla).
+      // Sin GPS: se usa el centro de Chiapas como origen por defecto.
     }
 
     try {

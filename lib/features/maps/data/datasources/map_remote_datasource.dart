@@ -1,7 +1,10 @@
+import 'dart:math' as math;
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/utils/app_constants.dart';
+import '../../domain/entities/route_info.dart';
 import 'remote/models/destination_model.dart';
 
 abstract class IMapRemoteDatasource {
@@ -11,7 +14,7 @@ abstract class IMapRemoteDatasource {
     required double lng,
     required double radioKm,
   });
-  Future<List<List<List<double>>>> getRoutes({
+  Future<List<RouteInfo>> getRoutes({
     required double originLat,
     required double originLng,
     required double destLat,
@@ -171,7 +174,7 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
   }
 
   @override
-  Future<List<List<List<double>>>> getRoutes({
+  Future<List<RouteInfo>> getRoutes({
     required double originLat,
     required double originLng,
     required double destLat,
@@ -192,23 +195,18 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
         queryParameters: {
           'overview': 'full',
           'geometries': 'geojson',
-          // Pedir un número explícito (en vez de 'true') hace que OSRM
-          // intente más en serio devolver rutas alternas reales; aun así
-          // no está garantizado — depende de que existan caminos
-          // realmente distintos entre origen y destino.
           'alternatives': '2',
         },
       );
     } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionError) {
+        // Sin internet: devuelve estimación Haversine para poder mostrar algo.
+        return [_fallbackHaversine(originLat, originLng, destLat, destLng)];
+      }
       if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout ||
           e.type == DioExceptionType.sendTimeout) {
-        throw Exception(
-          'El servicio de rutas tardó demasiado en responder. Intenta de nuevo.',
-        );
-      }
-      if (e.type == DioExceptionType.connectionError) {
-        throw Exception('Sin conexión a internet. Verifica tu red.');
+        return [_fallbackHaversine(originLat, originLng, destLat, destLng)];
       }
       throw Exception('No se pudo calcular la ruta. Intenta de nuevo.');
     }
@@ -224,9 +222,65 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
     return routes.map((route) {
       final coords =
           (route['geometry']['coordinates'] as List<dynamic>).cast<List<dynamic>>();
-      return coords
+      final points = coords
           .map((c) => [(c[1] as num).toDouble(), (c[0] as num).toDouble()])
           .toList();
+
+      final rawMeters = (route['distance'] as num?)?.toDouble() ?? 0.0;
+      final rawSeconds = (route['duration'] as num?)?.toDouble() ?? 0.0;
+      final distanceKm = (rawMeters / 1000 * 10).round() / 10.0;
+
+      // Modelo de corrección diferenciado por zona (ver README de rutas):
+      //   < 20 km  → 1.2x  urbano (Tuxtla / San Cristóbal)
+      //   20–80 km → 1.4x  semi-rural (conexiones entre cabeceras)
+      //   > 80 km  → 1.6x  rural/montaña (Palenque, Montebello, El Chiflón)
+      final factor = _factorCorreccion(rawMeters);
+      final durationMinutes = (rawSeconds * factor / 60).round();
+
+      return RouteInfo(
+        points: points,
+        durationMinutes: durationMinutes,
+        distanceKm: distanceKm,
+      );
     }).toList();
+  }
+
+  // Factor diferenciado: OSRM usa velocidades teóricas de OSM que no reflejan
+  // la realidad de Chiapas (topes, curvas de montaña, caminos de terracería).
+  static double _factorCorreccion(double metros) {
+    final km = metros / 1000;
+    if (km < 20) return 1.2;
+    if (km < 80) return 1.4;
+    return 1.6;
+  }
+
+  // Estimación de respaldo cuando OSRM no está disponible.
+  // Haversine da línea recta; multiplicamos por 1.35 (tortuosidad típica de
+  // carreteras en sierra) y asumimos 35 km/h promedio (urbano+rural).
+  static RouteInfo _fallbackHaversine(
+    double lat1, double lng1,
+    double lat2, double lng2,
+  ) {
+    const r = 6371000.0;
+    final dLat = (lat2 - lat1) * math.pi / 180;
+    final dLng = (lng2 - lng1) * math.pi / 180;
+    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(lat1 * math.pi / 180) *
+            math.cos(lat2 * math.pi / 180) *
+            math.sin(dLng / 2) *
+            math.sin(dLng / 2);
+    final lineaRecta = r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+    final distanciaMetros = lineaRecta * 1.35;
+    final distanciaKm = (distanciaMetros / 1000 * 10).round() / 10.0;
+    final durationMinutes = (distanciaMetros / (35000 / 60)).round();
+
+    // Sin OSRM no tenemos polilínea real — devolvemos solo origen y destino
+    // para que el mapa dibuje una línea recta indicativa.
+    final points = [[lat1, lng1], [lat2, lng2]];
+    return RouteInfo(
+      points: points,
+      durationMinutes: durationMinutes,
+      distanceKm: distanciaKm,
+    );
   }
 }
