@@ -41,32 +41,36 @@ class DestinationBottomSheet extends StatefulWidget {
 class _DestinationBottomSheetState extends State<DestinationBottomSheet> {
   _ModoTransporte _modo = _ModoTransporte.carro;
 
-  RouteInfo? _routeParaModo(_ModoTransporte modo) {
+  // OSM pedestrian/bike data for Chiapas is incomplete and gives unreliable
+  // results (OSRM foot can return 2 min for a 19-min walk). We estimate
+  // all non-car modes from the reliable driving distance instead.
+  int? _tiempoParaModo(_ModoTransporte modo) {
+    final driving = widget.routeInfo;
+    if (driving == null) return null;
+    final distKm = driving.distanceKm;
+    final carMin = driving.durationMinutes;
     switch (modo) {
       case _ModoTransporte.carro:
-        return widget.routeInfo;
+        return carMin;
       case _ModoTransporte.moto:
-        return widget.routeInfo; // mismo perfil driving, tiempo -10%
+        // Moto hereda corrección de terreno del carro, ~10% más rápida
+        return (carMin * 0.90).round();
       case _ModoTransporte.pie:
-        return widget.routePie;
+        // 4.5 km/h realista para Chiapas (pendientes, veredas de tierra)
+        return (distKm / 4.5 * 60).round();
       case _ModoTransporte.bici:
-        return widget.routeBici;
+        // 13 km/h en terreno mixto con pendientes chiapanecas
+        return (distKm / 13.0 * 60).round();
     }
-  }
-
-  int? _tiempoParaModo(_ModoTransporte modo) {
-    final route = _routeParaModo(modo);
-    if (route == null) return null;
-    if (modo == _ModoTransporte.moto) {
-      return (route.durationMinutes * 0.90).round();
-    }
-    return route.durationMinutes;
   }
 
   String _distanciaParaModo(_ModoTransporte modo) {
-    final route = _routeParaModo(modo);
-    if (route == null) return '-- km';
-    return route.distanceText;
+    final driving = widget.routeInfo;
+    if (driving == null) return '-- km';
+    // Todos los modos muestran la distancia de carretera (la más confiable).
+    // A pie y Bici suelen tener rutas más directas pero OSM no las tiene bien
+    // mapeadas en Chiapas, así que evitamos inventar datos.
+    return driving.distanceText;
   }
 
   bool get _hayRutasCalculadas => widget.routeInfo != null;
