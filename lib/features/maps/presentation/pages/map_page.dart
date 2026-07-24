@@ -1037,6 +1037,8 @@ class _MapPageState extends State<MapPage>
                     DestinationBottomSheet(
                       destino: selected,
                       routeInfo: provider.selectedRouteInfo,
+                      routePie: provider.routePie,
+                      routeBici: provider.routeBici,
                       esRecomendado:
                           interesesUsuario != null &&
                           selected.categoryId != null &&

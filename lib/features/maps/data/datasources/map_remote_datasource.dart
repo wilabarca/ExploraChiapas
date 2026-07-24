@@ -19,6 +19,7 @@ abstract class IMapRemoteDatasource {
     required double originLng,
     required double destLat,
     required double destLng,
+    String perfil = 'driving',
   });
 }
 
@@ -264,6 +265,7 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
     required double originLng,
     required double destLat,
     required double destLng,
+    String perfil = 'driving',
   }) async {
     final dio = Dio(
       BaseOptions(
@@ -275,7 +277,7 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
     Response<Map<String, dynamic>> response;
     try {
       response = await dio.get<Map<String, dynamic>>(
-        'https://router.project-osrm.org/route/v1/driving/'
+        'https://router.project-osrm.org/route/v1/$perfil/'
         '$originLng,$originLat;$destLng,$destLat',
         queryParameters: {
           'overview': 'full',
@@ -312,9 +314,9 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
           .toList();
       final rawMeters = (route['distance'] as num?)?.toDouble() ?? 0.0;
       final rawSeconds = (route['duration'] as num?)?.toDouble() ?? 0.0;
-      // Factor diferenciado: OSRM usa velocidades teóricas que no reflejan
-      // la realidad de Chiapas (topes, curvas de montaña, terracería).
-      final factor = _factorCorreccion(rawMeters);
+      // El factor de corrección solo aplica a driving: OSRM foot y bike
+      // ya usan velocidades peatonales/ciclistas realistas de OSM.
+      final factor = perfil == 'driving' ? _factorCorreccion(rawMeters) : 1.0;
       return RouteInfo(
         points: points,
         distanceMeters: rawMeters,

@@ -8,7 +8,9 @@ enum _ModoTransporte { carro, moto, pie, bici }
 
 class DestinationBottomSheet extends StatefulWidget {
   final DestinationEntity destino;
-  final RouteInfo? routeInfo;
+  final RouteInfo? routeInfo;       // driving (carro/moto)
+  final RouteInfo? routePie;        // foot
+  final RouteInfo? routeBici;       // bike
   final bool esRecomendado;
   final VoidCallback onVerRuta;
   final VoidCallback? onRecalcular;
@@ -21,6 +23,8 @@ class DestinationBottomSheet extends StatefulWidget {
     super.key,
     required this.destino,
     this.routeInfo,
+    this.routePie,
+    this.routeBici,
     this.esRecomendado = false,
     required this.onVerRuta,
     this.onRecalcular,
@@ -37,45 +41,40 @@ class DestinationBottomSheet extends StatefulWidget {
 class _DestinationBottomSheetState extends State<DestinationBottomSheet> {
   _ModoTransporte _modo = _ModoTransporte.carro;
 
-  double? get _distanciaKm => widget.routeInfo?.distanceKm ?? widget.distanceKm;
+  RouteInfo? _routeParaModo(_ModoTransporte modo) {
+    switch (modo) {
+      case _ModoTransporte.carro:
+        return widget.routeInfo;
+      case _ModoTransporte.moto:
+        return widget.routeInfo; // mismo perfil driving, tiempo -10%
+      case _ModoTransporte.pie:
+        return widget.routePie;
+      case _ModoTransporte.bici:
+        return widget.routeBici;
+    }
+  }
 
   int? _tiempoParaModo(_ModoTransporte modo) {
-    final dist = _distanciaKm;
-    if (dist == null) return null;
-    final carMin = (widget.routeInfo?.durationMinutes ?? widget.durationMinutes) ?? 0;
-
-    switch (modo) {
-      case _ModoTransporte.carro:
-        return carMin > 0 ? carMin : null;
-      case _ModoTransporte.moto:
-        // Moto hereda la corrección de terreno del carro, ~10% más rápida
-        return carMin > 0 ? (carMin * 0.90).round() : null;
-      case _ModoTransporte.pie:
-        // 4 km/h en Chiapas (pendientes, veredas); distancia estimada 70% de la vial
-        return (dist * 0.70 / 4.0 * 60).round();
-      case _ModoTransporte.bici:
-        // 13 km/h en terreno mixto; distancia estimada 85% de la vial
-        return (dist * 0.85 / 13.0 * 60).round();
+    final route = _routeParaModo(modo);
+    if (route == null) return null;
+    if (modo == _ModoTransporte.moto) {
+      return (route.durationMinutes * 0.90).round();
     }
+    return route.durationMinutes;
   }
 
-  String _distanciaKmParaModo(_ModoTransporte modo) {
-    final dist = _distanciaKm;
-    if (dist == null) return '-- km';
-    switch (modo) {
-      case _ModoTransporte.carro:
-      case _ModoTransporte.moto:
-        return '${dist.toStringAsFixed(1)} km';
-      case _ModoTransporte.pie:
-        return '~${(dist * 0.70).toStringAsFixed(1)} km';
-      case _ModoTransporte.bici:
-        return '~${(dist * 0.85).toStringAsFixed(1)} km';
-    }
+  String _distanciaParaModo(_ModoTransporte modo) {
+    final route = _routeParaModo(modo);
+    if (route == null) return '-- km';
+    return route.distanceText;
   }
+
+  bool get _hayRutasCalculadas => widget.routeInfo != null;
 
   @override
   Widget build(BuildContext context) {
     final durationModo = _tiempoParaModo(_modo);
+    final distanciaLabel = _distanciaParaModo(_modo);
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
       decoration: BoxDecoration(
@@ -331,7 +330,7 @@ class _DestinationBottomSheetState extends State<DestinationBottomSheet> {
 
           const SizedBox(height: 20),
 
-          if (_distanciaKm != null) ...[
+          if (_hayRutasCalculadas) ...[
             // Tabs de modo de transporte
             Row(
               children: [
@@ -377,7 +376,7 @@ class _DestinationBottomSheetState extends State<DestinationBottomSheet> {
                 if (durationModo != null) const SizedBox(width: 10),
                 _InfoChip(
                   icon: Icons.straighten_rounded,
-                  label: _distanciaKmParaModo(_modo),
+                  label: distanciaLabel,
                 ),
               ],
             ),
