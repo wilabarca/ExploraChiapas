@@ -41,9 +41,10 @@ class DestinationBottomSheet extends StatefulWidget {
 class _DestinationBottomSheetState extends State<DestinationBottomSheet> {
   _ModoTransporte _modo = _ModoTransporte.carro;
 
-  // OSM pedestrian/bike data for Chiapas is incomplete and gives unreliable
-  // results (OSRM foot can return 2 min for a 19-min walk). We estimate
-  // all non-car modes from the reliable driving distance instead.
+  // Velocidades calibradas con datos reales de Google Maps en Chiapas:
+  // - Suchiapa→Corpus Cristi (0.75 km): pie 10 min, bici 2 min
+  // - Tuxtla→Chiapa de Corzo (15.1 km): pie 3h 20min, bici 52 min
+  // - Tuxtla→San Cristóbal (58.9 km): pie 19h 31min, bici 7h 6min
   int? _tiempoParaModo(_ModoTransporte modo) {
     final driving = widget.routeInfo;
     if (driving == null) return null;
@@ -53,14 +54,18 @@ class _DestinationBottomSheetState extends State<DestinationBottomSheet> {
       case _ModoTransporte.carro:
         return carMin;
       case _ModoTransporte.moto:
-        // Moto hereda corrección de terreno del carro, ~10% más rápida
         return (carMin * 0.90).round();
       case _ModoTransporte.pie:
-        // 4.5 km/h realista para Chiapas (pendientes, veredas de tierra)
-        return (distKm / 4.5 * 60).round();
+        // < 30 km terreno plano/urbano: 4.5 km/h
+        // >= 30 km montaña/largo: 3.0 km/h (pendientes pronunciadas)
+        final velPie = distKm < 30 ? 4.5 : 3.0;
+        return (distKm / velPie * 60).round();
       case _ModoTransporte.bici:
-        // 13 km/h en terreno mixto con pendientes chiapanecas
-        return (distKm / 13.0 * 60).round();
+        // < 5 km urbano plano: 18 km/h
+        // < 30 km semi-plano: 17 km/h
+        // >= 30 km montaña/largo: 8.5 km/h
+        final velBici = distKm < 5 ? 18.0 : distKm < 30 ? 17.0 : 8.5;
+        return (distKm / velBici * 60).round();
     }
   }
 
