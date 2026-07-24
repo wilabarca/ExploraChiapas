@@ -131,27 +131,13 @@ class MapProvider extends ChangeNotifier {
     }
 
     try {
-      // Llamadas en paralelo: driving (carro/moto), foot (a pie), bike (bici)
-      final resultados = await Future.wait([
-        _getRoute(
-          originLat: originLat, originLng: originLng,
-          destLat: destino.lat, destLng: destino.lng,
-          perfil: 'driving',
-        ),
-        _getRoute(
-          originLat: originLat, originLng: originLng,
-          destLat: destino.lat, destLng: destino.lng,
-          perfil: 'foot',
-        ).catchError((_) => <RouteInfo>[]),
-        _getRoute(
-          originLat: originLat, originLng: originLng,
-          destLat: destino.lat, destLng: destino.lng,
-          perfil: 'bike',
-        ).catchError((_) => <RouteInfo>[]),
-      ]);
-      _allRoutes = resultados[0];
-      _routePie = resultados[1].isNotEmpty ? resultados[1].first : null;
-      _routeBici = resultados[2].isNotEmpty ? resultados[2].first : null;
+      final rutas = await _getRoute(
+        originLat: originLat, originLng: originLng,
+        destLat: destino.lat, destLng: destino.lng,
+      );
+      _allRoutes = rutas;
+      _routePie = null;
+      _routeBici = null;
       _selectedRouteIndex = 0;
       _routeError = null;
       notifyListeners();
