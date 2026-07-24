@@ -274,55 +274,30 @@ class _DestinationBottomSheetState extends State<DestinationBottomSheet> {
             ],
           ),
 
-          if (routeInfo != null) ...[
+          if (widget.routeInfo != null && widget.onRecalcular != null) ...[
             const SizedBox(height: 14),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppColors.primaryContainer(context),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.route_outlined,
-                    size: 18,
-                    color: AppColors.primary(context),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${routeInfo!.distanceText} · ${routeInfo!.durationText}',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primary(context),
-                    ),
-                  ),
-                  const Spacer(),
-                  if (onRecalcular != null)
-                    GestureDetector(
-                      onTap: onRecalcular,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.refresh,
-                            size: 15,
-                            color: AppColors.primary(context),
-                          ),
-                          const SizedBox(width: 3),
-                          Text(
-                            'Recalcular',
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.primary(context),
-                            ),
-                          ),
-                        ],
+            GestureDetector(
+              onTap: widget.onRecalcular,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryContainer(context),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.refresh, size: 15, color: AppColors.primary(context)),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Recalcular ruta',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary(context),
                       ),
                     ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],
