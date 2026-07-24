@@ -24,10 +24,12 @@ class MapRepositoryImpl implements IMapRepository {
     required double originLng,
     required double destLat,
     required double destLng,
+    String perfil = 'driving',
   }) => _datasource.getRoutes(
     originLat: originLat,
     originLng: originLng,
     destLat: destLat,
     destLng: destLng,
+    perfil: perfil,
   );
 }

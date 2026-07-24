@@ -8,7 +8,9 @@ enum _ModoTransporte { carro, moto, pie, bici }
 
 class DestinationBottomSheet extends StatefulWidget {
   final DestinationEntity destino;
-  final RouteInfo? routeInfo;
+  final RouteInfo? routeInfo;       // driving (carro/moto)
+  final RouteInfo? routePie;        // foot
+  final RouteInfo? routeBici;       // bike
   final bool esRecomendado;
   final VoidCallback onVerRuta;
   final VoidCallback? onRecalcular;
@@ -21,6 +23,8 @@ class DestinationBottomSheet extends StatefulWidget {
     super.key,
     required this.destino,
     this.routeInfo,
+    this.routePie,
+    this.routeBici,
     this.esRecomendado = false,
     required this.onVerRuta,
     this.onRecalcular,
@@ -37,29 +41,40 @@ class DestinationBottomSheet extends StatefulWidget {
 class _DestinationBottomSheetState extends State<DestinationBottomSheet> {
   _ModoTransporte _modo = _ModoTransporte.carro;
 
-  // Velocidades promedio en Chiapas por modo (km/h)
-  static const _velocidades = {
-    _ModoTransporte.carro: 0.0,  // usa durationMinutes de OSRM
-    _ModoTransporte.moto: 45.0,
-    _ModoTransporte.pie: 5.0,
-    _ModoTransporte.bici: 12.0,
-  };
-
-  double? get _distanciaKm => widget.routeInfo?.distanceKm ?? widget.distanceKm;
+  RouteInfo? _routeParaModo(_ModoTransporte modo) {
+    switch (modo) {
+      case _ModoTransporte.carro:
+        return widget.routeInfo;
+      case _ModoTransporte.moto:
+        return widget.routeInfo; // mismo perfil driving, tiempo -10%
+      case _ModoTransporte.pie:
+        return widget.routePie;
+      case _ModoTransporte.bici:
+        return widget.routeBici;
+    }
+  }
 
   int? _tiempoParaModo(_ModoTransporte modo) {
-    final dist = _distanciaKm;
-    if (dist == null) return null;
-    if (modo == _ModoTransporte.carro) {
-      return widget.routeInfo?.durationMinutes ?? widget.durationMinutes;
+    final route = _routeParaModo(modo);
+    if (route == null) return null;
+    if (modo == _ModoTransporte.moto) {
+      return (route.durationMinutes * 0.90).round();
     }
-    final vel = _velocidades[modo]!;
-    return (dist / vel * 60).round();
+    return route.durationMinutes;
   }
+
+  String _distanciaParaModo(_ModoTransporte modo) {
+    final route = _routeParaModo(modo);
+    if (route == null) return '-- km';
+    return route.distanceText;
+  }
+
+  bool get _hayRutasCalculadas => widget.routeInfo != null;
 
   @override
   Widget build(BuildContext context) {
     final durationModo = _tiempoParaModo(_modo);
+    final distanciaLabel = _distanciaParaModo(_modo);
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
       decoration: BoxDecoration(
@@ -315,7 +330,7 @@ class _DestinationBottomSheetState extends State<DestinationBottomSheet> {
 
           const SizedBox(height: 20),
 
-          if (_distanciaKm != null) ...[
+          if (_hayRutasCalculadas) ...[
             // Tabs de modo de transporte
             Row(
               children: [
@@ -361,7 +376,7 @@ class _DestinationBottomSheetState extends State<DestinationBottomSheet> {
                 if (durationModo != null) const SizedBox(width: 10),
                 _InfoChip(
                   icon: Icons.straighten_rounded,
-                  label: '${_distanciaKm!.toStringAsFixed(1)} km',
+                  label: distanciaLabel,
                 ),
               ],
             ),

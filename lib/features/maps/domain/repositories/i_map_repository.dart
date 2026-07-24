@@ -13,5 +13,6 @@ abstract class IMapRepository {
     required double originLng,
     required double destLat,
     required double destLng,
+    String perfil = 'driving',
   });
 }
