@@ -37,24 +37,40 @@ class DestinationBottomSheet extends StatefulWidget {
 class _DestinationBottomSheetState extends State<DestinationBottomSheet> {
   _ModoTransporte _modo = _ModoTransporte.carro;
 
-  // Velocidades promedio en Chiapas por modo (km/h)
-  static const _velocidades = {
-    _ModoTransporte.carro: 0.0,  // usa durationMinutes de OSRM
-    _ModoTransporte.moto: 45.0,
-    _ModoTransporte.pie: 5.0,
-    _ModoTransporte.bici: 12.0,
-  };
-
   double? get _distanciaKm => widget.routeInfo?.distanceKm ?? widget.distanceKm;
 
   int? _tiempoParaModo(_ModoTransporte modo) {
     final dist = _distanciaKm;
     if (dist == null) return null;
-    if (modo == _ModoTransporte.carro) {
-      return widget.routeInfo?.durationMinutes ?? widget.durationMinutes;
+    final carMin = (widget.routeInfo?.durationMinutes ?? widget.durationMinutes) ?? 0;
+
+    switch (modo) {
+      case _ModoTransporte.carro:
+        return carMin > 0 ? carMin : null;
+      case _ModoTransporte.moto:
+        // Moto hereda la corrección de terreno del carro, ~10% más rápida
+        return carMin > 0 ? (carMin * 0.90).round() : null;
+      case _ModoTransporte.pie:
+        // 4 km/h en Chiapas (pendientes, veredas); distancia estimada 70% de la vial
+        return (dist * 0.70 / 4.0 * 60).round();
+      case _ModoTransporte.bici:
+        // 13 km/h en terreno mixto; distancia estimada 85% de la vial
+        return (dist * 0.85 / 13.0 * 60).round();
     }
-    final vel = _velocidades[modo]!;
-    return (dist / vel * 60).round();
+  }
+
+  String _distanciaKmParaModo(_ModoTransporte modo) {
+    final dist = _distanciaKm;
+    if (dist == null) return '-- km';
+    switch (modo) {
+      case _ModoTransporte.carro:
+      case _ModoTransporte.moto:
+        return '${dist.toStringAsFixed(1)} km';
+      case _ModoTransporte.pie:
+        return '~${(dist * 0.70).toStringAsFixed(1)} km';
+      case _ModoTransporte.bici:
+        return '~${(dist * 0.85).toStringAsFixed(1)} km';
+    }
   }
 
   @override
@@ -361,7 +377,7 @@ class _DestinationBottomSheetState extends State<DestinationBottomSheet> {
                 if (durationModo != null) const SizedBox(width: 10),
                 _InfoChip(
                   icon: Icons.straighten_rounded,
-                  label: '${_distanciaKm!.toStringAsFixed(1)} km',
+                  label: _distanciaKmParaModo(_modo),
                 ),
               ],
             ),
