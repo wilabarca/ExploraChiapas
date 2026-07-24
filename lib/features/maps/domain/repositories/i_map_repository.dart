@@ -1,4 +1,5 @@
 import '../entities/destination_entity.dart';
+import '../entities/route_info.dart';
 
 abstract class IMapRepository {
   Future<List<DestinationEntity>> getDestinations({String? tipo});
@@ -7,7 +8,7 @@ abstract class IMapRepository {
     required double lng,
     required double radioKm,
   });
-  Future<List<List<List<double>>>> getRoutes({
+  Future<List<RouteInfo>> getRoutes({
     required double originLat,
     required double originLng,
     required double destLat,

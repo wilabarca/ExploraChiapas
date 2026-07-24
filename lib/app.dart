@@ -9,6 +9,7 @@ import 'core/providers/preferences_provider.dart';
 import 'core/providers/locale_provider.dart';
 import 'core/theme/app_theme.dart';
 
+import 'features/auth/presentation/pages/splash_page.dart';
 import 'features/auth/presentation/pages/welcome_page.dart';
 import 'features/auth/presentation/pages/register_page.dart';
 import 'features/auth/presentation/pages/login_page.dart';
@@ -16,9 +17,6 @@ import 'features/auth/presentation/pages/interests_page.dart';
 import 'features/auth/presentation/pages/permitir_acceso_page.dart';
 
 import 'features/auth/presentation/providers/auth_provider.dart';
-import 'features/biometric_auth/presentation/pages/biometric_unavailable_page.dart';
-import 'features/biometric_auth/presentation/pages/fingerprint_gate_page.dart';
-import 'features/biometric_auth/presentation/providers/biometric_auth_provider.dart';
 import 'features/profile/presentation/providers/profile_provider.dart';
 import 'features/Chat/presentation/providers/chat_provider.dart';
 import 'features/destinos/presentation/providers/destinos_provider.dart';
@@ -48,6 +46,7 @@ import 'features/recomendar/presentation/pages/mis_propuestas_page.dart';
 import 'features/recomendar/presentation/providers/recomendar_provider.dart';
 import 'features/recomendar/presentation/providers/mis_propuestas_provider.dart';
 import 'features/resena/presentation/pages/home_resenas_page.dart';
+import 'features/resena/presentation/providers/resenas_feed_provider.dart';
 import 'features/negocio/presentation/pages/negocio_lista_page.dart';
 import 'features/promociones/presentation/pages/promociones_page.dart';
 
@@ -58,13 +57,15 @@ class ExploraChiapasApp extends StatefulWidget {
   State<ExploraChiapasApp> createState() => _ExploraChiapasAppState();
 }
 
-class _ExploraChiapasAppState extends State<ExploraChiapasApp> {
+class _ExploraChiapasAppState extends State<ExploraChiapasApp>
+    with WidgetsBindingObserver {
   final _prefsProvider = PreferencesProvider();
   final _localeProvider = LocaleProvider();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _prefsProvider.cargar();
     _localeProvider.cargar();
     // Execute any notification tap navigation that arrived before the
@@ -75,14 +76,38 @@ class _ExploraChiapasAppState extends State<ExploraChiapasApp> {
   }
 
   @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // Android decide si mata el proceso al deslizar la app fuera del
+  // administrador de tareas — Flutter/Dart no puede ni debe forzar esa
+  // decisión (llamar `exit()`/`SystemNavigator.pop()` para "matarse a sí
+  // misma" es un antipatrón desaconsejado por Flutter/Android, y en la
+  // práctica no es necesario): cuando el proceso muere de verdad,
+  // `main()` se vuelve a ejecutar desde cero en el siguiente arranque, y
+  // el flujo Splash → validación de sesión (`WelcomePage`) ya se
+  // encarga de decidir Home o Login correctamente — nunca "continúa"
+  // con estado viejo porque no hay ningún estado viejo: es un proceso
+  // Dart nuevo. Si el sistema decide mantener el proceso en segundo
+  // plano (no lo mató), lo que hay aquí es simplemente pausa/resume
+  // normal de la app, no un reinicio — comportamiento esperado igual
+  // en cualquier app.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.detached) {
+      debugPrint('App: proceso a punto de finalizar (detached).');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<AuthProvider>(
           create: (_) => getIt<AuthProvider>(),
-        ),
-        ChangeNotifierProvider<BiometricAuthProvider>(
-          create: (_) => getIt<BiometricAuthProvider>(),
         ),
         ChangeNotifierProvider<ProfileProvider>(
           create: (_) => getIt<ProfileProvider>(),
@@ -130,12 +155,22 @@ class _ExploraChiapasAppState extends State<ExploraChiapasApp> {
             themeMode: prefs.themeMode,
             theme: AppTheme.light(),
             darkTheme: AppTheme.dark(),
-            initialRoute: '/',
+            initialRoute: '/splash',
             onGenerateRoute: (settings) {
               debugPrint('Navegando a: ${settings.name}');
 
               switch (settings.name) {
+                case '/splash':
+                  return MaterialPageRoute(
+                    builder: (_) => const SplashPage(),
+                    settings: settings,
+                  );
+
+                // '/' se conserva como alias de Welcome: el interceptor de
+                // 401 y el logout navegan aquí directo (ya saben que no hay
+                // sesión válida, no necesitan pasar de nuevo por Splash).
                 case '/':
+                case '/welcome':
                   return MaterialPageRoute(
                     builder: (_) => const WelcomePage(),
                     settings: settings,
@@ -162,18 +197,6 @@ class _ExploraChiapasAppState extends State<ExploraChiapasApp> {
                 case '/permisos':
                   return MaterialPageRoute(
                     builder: (_) => const PermitirAccesoPage(),
-                    settings: settings,
-                  );
-
-                case '/huella':
-                  return MaterialPageRoute(
-                    builder: (_) => const FingerprintGatePage(),
-                    settings: settings,
-                  );
-
-                case '/biometria-no-disponible':
-                  return MaterialPageRoute(
-                    builder: (_) => const BiometricUnavailablePage(),
                     settings: settings,
                   );
 
@@ -213,7 +236,10 @@ class _ExploraChiapasAppState extends State<ExploraChiapasApp> {
 
                 case '/resenas':
                   return MaterialPageRoute(
-                    builder: (_) => const HomeResenasPage(),
+                    builder: (_) => ChangeNotifierProvider<ResenasFeedProvider>(
+                      create: (_) => getIt<ResenasFeedProvider>(),
+                      child: const HomeResenasPage(),
+                    ),
                     settings: settings,
                   );
 
@@ -250,10 +276,11 @@ class _ExploraChiapasAppState extends State<ExploraChiapasApp> {
 
                 case '/mis-propuestas':
                   return MaterialPageRoute(
-                    builder: (_) => ChangeNotifierProvider<MisPropuestasProvider>(
-                      create: (_) => getIt<MisPropuestasProvider>(),
-                      child: const MisPropuestasPage(),
-                    ),
+                    builder: (_) =>
+                        ChangeNotifierProvider<MisPropuestasProvider>(
+                          create: (_) => getIt<MisPropuestasProvider>(),
+                          child: const MisPropuestasPage(),
+                        ),
                     settings: settings,
                   );
 

@@ -33,7 +33,17 @@ class MisPropuestasProvider extends ChangeNotifier {
         _errorMessage = failure.message;
       },
       (propuestas) {
-        _propuestas = propuestas;
+        // Más recientes primero; las que no traigan fecha (caso raro)
+        // se dejan al final en vez de alterar el orden del resto.
+        _propuestas = [...propuestas]
+          ..sort((a, b) {
+            final fechaA = a.createdAt;
+            final fechaB = b.createdAt;
+            if (fechaA == null && fechaB == null) return 0;
+            if (fechaA == null) return 1;
+            if (fechaB == null) return -1;
+            return fechaB.compareTo(fechaA);
+          });
         _status = MisPropuestasStatus.success;
       },
     );

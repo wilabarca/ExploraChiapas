@@ -1,18 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../domain/entities/destination_entity.dart';
+import '../../domain/entities/route_info.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class DestinationBottomSheet extends StatelessWidget {
   final DestinationEntity destino;
+  final RouteInfo? routeInfo;
+  final bool esRecomendado;
   final VoidCallback onVerRuta;
+  final VoidCallback? onRecalcular;
   final VoidCallback onGuardar;
   final VoidCallback onCerrar;
 
   const DestinationBottomSheet({
     super.key,
     required this.destino,
+    this.routeInfo,
+    this.esRecomendado = false,
     required this.onVerRuta,
+    this.onRecalcular,
     required this.onGuardar,
     required this.onCerrar,
   });
@@ -91,6 +98,36 @@ class DestinationBottomSheet extends StatelessWidget {
                           ],
                         ),
                         _TipoBadge(tipo: destino.tipo),
+                        if (esRecomendado)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary(context),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.star,
+                                  size: 11,
+                                  color: AppColors.onPrimary(context),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Para ti',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.onPrimary(context),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         if (destino.esMock)
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -203,6 +240,59 @@ class DestinationBottomSheet extends StatelessWidget {
             ],
           ),
 
+          if (routeInfo != null) ...[
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.primaryContainer(context),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.route_outlined,
+                    size: 18,
+                    color: AppColors.primary(context),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${routeInfo!.distanceText} · ${routeInfo!.durationText}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary(context),
+                    ),
+                  ),
+                  const Spacer(),
+                  if (onRecalcular != null)
+                    GestureDetector(
+                      onTap: onRecalcular,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.refresh,
+                            size: 15,
+                            color: AppColors.primary(context),
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            'Recalcular',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+
           const SizedBox(height: 12),
 
           Text(
@@ -283,13 +373,16 @@ class _TipoBadge extends StatelessWidget {
   final String tipo;
   const _TipoBadge({required this.tipo});
 
-  // Softer background colors (same palette, reduced saturation)
+  // Softer background colors (same palette, reduced saturation). Claves
+  // alineadas con las 6 categorías reales de `/categories?scope=destinos`.
   static const _fondos = {
     'naturaleza': Color(0xFFE8F5E9),
     'cultura': Color(0xFFE3F2FD),
     'gastronomia': Color(0xFFFFF3E0),
     'aventura': Color(0xFFF3E5F5),
     'descanso': Color(0xFFE0F7FA),
+    'pueblos magicos': Color(0xFFFCE4EC),
+    'arqueologia': Color(0xFFEFEBE9),
   };
   static const _fondosDark = {
     'naturaleza': Color(0xFF1B3A1C),
@@ -297,13 +390,17 @@ class _TipoBadge extends StatelessWidget {
     'gastronomia': Color(0xFF3A2200),
     'aventura': Color(0xFF2A0B3A),
     'descanso': Color(0xFF003A40),
+    'pueblos magicos': Color(0xFF3A0D24),
+    'arqueologia': Color(0xFF2A211D),
   };
   static const _textos = {
     'naturaleza': Color(0xFF43A047),
     'cultura': Color(0xFF1976D2),
     'gastronomia': Color(0xFFEF6C00),
     'aventura': Color(0xFF7B1FA2),
-    'descanso': Color(0xFF00ACC1),
+    'descanso': Color(0xFF00838F),
+    'pueblos magicos': Color(0xFFAD1457),
+    'arqueologia': Color(0xFF6D4C41),
   };
   static const _iconos = {
     'naturaleza': Icons.park_outlined,
@@ -311,6 +408,8 @@ class _TipoBadge extends StatelessWidget {
     'gastronomia': Icons.restaurant_outlined,
     'aventura': Icons.terrain_outlined,
     'descanso': Icons.spa_outlined,
+    'pueblos magicos': Icons.location_city_outlined,
+    'arqueologia': Icons.temple_hindu_outlined,
   };
 
   @override

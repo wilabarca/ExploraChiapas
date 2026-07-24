@@ -17,4 +17,16 @@ abstract class ResenasRepository {
     required int rating,
     String? comment,
   });
+
+  /// PATCH /v1/api/reviews/{id}  (requiere Authorization: Bearer TOKEN,
+  /// solo el autor puede editar su propia reseña)
+  Future<Either<Failure, Resena>> editarResena({
+    required String id,
+    required int rating,
+    String? comment,
+  });
+
+  /// DELETE /v1/api/reviews/{id}  (requiere Authorization: Bearer TOKEN,
+  /// solo el autor puede eliminar su propia reseña)
+  Future<Either<Failure, void>> eliminarResena({required String id});
 }

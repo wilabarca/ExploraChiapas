@@ -87,7 +87,7 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
     if (exito) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('¡Reseña publicada exitosamente!'),
+          content: const Text('Reseña publicada correctamente.'),
           backgroundColor: AppColors.primary(context),
         ),
       );
@@ -96,7 +96,8 @@ class _EscribirResenaPageState extends State<EscribirResenaPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            provider.publicarError ?? 'No fue posible publicar la reseña',
+            provider.publicarError ??
+                'No fue posible realizar la operación. Inténtalo nuevamente.',
           ),
           backgroundColor: AppColors.error(context),
         ),

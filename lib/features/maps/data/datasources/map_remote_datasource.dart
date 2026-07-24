@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/utils/app_constants.dart';
+import '../../domain/entities/route_info.dart';
 import 'remote/models/destination_model.dart';
 
 abstract class IMapRemoteDatasource {
@@ -11,7 +12,7 @@ abstract class IMapRemoteDatasource {
     required double lng,
     required double radioKm,
   });
-  Future<List<List<List<double>>>> getRoutes({
+  Future<List<RouteInfo>> getRoutes({
     required double originLat,
     required double originLng,
     required double destLat,
@@ -126,15 +127,86 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
     },
   ];
 
+  // El endpoint real `/destinations` NO devuelve `nombre`/`tipo`/`lat`/`lng`
+  // como asumía la versión anterior de este datasource (esos nombres de
+  // campo eran de un mock inventado) — devuelve `name`, `categoryId` y
+  // `locationId` (coordenadas en un recurso aparte, `/locations/{id}`,
+  // igual que ya se resolvió para negocios). Como consecuencia, este mapa
+  // SIEMPRE caía al fallback mock, incluso con backend sano: cada llamada
+  // lanzaba una excepción de cast al intentar leer campos que no existían.
+  //
+  // Ahora se piden en paralelo destinos + `/locations` (para lat/lng real
+  // vía `locationId`) + `/categories` (para traducir `categoryId` al slug
+  // de tipo — naturaleza/cultura/etc. — que ya usan los íconos y colores
+  // del mapa). Un destino sin ubicación resoluble simplemente se omite en
+  // vez de inventarle coordenadas.
   @override
   Future<List<DestinationModel>> getDestinations({String? tipo}) async {
     try {
-      final response = await _apiClient.get(AppConstants.destinationsEndpoint);
-      final raw = response.data['data'] as List<dynamic>;
-      if (raw.isEmpty) throw Exception('backend_empty');
-      final all = raw
-          .map((e) => DestinationModel.fromJson(e as Map<String, dynamic>))
-          .toList();
+      final resultados = await Future.wait([
+        _apiClient.get(AppConstants.destinationsEndpoint),
+        _apiClient.get(AppConstants.locationsEndpoint),
+        // `scope: 'destinos'` es obligatorio aquí: sin él, `/categories`
+        // devuelve solo las categorías marcadas para EVENTOS (p. ej.
+        // "Festivales"/"Talleres") y omite las de destinos reales como
+        // "Pueblos Mágicos" o "Arqueología" — por eso esos destinos
+        // caían siempre en el `tipo: 'otro'` genérico (ícono/color de
+        // "sin categoría") aunque sí tuvieran una categoría real asignada.
+        _apiClient.get(
+          AppConstants.categoriesEndpoint,
+          queryParameters: {'scope': 'destinos'},
+        ),
+      ]);
+
+      final rawDestinos = resultados[0].data['data'] as List<dynamic>;
+      final rawLocations = resultados[1].data['data'] as List<dynamic>;
+      final rawCategorias = resultados[2].data['data'] as List<dynamic>;
+
+      if (rawDestinos.isEmpty) throw Exception('backend_empty');
+
+      final coordsPorLocationId = <String, (double, double)>{
+        for (final loc in rawLocations.cast<Map<String, dynamic>>())
+          if (loc['id'] != null &&
+              loc['latitude'] != null &&
+              loc['longitude'] != null)
+            loc['id'] as String: (
+              (loc['latitude'] as num).toDouble(),
+              (loc['longitude'] as num).toDouble(),
+            ),
+      };
+
+      final slugPorCategoryId = <String, String>{
+        for (final cat in rawCategorias.cast<Map<String, dynamic>>())
+          if (cat['id'] != null)
+            cat['id'] as String: _slugCategoria(cat['nombre'] as String? ?? ''),
+      };
+
+      final all = <DestinationModel>[];
+      for (final e in rawDestinos.cast<Map<String, dynamic>>()) {
+        final locationId = e['locationId'] as String?;
+        final coords = coordsPorLocationId[locationId];
+        if (coords == null) continue; // sin ubicación real, se omite
+
+        final isSaturated = e['isSaturated'] as bool? ?? false;
+        all.add(
+          DestinationModel(
+            id: e['id'] as String,
+            nombre: e['name'] as String? ?? '',
+            tipo: slugPorCategoryId[e['categoryId']] ?? 'otro',
+            descripcion: e['description'] as String? ?? '',
+            lat: coords.$1,
+            lng: coords.$2,
+            calificacion: (e['averageRating'] as num?)?.toDouble() ?? 0,
+            // El backend solo da `isSaturated` (bool), no un porcentaje de
+            // afluencia — se traduce al umbral que ya usa la UI (>75 =
+            // "alta") en vez de inventar un número específico.
+            afluencia: isSaturated ? 90 : 30,
+            esSostenible: !isSaturated,
+            categoryId: e['categoryId'] as String?,
+          ),
+        );
+      }
+
       if (tipo != null) {
         final filtered = all
             .where((d) => d.tipo.toLowerCase() == tipo.toLowerCase())
@@ -158,6 +230,20 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
     }
   }
 
+  static String _slugCategoria(String nombre) {
+    const acentos = {
+      'á': 'a',
+      'é': 'e',
+      'í': 'i',
+      'ó': 'o',
+      'ú': 'u',
+      'ñ': 'n',
+    };
+    var slug = nombre.toLowerCase();
+    acentos.forEach((con, sin) => slug = slug.replaceAll(con, sin));
+    return slug.trim();
+  }
+
   @override
   Future<List<DestinationModel>> getDestinationsNearby({
     required double lat,
@@ -171,7 +257,7 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
   }
 
   @override
-  Future<List<List<List<double>>>> getRoutes({
+  Future<List<RouteInfo>> getRoutes({
     required double originLat,
     required double originLng,
     required double destLat,
@@ -222,11 +308,16 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
     }
 
     return routes.map((route) {
-      final coords =
-          (route['geometry']['coordinates'] as List<dynamic>).cast<List<dynamic>>();
-      return coords
+      final coords = (route['geometry']['coordinates'] as List<dynamic>)
+          .cast<List<dynamic>>();
+      final points = coords
           .map((c) => [(c[1] as num).toDouble(), (c[0] as num).toDouble()])
           .toList();
+      return RouteInfo(
+        points: points,
+        distanceMeters: (route['distance'] as num?)?.toDouble() ?? 0,
+        durationSeconds: (route['duration'] as num?)?.toDouble() ?? 0,
+      );
     }).toList();
   }
 }

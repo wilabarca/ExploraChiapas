@@ -22,6 +22,14 @@ class NegocioRemoteDataSourceImpl implements NegocioRemoteDataSource {
   final ApiClient _apiClient;
   NegocioRemoteDataSourceImpl(this._apiClient);
 
+  // `/businesses` no incluye lat/lng directamente, solo `locationId` — sin
+  // resolverlo, todo negocio queda con latitud/longitud en 0.0 y el mapa
+  // los descarta por completo (el filtro `latitud != 0.0`), que es
+  // exactamente por lo que "los negocios locales" no aparecían aunque el
+  // negocio existiera y tuviera ubicación real en el backend. Se resuelve
+  // con una sola llamada a `/locations` (todas) y se cruza por
+  // `locationId` en memoria — igual que ya se hizo para los destinos del
+  // mapa — en vez de N llamadas individuales por negocio.
   @override
   Future<List<NegocioModel>> obtenerNegocios({
     String? tipoNegocioId,
@@ -30,37 +38,114 @@ class NegocioRemoteDataSourceImpl implements NegocioRemoteDataSource {
     double? latitud,
     double? longitud,
   }) async {
-    final response = await _apiClient.get(
-      AppConstants.businessesEndpoint,
-      queryParameters: {
-        if (tipoNegocioId != null && tipoNegocioId.isNotEmpty)
-          'businessTypeId': tipoNegocioId,
-        if (busqueda != null && busqueda.trim().isNotEmpty) 'search': busqueda,
-        if (soloVerificados == true) 'isVerified': 'true',
-      },
-    );
-    final raw = response.data;
+    final resultados = await Future.wait([
+      _apiClient.get(
+        AppConstants.businessesEndpoint,
+        queryParameters: {
+          if (tipoNegocioId != null && tipoNegocioId.isNotEmpty)
+            'businessTypeId': tipoNegocioId,
+          if (busqueda != null && busqueda.trim().isNotEmpty)
+            'search': busqueda,
+          if (soloVerificados == true) 'isVerified': 'true',
+        },
+      ),
+      _apiClient.get(AppConstants.locationsEndpoint),
+    ]);
+
+    final raw = resultados[0].data;
     List<dynamic> list;
     if (raw is List) {
       list = raw;
     } else if (raw is Map<String, dynamic>) {
-      final candidate = raw['data'] ?? raw['businesses'] ??
-          raw['results'] ?? raw['items'];
+      final candidate =
+          raw['data'] ?? raw['businesses'] ?? raw['results'] ?? raw['items'];
       list = (candidate is List) ? candidate : [];
     } else {
       list = [];
     }
-    return list
-        .map((e) => NegocioModel.fromJson(e as Map<String, dynamic>))
-        .toList();
+
+    final ubicacionesRaw = resultados[1].data;
+    final ubicacionesList = ubicacionesRaw is Map<String, dynamic>
+        ? (ubicacionesRaw['data'] as List<dynamic>? ?? [])
+        : <dynamic>[];
+    final ubicacionesPorId = <String, Map<String, dynamic>>{
+      for (final u in ubicacionesList.cast<Map<String, dynamic>>())
+        if (u['id'] != null) u['id'] as String: u,
+    };
+
+    return list.map((e) {
+      var negocio = NegocioModel.fromJson(e as Map<String, dynamic>);
+      final locationId = negocio.locationId;
+      final ubicacion = locationId == null
+          ? null
+          : ubicacionesPorId[locationId];
+      if (ubicacion == null) return negocio;
+
+      final lat = (ubicacion['latitude'] as num?)?.toDouble();
+      final lng = (ubicacion['longitude'] as num?)?.toDouble();
+      if (lat == null || lng == null) return negocio;
+
+      final partes = [
+        ubicacion['address']?.toString(),
+        ubicacion['municipality']?.toString(),
+        ubicacion['state']?.toString(),
+      ].where((p) => p != null && p.trim().isNotEmpty).cast<String>();
+
+      return negocio.copyConUbicacion(
+        latitud: lat,
+        longitud: lng,
+        direccion: partes.join(', '),
+      );
+    }).toList();
   }
 
   @override
   Future<NegocioModel> obtenerNegocioPorId(String id) async {
-    final response =
-        await _apiClient.get('${AppConstants.businessesEndpoint}/$id');
+    final response = await _apiClient.get(
+      '${AppConstants.businessesEndpoint}/$id',
+    );
     final body = response.data as Map<String, dynamic>;
-    return NegocioModel.fromJson(body['data'] as Map<String, dynamic>);
+    final negocio = NegocioModel.fromJson(body['data'] as Map<String, dynamic>);
+
+    // `/businesses` no trae lat/lng ni dirección directamente — solo un
+    // `locationId`. Se resuelve la ubicación real vía `/locations/{id}`
+    // igual que con destinos; si falla, se conserva el negocio tal cual
+    // (sin coordenadas) en vez de romper toda la pantalla de detalle.
+    if (negocio.locationId == null || negocio.locationId!.trim().isEmpty) {
+      return negocio;
+    }
+
+    try {
+      final ubicacionResponse = await _apiClient.get(
+        '${AppConstants.locationsEndpoint}/${negocio.locationId}',
+      );
+      final ubicacionBody = ubicacionResponse.data;
+      if (ubicacionResponse.statusCode != 200 ||
+          ubicacionBody is! Map<String, dynamic>) {
+        return negocio;
+      }
+      final ubicacionData = ubicacionBody['data'];
+      if (ubicacionData is! Map) return negocio;
+      final ubicacion = Map<String, dynamic>.from(ubicacionData);
+
+      final lat = (ubicacion['latitude'] as num?)?.toDouble();
+      final lng = (ubicacion['longitude'] as num?)?.toDouble();
+      if (lat == null || lng == null) return negocio;
+
+      final partes = [
+        ubicacion['address']?.toString(),
+        ubicacion['municipality']?.toString(),
+        ubicacion['state']?.toString(),
+      ].where((p) => p != null && p.trim().isNotEmpty).cast<String>();
+
+      return negocio.copyConUbicacion(
+        latitud: lat,
+        longitud: lng,
+        direccion: partes.join(', '),
+      );
+    } catch (_) {
+      return negocio;
+    }
   }
 
   @override

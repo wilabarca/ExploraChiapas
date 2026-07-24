@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../domain/entities/destination_entity.dart';
+import '../../domain/entities/route_info.dart';
 import '../../domain/usecases/get_destinations_usecase.dart';
 import '../../domain/usecases/get_routes_usecase.dart';
 
@@ -20,17 +21,24 @@ class MapProvider extends ChangeNotifier {
   List<DestinationEntity> get destinations => _destinations;
 
   // Todas las rutas disponibles (principal + alternativas)
-  List<List<List<double>>> _allRoutes = [];
-  List<List<List<double>>> get allRoutes => _allRoutes;
+  List<RouteInfo> _allRoutes = [];
+  List<RouteInfo> get allRoutes => _allRoutes;
 
   int _selectedRouteIndex = 0;
   int get selectedRouteIndex => _selectedRouteIndex;
 
   // Ruta actualmente visible en el mapa
   List<List<double>> get routePoints =>
-      _allRoutes.isEmpty ? [] : _allRoutes[_selectedRouteIndex];
+      _allRoutes.isEmpty ? [] : _allRoutes[_selectedRouteIndex].points;
+
+  RouteInfo? get selectedRouteInfo =>
+      _allRoutes.isEmpty ? null : _allRoutes[_selectedRouteIndex];
 
   bool get hayAlternativas => _allRoutes.length > 1;
+
+  // Último destino con ruta calculada — permite "Recalcular ruta" sin que
+  // la UI tenga que volver a pasar el destino.
+  DestinationEntity? _ultimoDestinoRuta;
 
   String? _routeError;
   String? get routeError => _routeError;
@@ -75,6 +83,7 @@ class MapProvider extends ChangeNotifier {
     _selected = null;
     _allRoutes = [];
     _selectedRouteIndex = 0;
+    _ultimoDestinoRuta = null;
     _detenerNavegacion();
     notifyListeners();
   }
@@ -89,12 +98,14 @@ class MapProvider extends ChangeNotifier {
   /// motivo en [routeError] y NO entra en modo navegación — antes el error
   /// se tragaba en silencio y la app "navegaba" sin ninguna ruta dibujada.
   Future<bool> loadRouteTo(DestinationEntity destino) async {
+    _ultimoDestinoRuta = destino;
     double originLat = 16.7521;
     double originLng = -93.1152;
 
     try {
       final permission = await Geolocator.checkPermission();
-      final tienePermiso = permission == LocationPermission.always ||
+      final tienePermiso =
+          permission == LocationPermission.always ||
           permission == LocationPermission.whileInUse;
 
       if (tienePermiso) {
@@ -135,21 +146,31 @@ class MapProvider extends ChangeNotifier {
     return true;
   }
 
+  /// Vuelve a pedir la ruta al mismo destino (misma llamada que
+  /// [loadRouteTo]) — útil cuando el usuario se desvió del camino o
+  /// simplemente quiere refrescar el cálculo con su posición actual.
+  Future<bool> recalcularRuta() async {
+    final destino = _ultimoDestinoRuta;
+    if (destino == null) return false;
+    return loadRouteTo(destino);
+  }
+
   void _iniciarNavegacion() {
     _posicionStream?.cancel();
     _enNavegacion = true;
     notifyListeners();
 
-    _posicionStream = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 3,
-      ),
-    ).listen((pos) {
-      _userPosition = pos;
-      _userHeading = pos.heading;
-      notifyListeners();
-    });
+    _posicionStream =
+        Geolocator.getPositionStream(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 3,
+          ),
+        ).listen((pos) {
+          _userPosition = pos;
+          _userHeading = pos.heading;
+          notifyListeners();
+        });
   }
 
   void _detenerNavegacion() {

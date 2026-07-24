@@ -250,6 +250,13 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       const SizedBox(height: 8),
                       ProfileMenuItem(
+                        icon: Icons.place_outlined,
+                        label: 'Mis recomendaciones',
+                        onTap: () =>
+                            Navigator.pushNamed(context, '/mis-propuestas'),
+                      ),
+                      const SizedBox(height: 8),
+                      ProfileMenuItem(
                         icon: Icons.logout_outlined,
                         label: s('cerrar_sesion'),
                         onTap: () => _confirmarCerrarSesion(context, lang),
@@ -286,19 +293,23 @@ class _ProfilePageState extends State<ProfilePage> {
                       _PreferenciaTile(
                         icon: Icons.brightness_6_outlined,
                         label: s('tema'),
-                        valor: s(prefs.tema == 'Oscuro'
-                            ? 'oscuro'
-                            : prefs.tema == 'Sistema'
-                                ? 'sistema'
-                                : 'claro'),
+                        valor: s(
+                          prefs.tema == 'Oscuro'
+                              ? 'oscuro'
+                              : prefs.tema == 'Sistema'
+                              ? 'sistema'
+                              : 'claro',
+                        ),
                         onTap: () => _seleccionarOpcion(
                           s('tema'),
                           [s('claro'), s('oscuro'), s('sistema')],
-                          s(prefs.tema == 'Oscuro'
-                              ? 'oscuro'
-                              : prefs.tema == 'Sistema'
-                                  ? 'sistema'
-                                  : 'claro'),
+                          s(
+                            prefs.tema == 'Oscuro'
+                                ? 'oscuro'
+                                : prefs.tema == 'Sistema'
+                                ? 'sistema'
+                                : 'claro',
+                          ),
                           (v) {
                             if (v == s('oscuro')) {
                               prefs.setTema('Oscuro');
