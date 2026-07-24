@@ -1,9 +1,20 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../home/presentation/widgets/home_app_bar.dart';
 import '../../../home/presentation/widgets/custom_bottom_nav_bar.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/fade_slide_in.dart';
 import 'rutas_urbanas_page.dart';
+
+// Imágenes decorativas de categoría — mismas URLs ya usadas en el resto
+// de la app (interests_page.dart, home_remote_datasource.dart) para
+// Naturaleza/Cultura, reaprovechadas aquí en vez de introducir nuevas.
+const String _imgDescubrimiento =
+    'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1000&q=80';
+const String _imgRutasUrbanas =
+    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1000&q=80';
+const String _imgRecomendar =
+    'https://images.unsplash.com/photo-1518638150340-f706e86654de?w=1000&q=80';
 
 class ExplorarCercaPage extends StatefulWidget {
   const ExplorarCercaPage({super.key});
@@ -106,14 +117,7 @@ class _ExplorarCercaPageState extends State<ExplorarCercaPage> {
                   child: _RecomendarLugarCard(onSugerir: _irARecomendar),
                 ),
 
-                const SizedBox(height: 36),
-
-                FadeSlideIn(
-                  delay: const Duration(milliseconds: 200),
-                  child: const _CuraduriaFooter(),
-                ),
-
-                const SizedBox(height: 100),
+                const SizedBox(height: 40),
               ],
             ),
           ),
@@ -162,18 +166,18 @@ class _Encabezado extends StatelessWidget {
   }
 }
 
-// ── Tarjeta base compartida: gradiente + marca de agua + ripple ───────────
-// Reutilizada por las dos tarjetas "de marca" (Descubrimiento y
-// Recomendar Lugar) para no duplicar la estructura Material+InkWell+Stack.
-class _TarjetaDegradada extends StatelessWidget {
-  final List<Color> colores;
-  final IconData iconoMarcaAgua;
+// ── Tarjeta base compartida: foto de fondo + degradado + ripple ───────────
+// Reutilizada por las tres tarjetas principales para no duplicar la
+// estructura Container(sombra)+Material+InkWell+Stack(foto+degradado).
+class _TarjetaImagenDegradada extends StatelessWidget {
+  final String imageUrl;
+  final List<Color> overlay;
   final VoidCallback onTap;
   final Widget child;
 
-  const _TarjetaDegradada({
-    required this.colores,
-    required this.iconoMarcaAgua,
+  const _TarjetaImagenDegradada({
+    required this.imageUrl,
+    required this.overlay,
     required this.onTap,
     required this.child,
   });
@@ -181,38 +185,119 @@ class _TarjetaDegradada extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _PressableScale(
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Ink(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: colores,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(
+                alpha: AppColors.isDark(context) ? 0.4 : 0.16,
               ),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
             ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(22),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            splashColor: Colors.white.withValues(alpha: 0.14),
+            highlightColor: Colors.white.withValues(alpha: 0.06),
+            // Sin StackFit.expand: dentro de un Column normal (sin
+            // Expanded) la altura entrante es infinita, y expandir el
+            // Stack a eso hace crashear el layout (pantalla en blanco en
+            // vez del típico overlay rojo). En su lugar, el contenido
+            // real (texto + botón) fija la altura mediante su propio
+            // ConstrainedBox, y las capas de foto/degradado la igualan
+            // con Positioned.fill — así el Stack se dimensiona de forma
+            // acotada y natural.
             child: Stack(
               children: [
-                Positioned(
-                  right: -20,
-                  top: -10,
-                  child: Icon(
-                    iconoMarcaAgua,
-                    size: 130,
-                    color: Colors.white.withValues(alpha: 0.12),
+                Positioned.fill(child: _FotoDeCategoria(url: imageUrl)),
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: overlay,
+                      ),
+                    ),
                   ),
                 ),
-                child,
+                ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 200),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: child,
+                  ),
+                ),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+// ── Foto de categoría con cache + shimmer mientras carga ───────────────────
+class _FotoDeCategoria extends StatelessWidget {
+  final String url;
+
+  const _FotoDeCategoria({required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    return CachedNetworkImage(
+      imageUrl: url,
+      fit: BoxFit.cover,
+      fadeInDuration: const Duration(milliseconds: 280),
+      placeholder: (_, __) => const _ShimmerVerde(),
+      errorWidget: (_, __, ___) =>
+          Container(color: AppColors.primaryContainer(context)),
+    );
+  }
+}
+
+/// Placeholder tipo shimmer (pulso suave entre dos tonos de verde) para
+/// no mostrar un cuadro sólido/plano mientras la imagen de red carga.
+class _ShimmerVerde extends StatefulWidget {
+  const _ShimmerVerde();
+
+  @override
+  State<_ShimmerVerde> createState() => _ShimmerVerdeState();
+}
+
+class _ShimmerVerdeState extends State<_ShimmerVerde>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1100),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (context, _) {
+        return ColoredBox(
+          color: Color.lerp(
+            const Color(0xFF1B4332),
+            const Color(0xFF2E7D32),
+            _ctrl.value,
+          )!,
+        );
+      },
     );
   }
 }
@@ -300,11 +385,15 @@ class _DescubrimientoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final base = AppColors.primary(context);
-    final oscuro = Color.lerp(base, Colors.black, 0.2)!;
+    final oscuro = Color.lerp(base, Colors.black, 0.35)!;
 
-    return _TarjetaDegradada(
-      colores: [base, oscuro],
-      iconoMarcaAgua: Icons.map_outlined,
+    return _TarjetaImagenDegradada(
+      imageUrl: _imgDescubrimiento,
+      overlay: [
+        Colors.black.withValues(alpha: 0.1),
+        base.withValues(alpha: 0.72),
+        oscuro.withValues(alpha: 0.93),
+      ],
       onTap: onVerMapa,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -383,8 +472,6 @@ class _DescubrimientoCard extends StatelessWidget {
 }
 
 // ── Card "Rutas Urbanas" (Caminata) ────────────────────────────────────────
-// Tarjeta plana y minimalista (sin foto de stock): reduce peticiones de
-// red en esta pantalla y se alinea con el lenguaje visual de referencia.
 class _RutasUrbanasCard extends StatelessWidget {
   final VoidCallback onExplorar;
 
@@ -392,97 +479,91 @@ class _RutasUrbanasCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _PressableScale(
-      child: Material(
-        color: AppColors.primaryContainer(context),
-        borderRadius: BorderRadius.circular(20),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onExplorar,
-          child: Ink(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            child: _RutasUrbanasContenido(onExplorar: onExplorar),
+    // Verde-azulado (teal) para diferenciarla de las otras dos tarjetas
+    // sin salirse de la paleta de tonos naturales de la app.
+    const tealOscuro = Color(0xFF0D4F45);
+    const tealClaro = Color(0xFF1F7A68);
+
+    return _TarjetaImagenDegradada(
+      imageUrl: _imgRutasUrbanas,
+      overlay: [
+        Colors.black.withValues(alpha: 0.1),
+        tealClaro.withValues(alpha: 0.68),
+        tealOscuro.withValues(alpha: 0.92),
+      ],
+      onTap: onExplorar,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const _EtiquetaCategoria(
+            icon: Icons.directions_walk_outlined,
+            texto: 'CAMINATA',
+            color: Colors.white70,
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RutasUrbanasContenido extends StatelessWidget {
-  final VoidCallback onExplorar;
-
-  const _RutasUrbanasContenido({required this.onExplorar});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _EtiquetaCategoria(
-          icon: Icons.directions_walk_outlined,
-          texto: 'CAMINATA',
-          color: AppColors.onPrimaryContainer(context),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('🥾', style: TextStyle(fontSize: 18)),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                'Rutas Urbanas',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 19,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.onPrimaryContainer(context),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Text('🥾', style: TextStyle(fontSize: 18)),
+              SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  'Rutas Urbanas',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Micro-aventuras culturales diseñadas para recorrer a '
-          'pie. Conecta con la esencia de la ciudad.',
-          style: TextStyle(
-            fontSize: 13,
-            color: AppColors.onPrimaryContainer(
-              context,
-            ).withValues(alpha: 0.75),
-            height: 1.4,
+            ],
           ),
-        ),
-        const SizedBox(height: 18),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton(
-            onPressed: onExplorar,
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              side: BorderSide(color: AppColors.primary(context)),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
+          const SizedBox(height: 8),
+          const Text(
+            'Micro-aventuras culturales diseñadas para recorrer a '
+            'pie. Conecta con la esencia de la ciudad.',
+            style: TextStyle(fontSize: 13, color: Colors.white70, height: 1.4),
+          ),
+          const SizedBox(height: 18),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: onExplorar,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white.withValues(alpha: 0.18),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                elevation: 0,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Flexible(
+                    child: Text(
+                      'Explorar rutas',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 6),
+                  Icon(Icons.arrow_forward, color: Colors.white, size: 16),
+                ],
               ),
             ),
-            child: Text(
-              'Explorar rutas',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: AppColors.primary(context),
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-              ),
-            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -495,11 +576,15 @@ class _RecomendarLugarCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final base = AppColors.primary(context);
-    final oscuro = Color.lerp(base, Colors.black, 0.4)!;
+    final oscuro = Color.lerp(base, Colors.black, 0.55)!;
 
-    return _TarjetaDegradada(
-      colores: [oscuro, oscuro],
-      iconoMarcaAgua: Icons.add_location_alt_outlined,
+    return _TarjetaImagenDegradada(
+      imageUrl: _imgRecomendar,
+      overlay: [
+        oscuro.withValues(alpha: 0.55),
+        oscuro.withValues(alpha: 0.88),
+        oscuro.withValues(alpha: 0.96),
+      ],
       onTap: onSugerir,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -569,74 +654,6 @@ class _RecomendarLugarCard extends StatelessWidget {
                   SizedBox(width: 6),
                   Icon(Icons.edit_outlined, color: Colors.white, size: 16),
                 ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Sello "Curaduría Experta" + mensaje de cierre ──────────────────────────
-class _CuraduriaFooter extends StatelessWidget {
-  const _CuraduriaFooter();
-
-  @override
-  Widget build(BuildContext context) {
-    final isTablet = MediaQuery.sizeOf(context).width >= 600;
-    return SizedBox(
-      width: double.infinity,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.primaryContainer(context),
-              borderRadius: BorderRadius.circular(30),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.verified_outlined,
-                  size: 15,
-                  color: AppColors.onPrimaryContainer(context),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  'Curaduría Experta',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.onPrimaryContainer(context),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Tu aventura comienza aquí',
-            style: TextStyle(
-              fontSize: isTablet ? 18 : 15,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary(context),
-            ),
-          ),
-          const SizedBox(height: 10),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 380),
-            child: Text(
-              'Cada destino y ruta ha sido seleccionado para '
-              'ofrecerte una experiencia auténtica y sostenible '
-              'en el corazón de la selva y sus ciudades.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: isTablet ? 14 : 12.5,
-                color: AppColors.textSecondary(context),
-                height: 1.5,
               ),
             ),
           ),

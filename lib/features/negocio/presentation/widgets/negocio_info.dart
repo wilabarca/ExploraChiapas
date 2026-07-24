@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/negocio.dart';
 
@@ -58,22 +60,57 @@ class NegocioInfo extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        // Placeholder de mapa — reemplazar por flutter_map/OSM cuando se
-        // integre este feature con el módulo de mapas existente.
-        AspectRatio(
-          aspectRatio: 16 / 8,
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppColors.primaryContainer(context),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Center(
-              child: Icon(
-                Icons.map_outlined,
-                size: 36,
-                color: AppColors.primary(context),
-              ),
-            ),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: AspectRatio(
+            aspectRatio: 16 / 8,
+            child: negocio.tieneCoordenadasValidas
+                ? IgnorePointer(
+                    child: FlutterMap(
+                      options: MapOptions(
+                        initialCenter: LatLng(
+                          negocio.latitud,
+                          negocio.longitud,
+                        ),
+                        initialZoom: 15,
+                        interactionOptions: const InteractionOptions(
+                          flags: InteractiveFlag.none,
+                        ),
+                      ),
+                      children: [
+                        TileLayer(
+                          urlTemplate:
+                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          userAgentPackageName: 'com.explorachiapas.app',
+                        ),
+                        MarkerLayer(
+                          markers: [
+                            Marker(
+                              point: LatLng(negocio.latitud, negocio.longitud),
+                              width: 36,
+                              height: 36,
+                              alignment: Alignment.topCenter,
+                              child: Icon(
+                                Icons.location_pin,
+                                color: AppColors.primary(context),
+                                size: 36,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  )
+                : Container(
+                    color: AppColors.primaryContainer(context),
+                    child: Center(
+                      child: Icon(
+                        Icons.map_outlined,
+                        size: 36,
+                        color: AppColors.primary(context),
+                      ),
+                    ),
+                  ),
           ),
         ),
         if (negocio.precioDesde != null) ...[

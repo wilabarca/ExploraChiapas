@@ -1,5 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- OneSignal / push notifications: obligatorio desde Android 13
+         (API 33). Sin esto, el diálogo de permiso de notificaciones no se
+         comporta correctamente y el sistema bloquea las notificaciones
+         aunque el App ID de OneSignal esté bien configurado. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <!-- geolocator: ubicación del dispositivo -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -9,9 +15,6 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-
-    <!-- local_auth: autenticación con huella digital -->
-    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
     <application
         android:label="explorachiapas"

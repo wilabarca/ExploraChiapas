@@ -26,18 +26,6 @@ import '../../features/auth/domain/usecases/update_user_interests_usecase.dart'
     as _i70;
 import '../../features/auth/presentation/providers/auth_provider.dart'
     as _i1054;
-import '../../features/biometric_auth/data/datasource/biometric_local_datasource.dart'
-    as _i638;
-import '../../features/biometric_auth/data/repositories/biometric_repository_impl.dart'
-    as _i931;
-import '../../features/biometric_auth/domain/repositories/i_biometric_repository.dart'
-    as _i177;
-import '../../features/biometric_auth/domain/usecases/authenticate_with_biometrics_usecase.dart'
-    as _i1024;
-import '../../features/biometric_auth/domain/usecases/check_biometric_availability_usecase.dart'
-    as _i992;
-import '../../features/biometric_auth/presentation/providers/biometric_auth_provider.dart'
-    as _i1047;
 import '../../features/categorias/data/datasource/categorias_remote_datasource.dart'
     as _i150;
 import '../../features/categorias/data/repositories_impl/categorias_repository_impl.dart'
@@ -172,7 +160,13 @@ import '../../features/resena/data/repositories/ResenasRepositoryImpl.dart'
 import '../../features/resena/domain/repositories/ResenasRepository.dart'
     as _i908;
 import '../../features/resena/domain/usecases/CrearResenaUseCase.dart' as _i392;
+import '../../features/resena/domain/usecases/EditarResenaUseCase.dart'
+    as _i918;
+import '../../features/resena/domain/usecases/EliminarResenaUseCase.dart'
+    as _i123;
 import '../../features/resena/domain/usecases/GetResenasUseCase.dart' as _i33;
+import '../../features/resena/presentation/providers/resenas_feed_provider.dart'
+    as _i915;
 import '../../features/resena/presentation/providers/ResenasProvider.dart'
     as _i112;
 import '../network/api_client.dart' as _i557;
@@ -197,9 +191,6 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i757.SecureSessionStorage(),
     );
     gh.lazySingleton<_i45.AvatarService>(() => _i149.AvatarServiceImpl());
-    gh.lazySingleton<_i638.IBiometricLocalDatasource>(
-      () => _i638.BiometricLocalDatasourceImpl(),
-    );
     gh.lazySingleton<_i730.IChatRemoteDatasource>(
       () => _i730.ChatRemoteDatasourceImpl(gh<_i322.MlApiClient>()),
     );
@@ -214,10 +205,6 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i124.IChatRepository>(
       () => _i1018.ChatRepositoryImpl(gh<_i730.IChatRemoteDatasource>()),
-    );
-    gh.factory<_i177.IBiometricRepository>(
-      () =>
-          _i931.BiometricRepositoryImpl(gh<_i638.IBiometricLocalDatasource>()),
     );
     gh.lazySingleton<_i557.ApiClient>(
       () => _i557.ApiClient(gh<_i757.SecureSessionStorage>()),
@@ -234,22 +221,6 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i301.EnviarMensajeUseCase>(
       () => _i301.EnviarMensajeUseCase(gh<_i124.IChatRepository>()),
-    );
-    gh.factory<_i1024.AuthenticateWithBiometricsUseCase>(
-      () => _i1024.AuthenticateWithBiometricsUseCase(
-        gh<_i177.IBiometricRepository>(),
-      ),
-    );
-    gh.factory<_i992.CheckBiometricAvailabilityUseCase>(
-      () => _i992.CheckBiometricAvailabilityUseCase(
-        gh<_i177.IBiometricRepository>(),
-      ),
-    );
-    gh.factory<_i1047.BiometricAuthProvider>(
-      () => _i1047.BiometricAuthProvider(
-        gh<_i992.CheckBiometricAvailabilityUseCase>(),
-        gh<_i1024.AuthenticateWithBiometricsUseCase>(),
-      ),
     );
     gh.lazySingleton<_i498.ConversacionRemoteDatasource>(
       () => _i498.ConversacionRemoteDatasource(gh<_i557.ApiClient>()),
@@ -451,8 +422,21 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i392.CrearResenaUseCase>(
       () => _i392.CrearResenaUseCase(gh<_i908.ResenasRepository>()),
     );
+    gh.factory<_i918.EditarResenaUseCase>(
+      () => _i918.EditarResenaUseCase(gh<_i908.ResenasRepository>()),
+    );
+    gh.factory<_i123.EliminarResenaUseCase>(
+      () => _i123.EliminarResenaUseCase(gh<_i908.ResenasRepository>()),
+    );
     gh.factory<_i33.GetResenasUseCase>(
       () => _i33.GetResenasUseCase(gh<_i908.ResenasRepository>()),
+    );
+    gh.factory<_i915.ResenasFeedProvider>(
+      () => _i915.ResenasFeedProvider(
+        gh<_i488.ListDestinosUseCase>(),
+        gh<_i933.ObtenerNegocios>(),
+        gh<_i33.GetResenasUseCase>(),
+      ),
     );
     gh.factory<_i902.EventosProvider>(
       () => _i902.EventosProvider(
@@ -472,6 +456,8 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i112.ResenasProvider(
         gh<_i33.GetResenasUseCase>(),
         gh<_i392.CrearResenaUseCase>(),
+        gh<_i918.EditarResenaUseCase>(),
+        gh<_i123.EliminarResenaUseCase>(),
         gh<_i16.UserStatsLocalService>(),
       ),
     );

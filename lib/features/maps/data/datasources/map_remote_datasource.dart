@@ -129,15 +129,86 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
     },
   ];
 
+  // El endpoint real `/destinations` NO devuelve `nombre`/`tipo`/`lat`/`lng`
+  // como asumía la versión anterior de este datasource (esos nombres de
+  // campo eran de un mock inventado) — devuelve `name`, `categoryId` y
+  // `locationId` (coordenadas en un recurso aparte, `/locations/{id}`,
+  // igual que ya se resolvió para negocios). Como consecuencia, este mapa
+  // SIEMPRE caía al fallback mock, incluso con backend sano: cada llamada
+  // lanzaba una excepción de cast al intentar leer campos que no existían.
+  //
+  // Ahora se piden en paralelo destinos + `/locations` (para lat/lng real
+  // vía `locationId`) + `/categories` (para traducir `categoryId` al slug
+  // de tipo — naturaleza/cultura/etc. — que ya usan los íconos y colores
+  // del mapa). Un destino sin ubicación resoluble simplemente se omite en
+  // vez de inventarle coordenadas.
   @override
   Future<List<DestinationModel>> getDestinations({String? tipo}) async {
     try {
-      final response = await _apiClient.get(AppConstants.destinationsEndpoint);
-      final raw = response.data['data'] as List<dynamic>;
-      if (raw.isEmpty) throw Exception('backend_empty');
-      final all = raw
-          .map((e) => DestinationModel.fromJson(e as Map<String, dynamic>))
-          .toList();
+      final resultados = await Future.wait([
+        _apiClient.get(AppConstants.destinationsEndpoint),
+        _apiClient.get(AppConstants.locationsEndpoint),
+        // `scope: 'destinos'` es obligatorio aquí: sin él, `/categories`
+        // devuelve solo las categorías marcadas para EVENTOS (p. ej.
+        // "Festivales"/"Talleres") y omite las de destinos reales como
+        // "Pueblos Mágicos" o "Arqueología" — por eso esos destinos
+        // caían siempre en el `tipo: 'otro'` genérico (ícono/color de
+        // "sin categoría") aunque sí tuvieran una categoría real asignada.
+        _apiClient.get(
+          AppConstants.categoriesEndpoint,
+          queryParameters: {'scope': 'destinos'},
+        ),
+      ]);
+
+      final rawDestinos = resultados[0].data['data'] as List<dynamic>;
+      final rawLocations = resultados[1].data['data'] as List<dynamic>;
+      final rawCategorias = resultados[2].data['data'] as List<dynamic>;
+
+      if (rawDestinos.isEmpty) throw Exception('backend_empty');
+
+      final coordsPorLocationId = <String, (double, double)>{
+        for (final loc in rawLocations.cast<Map<String, dynamic>>())
+          if (loc['id'] != null &&
+              loc['latitude'] != null &&
+              loc['longitude'] != null)
+            loc['id'] as String: (
+              (loc['latitude'] as num).toDouble(),
+              (loc['longitude'] as num).toDouble(),
+            ),
+      };
+
+      final slugPorCategoryId = <String, String>{
+        for (final cat in rawCategorias.cast<Map<String, dynamic>>())
+          if (cat['id'] != null)
+            cat['id'] as String: _slugCategoria(cat['nombre'] as String? ?? ''),
+      };
+
+      final all = <DestinationModel>[];
+      for (final e in rawDestinos.cast<Map<String, dynamic>>()) {
+        final locationId = e['locationId'] as String?;
+        final coords = coordsPorLocationId[locationId];
+        if (coords == null) continue; // sin ubicación real, se omite
+
+        final isSaturated = e['isSaturated'] as bool? ?? false;
+        all.add(
+          DestinationModel(
+            id: e['id'] as String,
+            nombre: e['name'] as String? ?? '',
+            tipo: slugPorCategoryId[e['categoryId']] ?? 'otro',
+            descripcion: e['description'] as String? ?? '',
+            lat: coords.$1,
+            lng: coords.$2,
+            calificacion: (e['averageRating'] as num?)?.toDouble() ?? 0,
+            // El backend solo da `isSaturated` (bool), no un porcentaje de
+            // afluencia — se traduce al umbral que ya usa la UI (>75 =
+            // "alta") en vez de inventar un número específico.
+            afluencia: isSaturated ? 90 : 30,
+            esSostenible: !isSaturated,
+            categoryId: e['categoryId'] as String?,
+          ),
+        );
+      }
+
       if (tipo != null) {
         final filtered = all
             .where((d) => d.tipo.toLowerCase() == tipo.toLowerCase())
@@ -159,6 +230,20 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
           .map((json) => DestinationModel.fromJson(json, esMock: true))
           .toList();
     }
+  }
+
+  static String _slugCategoria(String nombre) {
+    const acentos = {
+      'á': 'a',
+      'é': 'e',
+      'í': 'i',
+      'ó': 'o',
+      'ú': 'u',
+      'ñ': 'n',
+    };
+    var slug = nombre.toLowerCase();
+    acentos.forEach((con, sin) => slug = slug.replaceAll(con, sin));
+    return slug.trim();
   }
 
   @override
@@ -220,33 +305,25 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
     }
 
     return routes.map((route) {
-      final coords =
-          (route['geometry']['coordinates'] as List<dynamic>).cast<List<dynamic>>();
+      final coords = (route['geometry']['coordinates'] as List<dynamic>)
+          .cast<List<dynamic>>();
       final points = coords
           .map((c) => [(c[1] as num).toDouble(), (c[0] as num).toDouble()])
           .toList();
-
       final rawMeters = (route['distance'] as num?)?.toDouble() ?? 0.0;
       final rawSeconds = (route['duration'] as num?)?.toDouble() ?? 0.0;
-      final distanceKm = (rawMeters / 1000 * 10).round() / 10.0;
-
-      // Modelo de corrección diferenciado por zona (ver README de rutas):
-      //   < 20 km  → 1.2x  urbano (Tuxtla / San Cristóbal)
-      //   20–80 km → 1.4x  semi-rural (conexiones entre cabeceras)
-      //   > 80 km  → 1.6x  rural/montaña (Palenque, Montebello, El Chiflón)
+      // Factor diferenciado: OSRM usa velocidades teóricas que no reflejan
+      // la realidad de Chiapas (topes, curvas de montaña, terracería).
       final factor = _factorCorreccion(rawMeters);
-      final durationMinutes = (rawSeconds * factor / 60).round();
-
       return RouteInfo(
         points: points,
-        durationMinutes: durationMinutes,
-        distanceKm: distanceKm,
+        distanceMeters: rawMeters,
+        durationSeconds: rawSeconds * factor,
       );
     }).toList();
   }
 
-  // Factor diferenciado: OSRM usa velocidades teóricas de OSM que no reflejan
-  // la realidad de Chiapas (topes, curvas de montaña, caminos de terracería).
+  // < 20 km → 1.2x urbano, 20–80 km → 1.4x semi-rural, > 80 km → 1.6x montaña
   static double _factorCorreccion(double metros) {
     final km = metros / 1000;
     if (km < 20) return 1.2;
@@ -254,9 +331,8 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
     return 1.6;
   }
 
-  // Estimación de respaldo cuando OSRM no está disponible.
-  // Haversine da línea recta; multiplicamos por 1.35 (tortuosidad típica de
-  // carreteras en sierra) y asumimos 35 km/h promedio (urbano+rural).
+  // Respaldo cuando OSRM no está disponible: Haversine × 1.35 tortuosidad,
+  // 35 km/h promedio, polilínea de dos puntos (línea recta indicativa).
   static RouteInfo _fallbackHaversine(
     double lat1, double lng1,
     double lat2, double lng2,
@@ -271,16 +347,10 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
             math.sin(dLng / 2);
     final lineaRecta = r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
     final distanciaMetros = lineaRecta * 1.35;
-    final distanciaKm = (distanciaMetros / 1000 * 10).round() / 10.0;
-    final durationMinutes = (distanciaMetros / (35000 / 60)).round();
-
-    // Sin OSRM no tenemos polilínea real — devolvemos solo origen y destino
-    // para que el mapa dibuje una línea recta indicativa.
-    final points = [[lat1, lng1], [lat2, lng2]];
     return RouteInfo(
-      points: points,
-      durationMinutes: durationMinutes,
-      distanceKm: distanciaKm,
+      points: [[lat1, lng1], [lat2, lng2]],
+      distanceMeters: distanciaMetros,
+      durationSeconds: distanciaMetros / (35000 / 3600),
     );
   }
 }

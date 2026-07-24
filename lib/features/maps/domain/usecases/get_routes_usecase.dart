@@ -10,11 +10,10 @@ class GetRouteUseCase {
     required double originLng,
     required double destLat,
     required double destLng,
-  }) =>
-      _repository.getRoutes(
-        originLat: originLat,
-        originLng: originLng,
-        destLat: destLat,
-        destLng: destLng,
-      );
+  }) => _repository.getRoutes(
+    originLat: originLat,
+    originLng: originLng,
+    destLat: destLat,
+    destLng: destLng,
+  );
 }

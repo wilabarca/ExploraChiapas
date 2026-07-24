@@ -64,4 +64,48 @@ class ResenasRepositoryImpl implements ResenasRepository {
       return Left(ServerFailure(message: e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, Resena>> editarResena({
+    required String id,
+    required int rating,
+    String? comment,
+  }) async {
+    try {
+      final resena = await _remoteDataSource.editarResena(
+        id: id,
+        rating: rating,
+        comment: comment,
+      );
+      return Right(resena);
+    } on DioException catch (e) {
+      return Left(
+        ServerFailure(
+          message:
+              e.response?.data?['message']?.toString() ??
+              'No fue posible editar la reseña',
+        ),
+      );
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> eliminarResena({required String id}) async {
+    try {
+      await _remoteDataSource.eliminarResena(id: id);
+      return const Right(null);
+    } on DioException catch (e) {
+      return Left(
+        ServerFailure(
+          message:
+              e.response?.data?['message']?.toString() ??
+              'No fue posible eliminar la reseña',
+        ),
+      );
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
 }

@@ -16,8 +16,7 @@ class MapRepositoryImpl implements IMapRepository {
     required double lat,
     required double lng,
     required double radioKm,
-  }) =>
-      _datasource.getDestinationsNearby(lat: lat, lng: lng, radioKm: radioKm);
+  }) => _datasource.getDestinationsNearby(lat: lat, lng: lng, radioKm: radioKm);
 
   @override
   Future<List<RouteInfo>> getRoutes({
@@ -25,11 +24,10 @@ class MapRepositoryImpl implements IMapRepository {
     required double originLng,
     required double destLat,
     required double destLng,
-  }) =>
-      _datasource.getRoutes(
-        originLat: originLat,
-        originLng: originLng,
-        destLat: destLat,
-        destLng: destLng,
-      );
+  }) => _datasource.getRoutes(
+    originLat: originLat,
+    originLng: originLng,
+    destLat: destLat,
+    destLng: destLng,
+  );
 }
