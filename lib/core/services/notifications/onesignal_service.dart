@@ -55,17 +55,15 @@ class OneSignalService {
 
   static String? _rutaDesdeDatos(Map<String, dynamic>? data) {
     final tipo = data?['type']?.toString();
-    if (tipo == 'evento') return '/eventos';
-    if (tipo == 'promocion') return '/promociones';
+    if (tipo == 'event') return '/eventos';
+    if (tipo == 'promotion') return '/promociones';
     return null;
   }
 
   static Map<String, dynamic>? _argsDesdeDatos(Map<String, dynamic>? data) {
-    final tipo = data?['type']?.toString();
-    if (tipo == 'promocion') {
-      final negocioId = data?['negocioId']?.toString();
-      return negocioId != null ? {'negocioId': negocioId} : null;
-    }
+    // Backend sends type='promotion' with promotionId.
+    // PromocionesPage accepts optional negocioId to filter; without it,
+    // it shows all promotions — which is fine for a general push tap.
     return null;
   }
 
