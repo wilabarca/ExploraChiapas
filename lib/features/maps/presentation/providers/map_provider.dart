@@ -42,6 +42,12 @@ class MapProvider extends ChangeNotifier {
   // la UI tenga que volver a pasar el destino.
   DestinationEntity? _ultimoDestinoRuta;
 
+  // Rutas reales por perfil de transporte (foot y bike de OSRM)
+  RouteInfo? _routePie;
+  RouteInfo? _routeBici;
+  RouteInfo? get routePie => _routePie;
+  RouteInfo? get routeBici => _routeBici;
+
   String? _routeError;
   String? get routeError => _routeError;
 
@@ -85,6 +91,8 @@ class MapProvider extends ChangeNotifier {
     _allRoutes = [];
     _selectedRouteIndex = 0;
     _ultimoDestinoRuta = null;
+    _routePie = null;
+    _routeBici = null;
     _detenerNavegacion();
     notifyListeners();
   }
@@ -123,18 +131,34 @@ class MapProvider extends ChangeNotifier {
     }
 
     try {
-      final rutas = await _getRoute(
-        originLat: originLat,
-        originLng: originLng,
-        destLat: destino.lat,
-        destLng: destino.lng,
-      );
-      _allRoutes = rutas;
+      // Llamadas en paralelo: driving (carro/moto), foot (a pie), bike (bici)
+      final resultados = await Future.wait([
+        _getRoute(
+          originLat: originLat, originLng: originLng,
+          destLat: destino.lat, destLng: destino.lng,
+          perfil: 'driving',
+        ),
+        _getRoute(
+          originLat: originLat, originLng: originLng,
+          destLat: destino.lat, destLng: destino.lng,
+          perfil: 'foot',
+        ).catchError((_) => <RouteInfo>[]),
+        _getRoute(
+          originLat: originLat, originLng: originLng,
+          destLat: destino.lat, destLng: destino.lng,
+          perfil: 'bike',
+        ).catchError((_) => <RouteInfo>[]),
+      ]);
+      _allRoutes = resultados[0];
+      _routePie = resultados[1].isNotEmpty ? resultados[1].first : null;
+      _routeBici = resultados[2].isNotEmpty ? resultados[2].first : null;
       _selectedRouteIndex = 0;
       _routeError = null;
       notifyListeners();
     } catch (e) {
       _allRoutes = [];
+      _routePie = null;
+      _routeBici = null;
       _routeError = e.toString().replaceFirst('Exception: ', '');
       notifyListeners();
       return false;
