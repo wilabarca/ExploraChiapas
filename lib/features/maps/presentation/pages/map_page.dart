@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -53,7 +53,7 @@ class _MapPageState extends State<MapPage>
   static const _chiapasCenter = LatLng(16.7521, -93.1152);
 
   // Casetas de cobro y gasolineras: aparecen desde un poco antes que los
-  // negocios (son útiles al planear ruta, no solo dentro de la ciudad).
+  // negocios (son Ãºtiles al planear ruta, no solo dentro de la ciudad).
   static const _zoomVias = 11.0;
 
   final OverpassViasDatasource _viasDatasource = OverpassViasDatasource();
@@ -65,7 +65,7 @@ class _MapPageState extends State<MapPage>
 
   // Evita refrescos duplicados si `resumed` y `didPopNext` se disparan
   // casi al mismo tiempo (p. ej. al volver de una pantalla justo cuando
-  // la app también pasa a primer plano).
+  // la app tambiÃ©n pasa a primer plano).
   bool _refrescando = false;
 
   @override
@@ -96,10 +96,10 @@ class _MapPageState extends State<MapPage>
     });
   }
 
-  // Overpass es un servicio público compartido: se consulta con debounce y
+  // Overpass es un servicio pÃºblico compartido: se consulta con debounce y
   // solo cuando el usuario deja de mover el mapa (moveEnd), y se evita
-  // repetir la consulta si el recuadro visible sigue dentro del último ya
-  // cargado — así la capa "se actualiza" al explorar sin bombardear la API.
+  // repetir la consulta si el recuadro visible sigue dentro del Ãºltimo ya
+  // cargado â€” asÃ­ la capa "se actualiza" al explorar sin bombardear la API.
   void _programarCargaVias(LatLngBounds bounds) {
     _debounceVias?.cancel();
     _debounceVias = Timer(const Duration(milliseconds: 600), () {
@@ -117,8 +117,8 @@ class _MapPageState extends State<MapPage>
     if (_cargandoVias) return;
 
     setState(() => _cargandoVias = true);
-    // Se consulta un recuadro ligeramente más grande que el visible para
-    // que al hacer pan pequeño no dispare otra consulta de inmediato.
+    // Se consulta un recuadro ligeramente mÃ¡s grande que el visible para
+    // que al hacer pan pequeÃ±o no dispare otra consulta de inmediato.
     final padLat = (bounds.north - bounds.south) * 0.5;
     final padLng = (bounds.east - bounds.west) * 0.5;
     final consultado = LatLngBounds(
@@ -141,7 +141,7 @@ class _MapPageState extends State<MapPage>
     });
   }
 
-  // Punto de ubicación en tiempo real en la vista general (fuera de navegación).
+  // Punto de ubicaciÃ³n en tiempo real en la vista general (fuera de navegaciÃ³n).
   Future<void> _iniciarUbicacionEnVivo() async {
     try {
       var permission = await Geolocator.checkPermission();
@@ -223,9 +223,9 @@ class _MapPageState extends State<MapPage>
     _mapController.move(LatLng(pos.latitude, pos.longitude), 17);
   }
 
-  // La app vuelve a primer plano (p. ej. el usuario dejó la app abierta,
-  // fue a otro lado y regresó): refresca por si algo cambió mientras tanto
-  // (un negocio nuevo, un destino recién aprobado).
+  // La app vuelve a primer plano (p. ej. el usuario dejÃ³ la app abierta,
+  // fue a otro lado y regresÃ³): refresca por si algo cambiÃ³ mientras tanto
+  // (un negocio nuevo, un destino reciÃ©n aprobado).
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
@@ -234,7 +234,7 @@ class _MapPageState extends State<MapPage>
   }
 
   // Se dispara al volver a este mapa tras cerrar (pop) una pantalla
-  // apilada encima (detalle de negocio, ruta local, etc.) — mismo patrón
+  // apilada encima (detalle de negocio, ruta local, etc.) â€” mismo patrÃ³n
   // ya usado en Home para promociones/eventos.
   @override
   void didPopNext() {
@@ -244,7 +244,7 @@ class _MapPageState extends State<MapPage>
   Future<void> _refrescarDatos() async {
     if (!mounted || _refrescando) return;
     // Si el usuario tiene una ficha/ruta abierta, un refresco de fondo no
-    // debe interrumpirla ni resetear su selección.
+    // debe interrumpirla ni resetear su selecciÃ³n.
     if (_mapProvider?.selected != null) return;
 
     _refrescando = true;
@@ -275,10 +275,10 @@ class _MapPageState extends State<MapPage>
     _mapController.move(LatLng(lat, lng), 16);
   }
 
-  // Un solo vuelo animado hacia la ubicación real del usuario en cuanto se
-  // obtiene el primer fix de GPS — solo una vez por apertura de pantalla
-  // (no en cada actualización del stream, o la cámara "pelearía" con el
-  // usuario si está paneando el mapa manualmente).
+  // Un solo vuelo animado hacia la ubicaciÃ³n real del usuario en cuanto se
+  // obtiene el primer fix de GPS â€” solo una vez por apertura de pantalla
+  // (no en cada actualizaciÃ³n del stream, o la cÃ¡mara "pelearÃ­a" con el
+  // usuario si estÃ¡ paneando el mapa manualmente).
   void _animarCamaraAlUsuario(Position pos) {
     if (_yaSeCentroEnUsuario || !mounted) return;
     _yaSeCentroEnUsuario = true;
@@ -313,8 +313,8 @@ class _MapPageState extends State<MapPage>
 
   // Encontrar un resultado (destino real o negocio real) y no verlo porque
   // sigue fuera de la vista actual del mapa (p. ej. buscando algo lejano
-  // mientras el mapa está centrado en todo Chiapas) se siente igual que
-  // "no aparece nada". Al buscar, la cámara se mueve al primer resultado.
+  // mientras el mapa estÃ¡ centrado en todo Chiapas) se siente igual que
+  // "no aparece nada". Al buscar, la cÃ¡mara se mueve al primer resultado.
   void _centrarEnPrimerResultado(String query) {
     if (query.trim().isEmpty) return;
     final q = query.toLowerCase();
@@ -346,8 +346,8 @@ class _MapPageState extends State<MapPage>
 
   // Softer, less saturated versions of the original colors. Las claves
   // deben coincidir con el slug generado en `_slugCategoria` del
-  // datasource (nombre real de categoría, en minúsculas y sin acentos) —
-  // cubre las 6 categorías reales de `/categories?scope=destinos`.
+  // datasource (nombre real de categorÃ­a, en minÃºsculas y sin acentos) â€”
+  // cubre las 6 categorÃ­as reales de `/categories?scope=destinos`.
   Color _colorPorTipo(String tipo) {
     switch (tipo) {
       case 'naturaleza':
@@ -433,16 +433,16 @@ class _MapPageState extends State<MapPage>
   @override
   Widget build(BuildContext context) {
     // Los negocios ahora se muestran desde que se abre el mapa, sin
-    // esperar a que el usuario haga zoom manual ni busque algo — antes
-    // exigían zoom >= 13 (o una búsqueda activa), lo que se sentía como
-    // "el mapa está vacío". Van agrupados en su propio cluster (como los
+    // esperar a que el usuario haga zoom manual ni busque algo â€” antes
+    // exigÃ­an zoom >= 13 (o una bÃºsqueda activa), lo que se sentÃ­a como
+    // "el mapa estÃ¡ vacÃ­o". Van agrupados en su propio cluster (como los
     // destinos) para que no se amontonen visualmente al estar lejos.
     final _negociosConCoordenadas = _filtrarNegocios(
       _negocios,
     ).where((n) => n.latitud != 0.0 && n.longitud != 0.0).toList();
 
     // Intereses guardados por el usuario en el onboarding (mismos UUID de
-    // categoría que `Destino.categoryId`/`DestinationEntity.categoryId`) —
+    // categorÃ­a que `Destino.categoryId`/`DestinationEntity.categoryId`) â€”
     // se usan para resaltar, no para ocultar, los destinos recomendados.
     final interesesUsuario = context
         .watch<AuthProvider>()
@@ -454,7 +454,7 @@ class _MapPageState extends State<MapPage>
     return Scaffold(
       body: Stack(
         children: [
-          // ── Mapa ────────────────────────────────────────────────────────────
+          // â”€â”€ Mapa â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Consumer<MapProvider>(
             builder: (_, provider, __) {
               final destinos = _filtrarDestinos(provider.destinations);
@@ -468,7 +468,7 @@ class _MapPageState extends State<MapPage>
                   // A partir de zoom ~17 el tile de OSM empieza a mostrar
                   // senderos/detalle crudo sin curar (ver captura: caminos
                   // de excursionismo, etiquetas en otros idiomas). Limitarlo
-                  // mantiene una vista más "app turística", no de mapa crudo.
+                  // mantiene una vista mÃ¡s "app turÃ­stica", no de mapa crudo.
                   maxZoom: 17,
                   onTap: (_, __) {
                     provider.clearSelection();
@@ -477,7 +477,7 @@ class _MapPageState extends State<MapPage>
                 ),
                 children: [
                   // En modo oscuro se usa el basemap oscuro de CARTO en vez
-                  // del tile claro estándar de OSM — de otra forma el mapa
+                  // del tile claro estÃ¡ndar de OSM â€” de otra forma el mapa
                   // queda deslumbrante/blanco en medio de una UI oscura.
                   TileLayer(
                     urlTemplate: AppColors.isDark(context)
@@ -490,7 +490,7 @@ class _MapPageState extends State<MapPage>
                     maxZoom: 17,
                   ),
 
-                  // Routes — blue so they don't blend with green nature markers
+                  // Routes â€” blue so they don't blend with green nature markers
                   if (provider.allRoutes.isNotEmpty)
                     PolylineLayer(
                       polylines: List.generate(
@@ -510,8 +510,8 @@ class _MapPageState extends State<MapPage>
                       ),
                     ),
 
-                  // Destinos agrupados: evita que se encimen cuando están
-                  // muy cerca entre sí (p. ej. dos lugares en la misma ciudad).
+                  // Destinos agrupados: evita que se encimen cuando estÃ¡n
+                  // muy cerca entre sÃ­ (p. ej. dos lugares en la misma ciudad).
                   MarkerClusterLayerWidget(
                     options: MarkerClusterLayerOptions(
                       maxClusterRadius: 45,
@@ -571,11 +571,11 @@ class _MapPageState extends State<MapPage>
                         ),
                       ),
                       // zoomToBoundsOnClick (activado por defecto) ya centra
-                      // y hace zoom automáticamente al tocar un cluster.
+                      // y hace zoom automÃ¡ticamente al tocar un cluster.
                     ),
                   ),
 
-                  // Negocios agrupados — visibles desde que se abre el mapa,
+                  // Negocios agrupados â€” visibles desde que se abre el mapa,
                   // en su propio cluster para no encimarse con destinos.
                   if (_negociosConCoordenadas.isNotEmpty)
                     MarkerClusterLayerWidget(
@@ -637,7 +637,7 @@ class _MapPageState extends State<MapPage>
 
                   MarkerLayer(
                     markers: [
-                      // Casetas de cobro / gasolineras — datos reales de
+                      // Casetas de cobro / gasolineras â€” datos reales de
                       // Overpass (OSM), visibles desde zoom de carretera.
                       if (_mostrarVias && _currentZoom >= _zoomVias)
                         ..._viasPois.map(
@@ -694,7 +694,7 @@ class _MapPageState extends State<MapPage>
                           ),
                         ),
 
-                      // Punto de ubicación en tiempo real (fuera de navegación)
+                      // Punto de ubicaciÃ³n en tiempo real (fuera de navegaciÃ³n)
                       if (!provider.enNavegacion && _liveUserPosition != null)
                         Marker(
                           point: LatLng(
@@ -722,10 +722,10 @@ class _MapPageState extends State<MapPage>
                     popupInitialDisplayDuration: const Duration(seconds: 3),
                     attributions: [
                       const TextSourceAttribution(
-                        '© OpenStreetMap contributors',
+                        'Â© OpenStreetMap contributors',
                       ),
                       if (AppColors.isDark(context))
-                        const TextSourceAttribution('© CARTO'),
+                        const TextSourceAttribution('Â© CARTO'),
                     ],
                   ),
                 ],
@@ -733,10 +733,10 @@ class _MapPageState extends State<MapPage>
             },
           ),
 
-          // ── Loading bar — thin line at top, doesn't block the map ──────────
+          // â”€â”€ Loading bar â€” thin line at top, doesn't block the map â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           // Cubre tanto la carga de destinos (MapProvider) como la de
           // negocios (estado local): al abrir el mapa ambas arrancan en
-          // paralelo, y el usuario debe ver que algo está cargando en
+          // paralelo, y el usuario debe ver que algo estÃ¡ cargando en
           // cualquiera de los dos casos, no solo en uno.
           Consumer<MapProvider>(
             builder: (_, provider, __) {
@@ -756,7 +756,7 @@ class _MapPageState extends State<MapPage>
             },
           ),
 
-          // ── Estado vacío: búsqueda sin resultados ───────────────────────────
+          // â”€â”€ Estado vacÃ­o: bÃºsqueda sin resultados â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           if (_busqueda.isNotEmpty && !_cargandoNegocios)
             Consumer<MapProvider>(
               builder: (_, provider, __) {
@@ -813,7 +813,7 @@ class _MapPageState extends State<MapPage>
               },
             ),
 
-          // ── Header + filter bar ─────────────────────────────────────────────
+          // â”€â”€ Header + filter bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           SafeArea(
             child: Column(
               children: [
@@ -856,7 +856,7 @@ class _MapPageState extends State<MapPage>
                                     color: AppColors.textHint(context),
                                   ),
                                   // Evita heredar el "filled: true" del tema
-                                  // global (rectángulo cuadrado de fondo).
+                                  // global (rectÃ¡ngulo cuadrado de fondo).
                                   filled: false,
                                   border: InputBorder.none,
                                 ),
@@ -959,10 +959,10 @@ class _MapPageState extends State<MapPage>
             ),
           ),
 
-          // ── Destination bottom sheet (+ selector de rutas, si hay) ───────────
-          // Antes el selector de rutas vivía en un Positioned con offset fijo
+          // â”€â”€ Destination bottom sheet (+ selector de rutas, si hay) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          // Antes el selector de rutas vivÃ­a en un Positioned con offset fijo
           // (bottom: 260) independiente de la ficha, y como la ficha tiene
-          // alto variable (según descripción/insignias), a veces terminaban
+          // alto variable (segÃºn descripciÃ³n/insignias), a veces terminaban
           // encimados. Ahora van juntos en la misma columna: el selector se
           // apila arriba de la ficha de forma natural, sin coordenadas fijas.
           Consumer<MapProvider>(
@@ -1047,7 +1047,7 @@ class _MapPageState extends State<MapPage>
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text(
-                                'Este destino es de muestra y aún no está '
+                                'Este destino es de muestra y aÃºn no estÃ¡ '
                                 'disponible en el servidor, no se puede guardar.',
                               ),
                               backgroundColor: Colors.orange,
@@ -1134,7 +1134,7 @@ class _MapPageState extends State<MapPage>
             },
           ),
 
-          // ── Toggle casetas/gasolineras ──────────────────────────────────────
+          // â”€â”€ Toggle casetas/gasolineras â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Consumer<MapProvider>(
             builder: (ctx, provider, __) {
               if (provider.selected != null) return const SizedBox.shrink();
@@ -1165,10 +1165,10 @@ class _MapPageState extends State<MapPage>
             },
           ),
 
-          // ── Recenter button ─────────────────────────────────────────────────
-          // Oculto mientras la ficha del destino está abierta: su alto
-          // varía (badges, descripción larga, etc.) y este botón de
-          // posición fija terminaba encimado sobre el título.
+          // â”€â”€ Recenter button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          // Oculto mientras la ficha del destino estÃ¡ abierta: su alto
+          // varÃ­a (badges, descripciÃ³n larga, etc.) y este botÃ³n de
+          // posiciÃ³n fija terminaba encimado sobre el tÃ­tulo.
           Consumer<MapProvider>(
             builder: (ctx, provider, __) {
               if (provider.selected != null) return const SizedBox.shrink();
@@ -1204,10 +1204,10 @@ class _MapPageState extends State<MapPage>
             },
           ),
 
-          // ── Stop navigation button ──────────────────────────────────────────
-          // Se oculta si la ficha del destino ya está abierta: su propia "X"
+          // â”€â”€ Stop navigation button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          // Se oculta si la ficha del destino ya estÃ¡ abierta: su propia "X"
           // hace lo mismo (provider.clearSelection) y, al tener alto
-          // variable, chocaba con este botón de posición fija.
+          // variable, chocaba con este botÃ³n de posiciÃ³n fija.
           Consumer<MapProvider>(
             builder: (_, provider, __) {
               if (!provider.enNavegacion || provider.selected != null) {
@@ -1232,11 +1232,11 @@ class _MapPageState extends State<MapPage>
 }
 
 /// Marcador de destino que coincide con los intereses guardados del
-/// usuario: mismo ícono/color por categoría, pero con un anillo y una
+/// usuario: mismo Ã­cono/color por categorÃ­a, pero con un anillo y una
 /// insignia de estrella para distinguirlo sin ocultar el resto del mapa.
 /// Entrada suave (fade + escala) para cada marcador al aparecer en el
-/// mapa — un solo `TweenAnimationBuilder` sin `AnimationController` propio,
-/// igual de ligero que `FadeSlideIn` pero pensado para íconos pequeños.
+/// mapa â€” un solo `TweenAnimationBuilder` sin `AnimationController` propio,
+/// igual de ligero que `FadeSlideIn` pero pensado para Ã­conos pequeÃ±os.
 class _MarkerPop extends StatelessWidget {
   final Widget child;
   const _MarkerPop({required this.child});
@@ -1299,8 +1299,8 @@ class _MarcadorRecomendado extends StatelessWidget {
   }
 }
 
-/// Leyenda compacta de los marcadores y colores del mapa — se muestra u
-/// oculta con el botón de info del encabezado.
+/// Leyenda compacta de los marcadores y colores del mapa â€” se muestra u
+/// oculta con el botÃ³n de info del encabezado.
 class _LeyendaMapa extends StatelessWidget {
   const _LeyendaMapa();
 

@@ -4,7 +4,9 @@ import '../../domain/entities/destination_entity.dart';
 import '../../domain/entities/route_info.dart';
 import '../../../../core/theme/app_colors.dart';
 
-class DestinationBottomSheet extends StatelessWidget {
+enum _ModoTransporte { carro, moto, pie, bici }
+
+class DestinationBottomSheet extends StatefulWidget {
   final DestinationEntity destino;
   final RouteInfo? routeInfo;
   final bool esRecomendado;
@@ -12,6 +14,8 @@ class DestinationBottomSheet extends StatelessWidget {
   final VoidCallback? onRecalcular;
   final VoidCallback onGuardar;
   final VoidCallback onCerrar;
+  final int? durationMinutes;
+  final double? distanceKm;
 
   const DestinationBottomSheet({
     super.key,
@@ -22,10 +26,40 @@ class DestinationBottomSheet extends StatelessWidget {
     this.onRecalcular,
     required this.onGuardar,
     required this.onCerrar,
+    this.durationMinutes,
+    this.distanceKm,
   });
 
   @override
+  State<DestinationBottomSheet> createState() => _DestinationBottomSheetState();
+}
+
+class _DestinationBottomSheetState extends State<DestinationBottomSheet> {
+  _ModoTransporte _modo = _ModoTransporte.carro;
+
+  // Velocidades promedio en Chiapas por modo (km/h)
+  static const _velocidades = {
+    _ModoTransporte.carro: 0.0,  // usa durationMinutes de OSRM
+    _ModoTransporte.moto: 45.0,
+    _ModoTransporte.pie: 5.0,
+    _ModoTransporte.bici: 12.0,
+  };
+
+  double? get _distanciaKm => widget.routeInfo?.distanceKm ?? widget.distanceKm;
+
+  int? _tiempoParaModo(_ModoTransporte modo) {
+    final dist = _distanciaKm;
+    if (dist == null) return null;
+    if (modo == _ModoTransporte.carro) {
+      return widget.routeInfo?.durationMinutes ?? widget.durationMinutes;
+    }
+    final vel = _velocidades[modo]!;
+    return (dist / vel * 60).round();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final durationModo = _tiempoParaModo(_modo);
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
       decoration: BoxDecoration(
@@ -63,7 +97,7 @@ class DestinationBottomSheet extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      destino.nombre,
+                      widget.destino.nombre,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -88,7 +122,7 @@ class DestinationBottomSheet extends StatelessWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              destino.calificacion.toStringAsFixed(1),
+                              widget.destino.calificacion.toStringAsFixed(1),
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
@@ -97,8 +131,8 @@ class DestinationBottomSheet extends StatelessWidget {
                             ),
                           ],
                         ),
-                        _TipoBadge(tipo: destino.tipo),
-                        if (esRecomendado)
+                        _TipoBadge(tipo: widget.destino.tipo),
+                        if (widget.esRecomendado)
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,
@@ -128,7 +162,7 @@ class DestinationBottomSheet extends StatelessWidget {
                               ],
                             ),
                           ),
-                        if (destino.esMock)
+                        if (widget.destino.esMock)
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,
@@ -157,14 +191,14 @@ class DestinationBottomSheet extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   GestureDetector(
-                    onTap: onCerrar,
+                    onTap: widget.onCerrar,
                     child: Icon(
                       Icons.close,
                       size: 20,
                       color: AppColors.textSecondary(context),
                     ),
                   ),
-                  if (destino.esSostenible) ...[
+                  if (widget.destino.esSostenible) ...[
                     const SizedBox(height: 6),
                     Tooltip(
                       message:
@@ -200,7 +234,7 @@ class DestinationBottomSheet extends StatelessWidget {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (destino.afluencia > 75)
+                      if (widget.destino.afluencia > 75)
                         const Padding(
                           padding: EdgeInsets.only(right: 4),
                           child: Icon(
@@ -210,11 +244,11 @@ class DestinationBottomSheet extends StatelessWidget {
                           ),
                         ),
                       Text(
-                        destino.afluencia > 75 ? 'Alta' : 'Normal',
+                        widget.destino.afluencia > 75 ? 'Alta' : 'Normal',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: destino.afluencia > 75
+                          color: widget.destino.afluencia > 75
                               ? Colors.orange
                               : AppColors.primary(context),
                         ),
@@ -227,11 +261,11 @@ class DestinationBottomSheet extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
-                  value: destino.afluencia / 100,
+                  value: widget.destino.afluencia / 100,
                   minHeight: 6,
                   backgroundColor: AppColors.surfaceContainer(context),
                   valueColor: AlwaysStoppedAnimation(
-                    destino.afluencia > 75
+                    widget.destino.afluencia > 75
                         ? Colors.orange
                         : AppColors.primary(context),
                   ),
@@ -296,7 +330,7 @@ class DestinationBottomSheet extends StatelessWidget {
           const SizedBox(height: 12),
 
           Text(
-            destino.descripcion,
+            widget.destino.descripcion,
             style: TextStyle(
               fontSize: 14,
               color: AppColors.textSecondary(context),
@@ -306,11 +340,64 @@ class DestinationBottomSheet extends StatelessWidget {
 
           const SizedBox(height: 20),
 
+          if (_distanciaKm != null) ...[
+            // Tabs de modo de transporte
+            Row(
+              children: [
+                _ModoTab(
+                  icon: Icons.directions_car_outlined,
+                  label: 'Carro',
+                  activo: _modo == _ModoTransporte.carro,
+                  onTap: () => setState(() => _modo = _ModoTransporte.carro),
+                ),
+                const SizedBox(width: 8),
+                _ModoTab(
+                  icon: Icons.two_wheeler_outlined,
+                  label: 'Moto',
+                  activo: _modo == _ModoTransporte.moto,
+                  onTap: () => setState(() => _modo = _ModoTransporte.moto),
+                ),
+                const SizedBox(width: 8),
+                _ModoTab(
+                  icon: Icons.directions_walk_outlined,
+                  label: 'A pie',
+                  activo: _modo == _ModoTransporte.pie,
+                  onTap: () => setState(() => _modo = _ModoTransporte.pie),
+                ),
+                const SizedBox(width: 8),
+                _ModoTab(
+                  icon: Icons.directions_bike_outlined,
+                  label: 'Bici',
+                  activo: _modo == _ModoTransporte.bici,
+                  onTap: () => setState(() => _modo = _ModoTransporte.bici),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                if (durationModo != null)
+                  _InfoChip(
+                    icon: Icons.access_time_rounded,
+                    label: durationModo >= 60
+                        ? '${durationModo ~/ 60} h ${durationModo % 60} min'
+                        : '$durationModo min',
+                  ),
+                if (durationModo != null) const SizedBox(width: 10),
+                _InfoChip(
+                  icon: Icons.straighten_rounded,
+                  label: '${_distanciaKm!.toStringAsFixed(1)} km',
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
+
           Row(
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: onGuardar,
+                  onPressed: widget.onGuardar,
                   icon: Icon(
                     Icons.bookmark_border,
                     color: AppColors.primary(context),
@@ -331,7 +418,7 @@ class DestinationBottomSheet extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: onVerRuta,
+                  onPressed: widget.onVerRuta,
                   icon: Icon(
                     Icons.directions,
                     color: AppColors.onPrimary(context),
@@ -357,13 +444,85 @@ class DestinationBottomSheet extends StatelessWidget {
                 tooltip: 'Compartir',
                 onPressed: () {
                   Share.share(
-                    '¡Visita ${destino.nombre} en ExploraChiapas!\n${destino.descripcion}',
+                    '¡Visita ${widget.destino.nombre} en ExploraChiapas!\n${widget.destino.descripcion}',
                   );
                 },
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _InfoChip({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainer(context),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: AppColors.primary(context)),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary(context),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ModoTab extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool activo;
+  final VoidCallback onTap;
+  const _ModoTab({required this.icon, required this.label, required this.activo, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: activo ? AppColors.primary(context) : AppColors.surfaceContainer(context),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 20, color: activo ? AppColors.onPrimary(context) : AppColors.textSecondary(context)),
+              const SizedBox(height: 3),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: activo ? AppColors.onPrimary(context) : AppColors.textSecondary(context),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

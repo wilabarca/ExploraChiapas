@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../domain/entities/destination_entity.dart';
@@ -34,9 +34,11 @@ class MapProvider extends ChangeNotifier {
   RouteInfo? get selectedRouteInfo =>
       _allRoutes.isEmpty ? null : _allRoutes[_selectedRouteIndex];
 
+  RouteInfo? get selectedRoute => selectedRouteInfo;
+
   bool get hayAlternativas => _allRoutes.length > 1;
 
-  // Último destino con ruta calculada — permite "Recalcular ruta" sin que
+  // Ultimo destino con ruta calculada - permite recalcular sin que
   // la UI tenga que volver a pasar el destino.
   DestinationEntity? _ultimoDestinoRuta;
 
@@ -46,7 +48,6 @@ class MapProvider extends ChangeNotifier {
   DestinationEntity? _selected;
   DestinationEntity? get selected => _selected;
 
-  // Navegación en tiempo real
   bool _enNavegacion = false;
   bool get enNavegacion => _enNavegacion;
 
@@ -94,9 +95,6 @@ class MapProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Devuelve true si logró calcular al menos una ruta. Si falla, deja el
-  /// motivo en [routeError] y NO entra en modo navegación — antes el error
-  /// se tragaba en silencio y la app "navegaba" sin ninguna ruta dibujada.
   Future<bool> loadRouteTo(DestinationEntity destino) async {
     _ultimoDestinoRuta = destino;
     double originLat = 16.7521;
@@ -121,7 +119,7 @@ class MapProvider extends ChangeNotifier {
         _userHeading = pos.heading;
       }
     } catch (_) {
-      // Sin GPS disponible: se sigue con el origen por defecto (Tuxtla).
+      // Sin GPS: se usa el centro de Chiapas como origen por defecto.
     }
 
     try {
@@ -147,8 +145,8 @@ class MapProvider extends ChangeNotifier {
   }
 
   /// Vuelve a pedir la ruta al mismo destino (misma llamada que
-  /// [loadRouteTo]) — útil cuando el usuario se desvió del camino o
-  /// simplemente quiere refrescar el cálculo con su posición actual.
+  /// [loadRouteTo]) â€” Ãºtil cuando el usuario se desviÃ³ del camino o
+  /// simplemente quiere refrescar el cÃ¡lculo con su posiciÃ³n actual.
   Future<bool> recalcularRuta() async {
     final destino = _ultimoDestinoRuta;
     if (destino == null) return false;

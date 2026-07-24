@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../../../../core/network/api_client.dart';
@@ -278,23 +280,18 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
         queryParameters: {
           'overview': 'full',
           'geometries': 'geojson',
-          // Pedir un número explícito (en vez de 'true') hace que OSRM
-          // intente más en serio devolver rutas alternas reales; aun así
-          // no está garantizado — depende de que existan caminos
-          // realmente distintos entre origen y destino.
           'alternatives': '2',
         },
       );
     } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionError) {
+        // Sin internet: devuelve estimación Haversine para poder mostrar algo.
+        return [_fallbackHaversine(originLat, originLng, destLat, destLng)];
+      }
       if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout ||
           e.type == DioExceptionType.sendTimeout) {
-        throw Exception(
-          'El servicio de rutas tardó demasiado en responder. Intenta de nuevo.',
-        );
-      }
-      if (e.type == DioExceptionType.connectionError) {
-        throw Exception('Sin conexión a internet. Verifica tu red.');
+        return [_fallbackHaversine(originLat, originLng, destLat, destLng)];
       }
       throw Exception('No se pudo calcular la ruta. Intenta de nuevo.');
     }
@@ -313,11 +310,47 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
       final points = coords
           .map((c) => [(c[1] as num).toDouble(), (c[0] as num).toDouble()])
           .toList();
+      final rawMeters = (route['distance'] as num?)?.toDouble() ?? 0.0;
+      final rawSeconds = (route['duration'] as num?)?.toDouble() ?? 0.0;
+      // Factor diferenciado: OSRM usa velocidades teóricas que no reflejan
+      // la realidad de Chiapas (topes, curvas de montaña, terracería).
+      final factor = _factorCorreccion(rawMeters);
       return RouteInfo(
         points: points,
-        distanceMeters: (route['distance'] as num?)?.toDouble() ?? 0,
-        durationSeconds: (route['duration'] as num?)?.toDouble() ?? 0,
+        distanceMeters: rawMeters,
+        durationSeconds: rawSeconds * factor,
       );
     }).toList();
+  }
+
+  // < 20 km → 1.2x urbano, 20–80 km → 1.4x semi-rural, > 80 km → 1.6x montaña
+  static double _factorCorreccion(double metros) {
+    final km = metros / 1000;
+    if (km < 20) return 1.2;
+    if (km < 80) return 1.4;
+    return 1.6;
+  }
+
+  // Respaldo cuando OSRM no está disponible: Haversine × 1.35 tortuosidad,
+  // 35 km/h promedio, polilínea de dos puntos (línea recta indicativa).
+  static RouteInfo _fallbackHaversine(
+    double lat1, double lng1,
+    double lat2, double lng2,
+  ) {
+    const r = 6371000.0;
+    final dLat = (lat2 - lat1) * math.pi / 180;
+    final dLng = (lng2 - lng1) * math.pi / 180;
+    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(lat1 * math.pi / 180) *
+            math.cos(lat2 * math.pi / 180) *
+            math.sin(dLng / 2) *
+            math.sin(dLng / 2);
+    final lineaRecta = r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+    final distanciaMetros = lineaRecta * 1.35;
+    return RouteInfo(
+      points: [[lat1, lng1], [lat2, lng2]],
+      distanceMeters: distanciaMetros,
+      durationSeconds: distanciaMetros / (35000 / 3600),
+    );
   }
 }

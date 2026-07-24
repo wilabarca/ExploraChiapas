@@ -14,12 +14,14 @@ class RouteInfo {
 
   double get distanceKm => distanceMeters / 1000;
 
+  int get durationMinutes => (durationSeconds / 60).round();
+
   String get distanceText => distanceKm < 1
       ? '${distanceMeters.round()} m'
       : '${distanceKm.toStringAsFixed(1)} km';
 
   String get durationText {
-    final minutos = (durationSeconds / 60).round();
+    final minutos = durationMinutes;
     if (minutos < 60) return '$minutos min';
     final h = minutos ~/ 60;
     final m = minutos % 60;
