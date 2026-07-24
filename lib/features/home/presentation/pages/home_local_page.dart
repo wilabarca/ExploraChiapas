@@ -12,6 +12,7 @@ import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/promociones_fuego_banner.dart';
 import '../widgets/promociones_activas_section.dart';
 import '../widgets/negocio_home_card.dart';
+import '../../../negocio/presentation/pages/negocio_datalle_page.dart';
 import '../../../../core/navigation/app_navigator.dart';
 import '../../../negocio/domain/entities/negocio.dart';
 import '../../../negocio/domain/usecases/obtener_negocio.dart';
@@ -20,6 +21,7 @@ import '../../../../core/widgets/fade_slide_in.dart';
 import '../../../../core/widgets/skeleton_loader.dart';
 import '../../../../core/di/injector.dart';
 import '../../../../core/network/ml_api_client.dart';
+import '../../../Chat/presentation/pages/planificar_ruta_page.dart';
 import '../../../destinos/presentation/pages/lugar_detail_page.dart';
 import '../../../eventos/domain/entities/envento_entity.dart';
 import '../../../eventos/domain/entities/evento.dart';
@@ -117,8 +119,11 @@ class _HomeLocalPageState extends State<HomeLocalPage>
     try {
       if (!await Geolocator.isLocationServiceEnabled()) return;
       var p = await Geolocator.checkPermission();
-      if (p == LocationPermission.denied) p = await Geolocator.requestPermission();
-      if (p == LocationPermission.denied || p == LocationPermission.deniedForever) return;
+      if (p == LocationPermission.denied)
+        p = await Geolocator.requestPermission();
+      if (p == LocationPermission.denied ||
+          p == LocationPermission.deniedForever)
+        return;
       final pos = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.low,
@@ -147,8 +152,12 @@ class _HomeLocalPageState extends State<HomeLocalPage>
     const r = 6371.0;
     final dLat = (lat2 - lat1) * pi / 180;
     final dLon = (lon2 - lon1) * pi / 180;
-    final a = sin(dLat / 2) * sin(dLat / 2) +
-        cos(lat1 * pi / 180) * cos(lat2 * pi / 180) * sin(dLon / 2) * sin(dLon / 2);
+    final a =
+        sin(dLat / 2) * sin(dLat / 2) +
+        cos(lat1 * pi / 180) *
+            cos(lat2 * pi / 180) *
+            sin(dLon / 2) *
+            sin(dLon / 2);
     return r * 2 * atan2(sqrt(a), sqrt(1 - a));
   }
 
@@ -235,7 +244,7 @@ class _HomeLocalPageState extends State<HomeLocalPage>
 
     return Scaffold(
       backgroundColor: AppColors.background(context),
-      appBar: const HomeAppBar(),
+      appBar: const HomeAppBar(esPantallaPrincipal: true),
       floatingActionButton: FloatingActionButton(
         onPressed: () => Navigator.pushNamed(context, '/chat'),
         backgroundColor: AppColors.primary(context),
@@ -433,18 +442,23 @@ class _HomeLocalPageState extends State<HomeLocalPage>
                         const SizedBox.shrink()
                       else
                         SizedBox(
-                          height: 195,
+                          height: NegocioHomeCard.alturaRecomendada,
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 20),
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
                             itemCount: _negocios.length,
                             separatorBuilder: (_, __) =>
                                 const SizedBox(width: 12),
                             itemBuilder: (context, i) => NegocioHomeCard(
                               negocio: _negocios[i],
-                              onTap: () =>
-                                  Navigator.pushNamed(context, '/negocios'),
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => NegocioDetallePage(
+                                    negocioId: _negocios[i].id,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -460,7 +474,12 @@ class _HomeLocalPageState extends State<HomeLocalPage>
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: GestureDetector(
-                      onTap: () => Navigator.pushNamed(context, '/chat'),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const PlanificarRutaPage(),
+                        ),
+                      ),
                       child: Container(
                         padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(

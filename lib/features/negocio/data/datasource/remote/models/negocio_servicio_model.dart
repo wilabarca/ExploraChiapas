@@ -7,11 +7,15 @@ class NegocioServicioModel extends NegocioServicio {
     required super.nombre,
   });
 
+  /// Igual que con horarios: se soportan nombres de campo en inglés
+  /// (`businessId`, `name`) además de los españoles asumidos
+  /// originalmente, para no volver a romper el detalle si el backend
+  /// llega a exponer `services` con esa convención.
   factory NegocioServicioModel.fromJson(Map<String, dynamic> json) {
     return NegocioServicioModel(
-      id: json['id'] as String,
-      negocioId: json['negocioId'] as String,
-      nombre: json['nombre'] as String,
+      id: json['id']?.toString() ?? '',
+      negocioId: (json['businessId'] ?? json['negocioId'])?.toString() ?? '',
+      nombre: (json['name'] ?? json['nombre'])?.toString() ?? '',
     );
   }
 }

@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/fade_slide_in.dart';
 import '../../../favoritos/domain/entities/favorito.dart';
 import '../../../favoritos/presentation/providers/favoritos_provider.dart';
 import '../../../resena/domain/entities/DestinoResenaEntity.dart';
 import '../../../resena/presentation/pages/escribir_resena_page.dart';
 import '../../../resena/presentation/providers/ResenasProvider.dart';
 import '../../../resena/presentation/widgets/resena_card.dart';
+import '../../../profile/presentation/providers/profile_provider.dart';
 import '../../domain/entities/negocio.dart';
 import '../../domain/usecases/obtener_negocio_por_id.dart';
 import '../../../../core/di/injector.dart';
+import '../../../destinos/presentation/pages/mapa_ruta_page.dart';
 import '../widgets/negocio_header.dart';
 import '../widgets/negocio_info.dart';
 import '../widgets/negocio_servicios.dart';
@@ -41,6 +44,10 @@ class _NegocioDetallePageState extends State<NegocioDetallePage> {
       final favProvider = context.read<FavoritosProvider>();
       if (favProvider.status == FavoritosStatus.idle) {
         favProvider.cargarFavoritos();
+      }
+      final profileProvider = context.read<ProfileProvider>();
+      if (profileProvider.status == ProfileStatus.idle) {
+        profileProvider.loadPerfil();
       }
       context.read<ResenasProvider>().cargarResenas(
         targetType: 'business',
@@ -135,7 +142,45 @@ class _NegocioDetallePageState extends State<NegocioDetallePage> {
                   NegocioServicios(servicios: negocio.servicios),
                   const SizedBox(height: 22),
                   NegocioHorarios(horarios: negocio.horarios),
-                  const SizedBox(height: 26),
+                  const SizedBox(height: 22),
+                  // ── Botón Trazar Ruta ───────────────────────────────
+                  if (negocio.tieneCoordenadasValidas)
+                    FractionallySizedBox(
+                      widthFactor: 1.0,
+                      child: ElevatedButton.icon(
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => MapaRutaPage(
+                              nombre: negocio.nombre,
+                              destLat: negocio.latitud,
+                              destLng: negocio.longitud,
+                            ),
+                          ),
+                        ),
+                        icon: const Icon(
+                          Icons.directions_outlined,
+                          color: Colors.white,
+                        ),
+                        label: const Text(
+                          'Trazar Ruta',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1565C0),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (negocio.tieneCoordenadasValidas)
+                    const SizedBox(height: 12),
                   // ── Botón escribir reseña ──────────────────────────
                   FractionallySizedBox(
                     widthFactor: 1.0,
@@ -213,10 +258,17 @@ class _NegocioDetallePageState extends State<NegocioDetallePage> {
                           ),
                         );
                       }
+                      final resenas = provider.resenas;
                       return Column(
-                        children: provider.resenas
-                            .map((r) => ResenaCard(resena: r))
-                            .toList(),
+                        children: [
+                          for (var i = 0; i < resenas.length; i++) ...[
+                            if (i > 0) const SizedBox(height: 12),
+                            FadeSlideIn(
+                              delay: Duration(milliseconds: 40 * i),
+                              child: ResenaCard(resena: resenas[i]),
+                            ),
+                          ],
+                        ],
                       );
                     },
                   ),

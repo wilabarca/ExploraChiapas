@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import '../../navigation/app_navigator.dart';
@@ -9,10 +11,19 @@ class OneSignalService {
   static String? _rutaPendiente;
   static Map<String, dynamic>? _argsPendientes;
 
+  /// SDK setup + listeners only — rápido, sin diálogos. Se espera desde
+  /// `main()` antes de mostrar la app real, junto con la inyección de
+  /// dependencias.
   static Future<void> initialize() async {
-    await OneSignal.initialize(_appId);
+    // Verbose solo en debug: permite ver en `flutter run`/logcat si el
+    // dispositivo se registra correctamente contra OneSignal, si llega un
+    // payload del servidor, y en qué paso concreto se pierde — necesario
+    // para diagnosticar "no me llega la notificación" sin adivinar.
+    if (kDebugMode) {
+      await OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
+    }
 
-    await OneSignal.Notifications.requestPermission(true);
+    await OneSignal.initialize(_appId);
 
     // Show notification banner while the app is open.
     OneSignal.Notifications.addForegroundWillDisplayListener((event) {
@@ -21,6 +32,15 @@ class OneSignalService {
 
     // Handle tap in all app states: foreground, background, cold-start.
     OneSignal.Notifications.addClickListener(_onNotificationClick);
+
+    // El diálogo nativo de permiso de notificaciones espera a que el
+    // usuario responda (puede tardar segundos o quedarse indefinidamente
+    // si el usuario no interactúa). Antes se esperaba (`await`) dentro de
+    // este método, y como `main()` esperaba a `initialize()` completo
+    // antes de mostrar la app real, el arranque se quedaba bloqueado en
+    // el splash hasta que el usuario tocara "Permitir"/"No permitir".
+    // Se dispara sin esperar para que nunca retrase el arranque.
+    unawaited(OneSignal.Notifications.requestPermission(true));
   }
 
   static void _onNotificationClick(OSNotificationClickEvent event) {

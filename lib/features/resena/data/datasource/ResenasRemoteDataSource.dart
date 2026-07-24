@@ -16,6 +16,14 @@ abstract class ResenasRemoteDataSource {
     required int rating,
     String? comment,
   });
+
+  Future<ResenaModel> editarResena({
+    required String id,
+    required int rating,
+    String? comment,
+  });
+
+  Future<void> eliminarResena({required String id});
 }
 
 @LazySingleton(as: ResenasRemoteDataSource)
@@ -33,10 +41,7 @@ class ResenasRemoteDataSourceImpl implements ResenasRemoteDataSource {
     // otros nombres de método (p.ej. apiClient.get(...)), ajusta aquí.
     final response = await _apiClient.dio.get(
       AppConstants.reviewsEndpoint,
-      queryParameters: {
-        'targetType': targetType,
-        'targetId': targetId,
-      },
+      queryParameters: {'targetType': targetType, 'targetId': targetId},
     );
 
     final data = response.data['data'] as List;
@@ -63,5 +68,24 @@ class ResenasRemoteDataSourceImpl implements ResenasRemoteDataSource {
     );
 
     return ResenaModel.fromJson(response.data['data'] as Map<String, dynamic>);
+  }
+
+  @override
+  Future<ResenaModel> editarResena({
+    required String id,
+    required int rating,
+    String? comment,
+  }) async {
+    final response = await _apiClient.dio.patch(
+      '${AppConstants.reviewsEndpoint}/$id',
+      data: {'rating': rating, if (comment != null) 'comment': comment},
+    );
+
+    return ResenaModel.fromJson(response.data['data'] as Map<String, dynamic>);
+  }
+
+  @override
+  Future<void> eliminarResena({required String id}) async {
+    await _apiClient.dio.delete('${AppConstants.reviewsEndpoint}/$id');
   }
 }

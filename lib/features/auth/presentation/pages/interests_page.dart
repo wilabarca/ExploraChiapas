@@ -212,7 +212,16 @@ class _InterestsPageState extends State<InterestsPage> {
        * simplemente regresamos al perfil.
        */
       if (_isEditing) {
-        Navigator.pop(context, true);
+        // Defensivo: si esta pantalla se alcanzó reemplazando toda la
+        // pila de navegación (p. ej. al restaurar sesión) en vez de
+        // apilarse sobre otra pantalla, no hay a dónde "regresar" —
+        // Navigator.pop en ese caso deja la pantalla en negro. Se
+        // entra directo al Home en su lugar.
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context, true);
+        } else {
+          Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+        }
 
         return;
       }

@@ -19,6 +19,7 @@ import '../../../resena/presentation/pages/escribir_resena_page.dart';
 import '../../../resena/presentation/providers/ResenasProvider.dart';
 import '../../../resena/presentation/widgets/resena_card.dart';
 import '../../../resena/presentation/widgets/star_rating.dart';
+import '../../../profile/presentation/providers/profile_provider.dart';
 
 class LugarDetailPage extends StatefulWidget {
   final String id;
@@ -89,37 +90,37 @@ class _LugarDetailPageState extends State<LugarDetailPage>
       curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
     );
 
-    _contentSlide = Tween<Offset>(
-      begin: const Offset(0, 0.18),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _entryCtrl,
-      curve: const Interval(0.25, 0.75, curve: Curves.easeOutCubic),
-    ));
+    _contentSlide =
+        Tween<Offset>(begin: const Offset(0, 0.18), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _entryCtrl,
+            curve: const Interval(0.25, 0.75, curve: Curves.easeOutCubic),
+          ),
+        );
     _contentFade = CurvedAnimation(
       parent: _entryCtrl,
       curve: const Interval(0.25, 0.70, curve: Curves.easeOut),
     );
 
-    _infoSlide = Tween<Offset>(
-      begin: const Offset(0, 0.2),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _entryCtrl,
-      curve: const Interval(0.40, 0.85, curve: Curves.easeOutCubic),
-    ));
+    _infoSlide = Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero)
+        .animate(
+          CurvedAnimation(
+            parent: _entryCtrl,
+            curve: const Interval(0.40, 0.85, curve: Curves.easeOutCubic),
+          ),
+        );
     _infoFade = CurvedAnimation(
       parent: _entryCtrl,
       curve: const Interval(0.40, 0.80, curve: Curves.easeOut),
     );
 
-    _reviewsSlide = Tween<Offset>(
-      begin: const Offset(0, 0.2),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _entryCtrl,
-      curve: const Interval(0.55, 1.0, curve: Curves.easeOutCubic),
-    ));
+    _reviewsSlide = Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero)
+        .animate(
+          CurvedAnimation(
+            parent: _entryCtrl,
+            curve: const Interval(0.55, 1.0, curve: Curves.easeOutCubic),
+          ),
+        );
     _reviewsFade = CurvedAnimation(
       parent: _entryCtrl,
       curve: const Interval(0.55, 1.0, curve: Curves.easeOut),
@@ -138,6 +139,10 @@ class _LugarDetailPageState extends State<LugarDetailPage>
       final favProvider = context.read<FavoritosProvider>();
       if (favProvider.status == FavoritosStatus.idle) {
         favProvider.cargarFavoritos();
+      }
+      final profileProvider = context.read<ProfileProvider>();
+      if (profileProvider.status == ProfileStatus.idle) {
+        profileProvider.loadPerfil();
       }
     });
   }
@@ -201,13 +206,15 @@ class _LugarDetailPageState extends State<LugarDetailPage>
     }
     if (!_tieneLocationId) return;
     setState(() => _ubicandoLugar = true);
-    final result =
-        await getIt<GetUbicacionDestinoUseCase>()(id: widget.locationId!);
+    final result = await getIt<GetUbicacionDestinoUseCase>()(
+      id: widget.locationId!,
+    );
     if (!mounted) return;
     setState(() => _ubicandoLugar = false);
     result.fold(
       (_) => _mostrarError(
-          'No se pudo obtener la ubicación de este lugar. Intenta de nuevo.'),
+        'No se pudo obtener la ubicación de este lugar. Intenta de nuevo.',
+      ),
       (ubicacion) {
         if (!ubicacion.tieneCoordenadasValidas) {
           _mostrarError('Este lugar todavía no tiene coordenadas registradas.');
@@ -230,8 +237,9 @@ class _LugarDetailPageState extends State<LugarDetailPage>
 
   void _mostrarError(String mensaje) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(mensaje)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(mensaje)));
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
@@ -279,8 +287,10 @@ class _LugarDetailPageState extends State<LugarDetailPage>
               right: 0,
               child: SafeArea(
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -313,8 +323,7 @@ class _LugarDetailPageState extends State<LugarDetailPage>
                                 icon: esFav
                                     ? Icons.favorite_rounded
                                     : Icons.favorite_border_rounded,
-                                iconColor:
-                                    esFav ? Colors.red : Colors.white,
+                                iconColor: esFav ? Colors.red : Colors.white,
                               ),
                             ),
                           );
@@ -375,7 +384,9 @@ class _LugarDetailPageState extends State<LugarDetailPage>
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primary(context).withValues(alpha: 0.85),
                       borderRadius: BorderRadius.circular(20),
@@ -469,7 +480,8 @@ class _LugarDetailPageState extends State<LugarDetailPage>
                     child: FadeTransition(
                       opacity: _infoFade,
                       child: _BannerAlternativas(
-                          onVerAlternativas: _verAlternativas),
+                        onVerAlternativas: _verAlternativas,
+                      ),
                     ),
                   ),
                 ],
@@ -514,10 +526,7 @@ class _LugarDetailPageState extends State<LugarDetailPage>
   Widget _buildRatingRow() {
     return Row(
       children: [
-        StarRating(
-          rating: widget.calificacion,
-          size: 18,
-        ),
+        StarRating(rating: widget.calificacion, size: 18),
         const SizedBox(width: 8),
         Text(
           widget.calificacion.toStringAsFixed(1),
@@ -540,8 +549,7 @@ class _LugarDetailPageState extends State<LugarDetailPage>
           GestureDetector(
             onTap: _irAEscribirResena,
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: AppColors.primaryContainer(context),
                 borderRadius: BorderRadius.circular(20),
@@ -602,9 +610,7 @@ class _LugarDetailPageState extends State<LugarDetailPage>
           decoration: BoxDecoration(
             color: AppColors.surface(context),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: AppColors.borderSubtle(context),
-            ),
+            border: Border.all(color: AppColors.borderSubtle(context)),
           ),
           child: Text(
             widget.descripcion!,
@@ -689,7 +695,9 @@ class _LugarDetailPageState extends State<LugarDetailPage>
               width: 18,
               height: 18,
               child: CircularProgressIndicator(
-                  strokeWidth: 2, color: Colors.white),
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
             )
           : const Icon(Icons.near_me_rounded, color: Colors.white, size: 20),
       color: const Color(0xFF1565C0),
@@ -698,13 +706,17 @@ class _LugarDetailPageState extends State<LugarDetailPage>
 
     final resenaBtn = _ActionButton(
       label: 'Dejar reseña',
-      icon: const Icon(Icons.rate_review_rounded, color: Colors.white, size: 20),
+      icon: const Icon(
+        Icons.rate_review_rounded,
+        color: Colors.white,
+        size: 20,
+      ),
       color: AppColors.primary(context),
       onTap: _irAEscribirResena,
     );
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
       decoration: BoxDecoration(
         color: AppColors.surface(context),
         boxShadow: [
@@ -717,6 +729,7 @@ class _LugarDetailPageState extends State<LugarDetailPage>
       ),
       child: SafeArea(
         top: false,
+        minimum: const EdgeInsets.only(bottom: 4),
         child: Row(
           children: [
             if (_puedeIrAlLugar) ...[
@@ -750,15 +763,9 @@ class _FloatButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.black.withValues(alpha: 0.4),
           shape: BoxShape.circle,
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.25),
-          ),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
         ),
-        child: Icon(
-          icon,
-          color: iconColor ?? Colors.white,
-          size: 19,
-        ),
+        child: Icon(icon, color: iconColor ?? Colors.white, size: 19),
       ),
     );
   }
@@ -862,8 +869,10 @@ class _AnimatedResenaCardState extends State<_AnimatedResenaCard>
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
-    _slide = Tween<Offset>(begin: const Offset(0, 0.25), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
+    _slide = Tween<Offset>(
+      begin: const Offset(0, 0.25),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
     _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
 
     Future.delayed(widget.delay, () {
@@ -1019,8 +1028,9 @@ class _ImageCarouselState extends State<_ImageCarousel> {
 
   @override
   Widget build(BuildContext context) {
-    final imagenes =
-        widget.imageUrls.where((url) => url.trim().isNotEmpty).toList();
+    final imagenes = widget.imageUrls
+        .where((url) => url.trim().isNotEmpty)
+        .toList();
 
     if (imagenes.isEmpty) {
       return Container(
@@ -1128,8 +1138,11 @@ class _BannerAlternativasState extends State<_BannerAlternativas> {
                   color: Colors.orange.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.groups_outlined,
-                    color: Colors.orange, size: 20),
+                child: const Icon(
+                  Icons.groups_outlined,
+                  color: Colors.orange,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1155,8 +1168,10 @@ class _BannerAlternativasState extends State<_BannerAlternativas> {
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right_rounded,
-                  color: AppColors.textSecondary(context)),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.textSecondary(context),
+              ),
             ],
           ),
         ),

@@ -1,4 +1,5 @@
 import '../../domain/entities/destination_entity.dart';
+import '../../domain/entities/route_info.dart';
 import '../../domain/repositories/i_map_repository.dart';
 import '../datasources/map_remote_datasource.dart';
 
@@ -15,20 +16,18 @@ class MapRepositoryImpl implements IMapRepository {
     required double lat,
     required double lng,
     required double radioKm,
-  }) =>
-      _datasource.getDestinationsNearby(lat: lat, lng: lng, radioKm: radioKm);
+  }) => _datasource.getDestinationsNearby(lat: lat, lng: lng, radioKm: radioKm);
 
   @override
-  Future<List<List<List<double>>>> getRoutes({
+  Future<List<RouteInfo>> getRoutes({
     required double originLat,
     required double originLng,
     required double destLat,
     required double destLng,
-  }) =>
-      _datasource.getRoutes(
-        originLat: originLat,
-        originLng: originLng,
-        destLat: destLat,
-        destLng: destLng,
-      );
+  }) => _datasource.getRoutes(
+    originLat: originLat,
+    originLng: originLng,
+    destLat: destLat,
+    destLng: destLng,
+  );
 }

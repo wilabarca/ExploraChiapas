@@ -4,19 +4,31 @@ import 'package:injectable/injectable.dart';
 import '../../../../core/services/user_stats_local_service.dart';
 import '../../domain/entities/resena_entity.dart';
 import '../../domain/usecases/CrearResenaUseCase.dart';
+import '../../domain/usecases/EditarResenaUseCase.dart';
+import '../../domain/usecases/EliminarResenaUseCase.dart';
 import '../../domain/usecases/GetResenasUseCase.dart';
 
 enum ResenasStatus { idle, loading, success, error }
 
 enum PublicarStatus { idle, loading, success, error }
 
+enum EdicionStatus { idle, loading, success, error }
+
 @injectable
 class ResenasProvider extends ChangeNotifier {
   final GetResenasUseCase _getResenas;
   final CrearResenaUseCase _crearResena;
+  final EditarResenaUseCase _editarResena;
+  final EliminarResenaUseCase _eliminarResena;
   final UserStatsLocalService _statsLocal;
 
-  ResenasProvider(this._getResenas, this._crearResena, this._statsLocal);
+  ResenasProvider(
+    this._getResenas,
+    this._crearResena,
+    this._editarResena,
+    this._eliminarResena,
+    this._statsLocal,
+  );
 
   int _misResenasCount = 0;
   int get misResenasCount => _misResenasCount;
@@ -123,6 +135,80 @@ class ResenasProvider extends ChangeNotifier {
   void resetPublicarStatus() {
     _publicarStatus = PublicarStatus.idle;
     _publicarError = null;
+    notifyListeners();
+  }
+
+  EdicionStatus _edicionStatus = EdicionStatus.idle;
+  EdicionStatus get edicionStatus => _edicionStatus;
+
+  String? _edicionError;
+  String? get edicionError => _edicionError;
+
+  /// Edita una reseña propia y actualiza la lista en memoria en el
+  /// momento (sin recargar), para que el promedio se recalcule al
+  /// instante — `promedioCalificacion` ya se deriva de `_resenas`.
+  Future<bool> editarResena({
+    required String id,
+    required int rating,
+    String? comment,
+  }) async {
+    _edicionStatus = EdicionStatus.loading;
+    _edicionError = null;
+    notifyListeners();
+
+    final result = await _editarResena(
+      id: id,
+      rating: rating,
+      comment: comment,
+    );
+
+    return result.fold(
+      (failure) {
+        _edicionStatus = EdicionStatus.error;
+        _edicionError = failure.message;
+        notifyListeners();
+        return false;
+      },
+      (resenaActualizada) {
+        _resenas = [
+          for (final r in _resenas)
+            if (r.id == id) resenaActualizada else r,
+        ];
+        _edicionStatus = EdicionStatus.success;
+        notifyListeners();
+        return true;
+      },
+    );
+  }
+
+  /// Elimina una reseña propia y la quita de la lista en memoria al
+  /// instante — el promedio se recalcula solo.
+  Future<bool> eliminarResena(String id) async {
+    _edicionStatus = EdicionStatus.loading;
+    _edicionError = null;
+    notifyListeners();
+
+    final result = await _eliminarResena(id: id);
+
+    return result.fold(
+      (failure) {
+        _edicionStatus = EdicionStatus.error;
+        _edicionError = failure.message;
+        notifyListeners();
+        return false;
+      },
+      (_) {
+        _resenas = _resenas.where((r) => r.id != id).toList();
+        _edicionStatus = EdicionStatus.success;
+        notifyListeners();
+        return true;
+      },
+    );
+  }
+
+  void resetEdicionStatus() {
+    _edicionStatus = EdicionStatus.idle;
+    _edicionError = null;
     notifyListeners();
   }
 }
