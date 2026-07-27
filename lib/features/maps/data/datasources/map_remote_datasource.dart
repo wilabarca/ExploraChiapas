@@ -267,6 +267,20 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
     required double destLng,
     String perfil = 'driving',
   }) async {
+    // Driving → OSRM (rápido, rutas de carretera buenas para México)
+    // Foot/bike → Valhalla (maneja mejor datos OSM incompletos en Chiapas)
+    if (perfil == 'driving') {
+      return _rutasOsrm(originLat, originLng, destLat, destLng);
+    } else {
+      final costingValhalla = perfil == 'foot' ? 'pedestrian' : 'bicycle';
+      return _rutaValhalla(originLat, originLng, destLat, destLng, costingValhalla);
+    }
+  }
+
+  Future<List<RouteInfo>> _rutasOsrm(
+    double originLat, double originLng,
+    double destLat, double destLng,
+  ) async {
     final dio = Dio(
       BaseOptions(
         connectTimeout: const Duration(seconds: 10),
@@ -277,7 +291,7 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
     Response<Map<String, dynamic>> response;
     try {
       response = await dio.get<Map<String, dynamic>>(
-        'https://router.project-osrm.org/route/v1/$perfil/'
+        'https://router.project-osrm.org/route/v1/driving/'
         '$originLng,$originLat;$destLng,$destLat',
         queryParameters: {
           'overview': 'full',
@@ -286,11 +300,8 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
         },
       );
     } on DioException catch (e) {
-      if (e.type == DioExceptionType.connectionError) {
-        // Sin internet: devuelve estimación Haversine para poder mostrar algo.
-        return [_fallbackHaversine(originLat, originLng, destLat, destLng)];
-      }
-      if (e.type == DioExceptionType.connectionTimeout ||
+      if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout ||
           e.type == DioExceptionType.sendTimeout) {
         return [_fallbackHaversine(originLat, originLng, destLat, destLng)];
@@ -298,12 +309,9 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
       throw Exception('No se pudo calcular la ruta. Intenta de nuevo.');
     }
 
-    final body = response.data;
-    final routes = body?['routes'] as List<dynamic>?;
+    final routes = response.data?['routes'] as List<dynamic>?;
     if (routes == null || routes.isEmpty) {
-      throw Exception(
-        'No se encontró una ruta hacia ese destino por carretera.',
-      );
+      throw Exception('No se encontró una ruta hacia ese destino por carretera.');
     }
 
     return routes.map((route) {
@@ -314,15 +322,67 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
           .toList();
       final rawMeters = (route['distance'] as num?)?.toDouble() ?? 0.0;
       final rawSeconds = (route['duration'] as num?)?.toDouble() ?? 0.0;
-      // El factor de corrección solo aplica a driving: OSRM foot y bike
-      // ya usan velocidades peatonales/ciclistas realistas de OSM.
-      final factor = perfil == 'driving' ? _factorCorreccion(rawMeters) : 1.0;
       return RouteInfo(
         points: points,
         distanceMeters: rawMeters,
-        durationSeconds: rawSeconds * factor,
+        durationSeconds: rawSeconds * _factorCorreccion(rawMeters),
       );
     }).toList();
+  }
+
+  // Valhalla maneja redes OSM incompletas con modelos de costo, lo que da
+  // mejores tiempos peatonales/ciclistas que OSRM en zonas rurales de Chiapas.
+  Future<List<RouteInfo>> _rutaValhalla(
+    double originLat, double originLng,
+    double destLat, double destLng,
+    String costing,
+  ) async {
+    final dio = Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 12),
+        receiveTimeout: const Duration(seconds: 12),
+      ),
+    );
+
+    try {
+      final response = await dio.get<Map<String, dynamic>>(
+        'https://valhalla.openstreetmap.de/route',
+        queryParameters: {
+          'json': '{"locations":[{"lon":$originLng,"lat":$originLat},'
+              '{"lon":$destLng,"lat":$destLat}],'
+              '"costing":"$costing",'
+              '"shape_format":"geojson"}',
+        },
+      );
+
+      final trip = response.data?['trip'] as Map<String, dynamic>?;
+      final summary = trip?['summary'] as Map<String, dynamic>?;
+      final legs = trip?['legs'] as List<dynamic>?;
+      if (summary == null || legs == null || legs.isEmpty) {
+        return [_fallbackHaversine(originLat, originLng, destLat, destLng)];
+      }
+
+      final distMeters = ((summary['length'] as num?)?.toDouble() ?? 0.0) * 1000;
+      final durSeconds = (summary['time'] as num?)?.toDouble() ?? 0.0;
+
+      // Extraer polilínea del primer leg
+      final shape = (legs[0] as Map<String, dynamic>)['shape'];
+      List<List<double>> points;
+      if (shape is Map) {
+        // GeoJSON LineString
+        final coords = (shape['coordinates'] as List<dynamic>).cast<List<dynamic>>();
+        points = coords
+            .map((c) => [(c[1] as num).toDouble(), (c[0] as num).toDouble()])
+            .toList();
+      } else {
+        points = [[originLat, originLng], [destLat, destLng]];
+      }
+
+      return [RouteInfo(points: points, distanceMeters: distMeters, durationSeconds: durSeconds)];
+    } on DioException {
+      // Si Valhalla falla, vuelve a estimación desde distancia
+      return [_fallbackHaversine(originLat, originLng, destLat, destLng)];
+    }
   }
 
   // < 20 km → 1.2x urbano, 20–80 km → 1.4x semi-rural, > 80 km → 1.6x montaña
