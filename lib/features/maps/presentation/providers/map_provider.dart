@@ -1,4 +1,5 @@
 ﻿import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../domain/entities/destination_entity.dart';
@@ -48,6 +49,10 @@ class MapProvider extends ChangeNotifier {
   RouteInfo? get routePie => _routePie;
   RouteInfo? get routeBici => _routeBici;
 
+  // Distancia/tiempo restante actualizado en tiempo real por GPS
+  RouteInfo? _routeInfoRestante;
+  RouteInfo? get routeInfoRestante => _routeInfoRestante;
+
   String? _routeError;
   String? get routeError => _routeError;
 
@@ -93,6 +98,7 @@ class MapProvider extends ChangeNotifier {
     _ultimoDestinoRuta = null;
     _routePie = null;
     _routeBici = null;
+    _routeInfoRestante = null;
     _detenerNavegacion();
     notifyListeners();
   }
@@ -177,6 +183,7 @@ class MapProvider extends ChangeNotifier {
         ).listen((pos) {
           _userPosition = pos;
           _userHeading = pos.heading;
+          _actualizarRestante(pos);
           notifyListeners();
         });
   }
@@ -187,6 +194,43 @@ class MapProvider extends ChangeNotifier {
     _enNavegacion = false;
     _userPosition = null;
     _userHeading = 0;
+    _routeInfoRestante = null;
+  }
+
+  void _actualizarRestante(Position pos) {
+    final destino = _ultimoDestinoRuta;
+    final base = selectedRouteInfo;
+    if (destino == null || base == null) return;
+
+    final lineaRecta = _haversineMetros(
+      pos.latitude, pos.longitude,
+      destino.lat, destino.lng,
+    );
+    final restanteMetros = lineaRecta * 1.35;
+    final speedMs = base.distanceMeters > 0
+        ? base.distanceMeters / base.durationSeconds
+        : (35000 / 3600);
+
+    _routeInfoRestante = RouteInfo(
+      points: base.points,
+      distanceMeters: restanteMetros,
+      durationSeconds: restanteMetros / speedMs,
+    );
+  }
+
+  static double _haversineMetros(
+    double lat1, double lng1,
+    double lat2, double lng2,
+  ) {
+    const r = 6371000.0;
+    final dLat = (lat2 - lat1) * math.pi / 180;
+    final dLng = (lng2 - lng1) * math.pi / 180;
+    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(lat1 * math.pi / 180) *
+            math.cos(lat2 * math.pi / 180) *
+            math.sin(dLng / 2) *
+            math.sin(dLng / 2);
+    return r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
   }
 
   @override
