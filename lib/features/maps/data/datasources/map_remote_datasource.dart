@@ -385,12 +385,17 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
     }
   }
 
-  // < 20 km → 1.2x urbano, 20–80 km → 1.4x semi-rural, > 80 km → 1.6x montaña
+  // Factores calibrados con datos reales de OSRM vs Google Maps en Chiapas:
+  // - Tuxtla→Chiapa de Corzo (15.6km): OSRM 17min, real 25min → 1.48x
+  // - Tuxtla→San Cristóbal (60.9km):   OSRM 56min, real 60min → 1.07x
+  // - Tuxtla→Tonalá (144.8km):         OSRM 115min, real 123min → 1.07x
+  // - Tuxtla→Palenque (275km):         OSRM 257min, real 262min → 1.02x
+  // OSRM maneja bien autopistas largas; el error real está en zonas urbanas.
   static double _factorCorreccion(double metros) {
     final km = metros / 1000;
-    if (km < 20) return 1.2;
-    if (km < 80) return 1.4;
-    return 1.6;
+    if (km < 15) return 1.4;   // urbano: semáforos, tráfico, topes
+    if (km < 80) return 1.1;   // carretera libre / mix con autopista
+    return 1.05;               // autopista/carretera federal larga
   }
 
   // Respaldo cuando OSRM no está disponible: Haversine × 1.35 tortuosidad,
