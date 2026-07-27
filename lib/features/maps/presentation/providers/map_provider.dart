@@ -206,7 +206,21 @@ class MapProvider extends ChangeNotifier {
       pos.latitude, pos.longitude,
       destino.lat, destino.lng,
     );
-    final restanteMetros = lineaRecta * 1.35;
+
+    // Factor de tortuosidad real de esta ruta (distancia por carretera /
+    // línea recta entre origen y destino). Es mucho más preciso que usar
+    // 1.35 fijo: una autopista recta da ~1.1, una ruta de montaña ~1.7.
+    double factor = 1.35;
+    if (base.points.length >= 2) {
+      final inicio = base.points.first;
+      final fin = base.points.last;
+      final rectaRuta = _haversineMetros(inicio[0], inicio[1], fin[0], fin[1]);
+      if (rectaRuta > 0) {
+        factor = (base.distanceMeters / rectaRuta).clamp(1.0, 3.0);
+      }
+    }
+
+    final restanteMetros = lineaRecta * factor;
     final speedMs = base.distanceMeters > 0
         ? base.distanceMeters / base.durationSeconds
         : (35000 / 3600);
