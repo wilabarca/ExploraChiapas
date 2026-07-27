@@ -200,13 +200,16 @@ class MapProvider extends ChangeNotifier {
   void _actualizarRestante(Position pos) {
     final destino = _ultimoDestinoRuta;
     final base = selectedRouteInfo;
-    if (destino == null || base == null) return;
+    if (destino == null || base == null || base.points.length < 2) return;
 
-    final lineaRecta = _haversineMetros(
+    // Usa la geometría real de la polilínea OSRM: busca el punto de la ruta
+    // más cercano al usuario y suma los segmentos restantes hasta el destino.
+    // Es mucho más preciso que Haversine × factor porque sigue el camino real.
+    final restanteMetros = _distanciaRestanteEnRuta(
       pos.latitude, pos.longitude,
-      destino.lat, destino.lng,
+      base.points,
     );
-    final restanteMetros = lineaRecta * 1.35;
+
     final speedMs = base.distanceMeters > 0
         ? base.distanceMeters / base.durationSeconds
         : (35000 / 3600);
@@ -216,6 +219,33 @@ class MapProvider extends ChangeNotifier {
       distanceMeters: restanteMetros,
       durationSeconds: restanteMetros / speedMs,
     );
+  }
+
+  // Recorre los puntos de la ruta para encontrar el segmento más cercano
+  // al usuario, luego suma todos los segmentos desde ahí hasta el final.
+  static double _distanciaRestanteEnRuta(
+    double userLat, double userLng,
+    List<List<double>> points,
+  ) {
+    double minDist = double.infinity;
+    int puntoMasCercano = 0;
+
+    for (int i = 0; i < points.length; i++) {
+      final d = _haversineMetros(userLat, userLng, points[i][0], points[i][1]);
+      if (d < minDist) {
+        minDist = d;
+        puntoMasCercano = i;
+      }
+    }
+
+    double restante = 0;
+    for (int i = puntoMasCercano; i < points.length - 1; i++) {
+      restante += _haversineMetros(
+        points[i][0], points[i][1],
+        points[i + 1][0], points[i + 1][1],
+      );
+    }
+    return restante;
   }
 
   static double _haversineMetros(
