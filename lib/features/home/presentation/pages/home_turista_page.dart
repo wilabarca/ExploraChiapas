@@ -58,6 +58,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
+    getIt<MlApiClient>().warmup();
     _cargarDestacadosML();
     _cargarNegocios();
     _cargarPosicion();
@@ -115,7 +116,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
       setState(() {
         _destacadosML = resultados;
         _cargandoDestacados = false;
-        _errorDestacados = resultados.isEmpty;
+        _errorDestacados = false;
       });
       _calcularDistanciasML(resultados);
     } catch (_) {
