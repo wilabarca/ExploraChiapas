@@ -23,18 +23,11 @@ class MlApiClient {
     );
   }
 
-  // Despierta el NLP service y el motor ML. Espera hasta que el servidor
-  // confirme que está listo (o hasta el timeout). Retorna true si el servidor
-  // respondió antes del timeout, false si está en cold start.
-  Future<bool> warmup() async {
+  // Ping de salud al NLP service — fire and forget.
+  Future<void> warmup() async {
     try {
-      await _dio
-          .get('/warmup')
-          .timeout(const Duration(seconds: 60));
-      return true;
-    } catch (_) {
-      return false;
-    }
+      await _dio.get('/warmup').timeout(const Duration(seconds: 10));
+    } catch (_) {}
   }
 
   /// Devuelve la lista o lanza excepción — el llamador decide si mostrar error.

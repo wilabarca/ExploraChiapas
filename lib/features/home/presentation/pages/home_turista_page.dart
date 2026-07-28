@@ -103,11 +103,8 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
     _refreshDynamicHomeData();
   }
 
-  // Hace warmup primero para despertar el ML engine, luego carga destacados.
-  // Si warmup retorna false (cold start >60s) igual intenta cargar — el timeout
-  // de fetchDestacados (90s) cubre el tiempo de arranque restante.
   Future<void> _cargarDestacadosConWarmup() async {
-    await getIt<MlApiClient>().warmup();
+    getIt<MlApiClient>().warmup(); // ping sin esperar
     await _cargarDestacadosML();
   }
 
