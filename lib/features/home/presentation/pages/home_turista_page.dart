@@ -58,8 +58,7 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    getIt<MlApiClient>().warmup();
-    _cargarDestacadosML();
+    _cargarDestacadosConWarmup();
     _cargarNegocios();
     _cargarPosicion();
     _cargarDestinosPocoConcurridos();
@@ -102,6 +101,14 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
   @override
   void didPopNext() {
     _refreshDynamicHomeData();
+  }
+
+  // Hace warmup primero para despertar el ML engine, luego carga destacados.
+  // Si warmup retorna false (cold start >60s) igual intenta cargar — el timeout
+  // de fetchDestacados (90s) cubre el tiempo de arranque restante.
+  Future<void> _cargarDestacadosConWarmup() async {
+    await getIt<MlApiClient>().warmup();
+    await _cargarDestacadosML();
   }
 
   Future<void> _cargarDestacadosML() async {
@@ -311,6 +318,16 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                           child: _SeccionError(
                             message: 'No se pudieron cargar los destinos.\nVerifica tu conexión.',
+                            onRetry: _cargarDestacadosML,
+                          ),
+                        );
+                      }
+
+                      if (_destacadosML.isEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: _SeccionError(
+                            message: 'No hay destinos disponibles.\nIntenta de nuevo en un momento.',
                             onRetry: _cargarDestacadosML,
                           ),
                         );

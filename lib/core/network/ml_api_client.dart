@@ -23,25 +23,25 @@ class MlApiClient {
     );
   }
 
-  // Despierta tanto el NLP service como el motor ML (ambos en Render free tier).
-  // Llamar esto cuando el usuario abre la pantalla de chat.
-  Future<void> warmup() async {
+  // Despierta el NLP service y el motor ML. Espera hasta que el servidor
+  // confirme que está listo (o hasta el timeout). Retorna true si el servidor
+  // respondió antes del timeout, false si está en cold start.
+  Future<bool> warmup() async {
     try {
       await _dio
           .get('/warmup')
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 60));
+      return true;
     } catch (_) {
-      // silencioso — es solo un ping preventivo
+      return false;
     }
   }
 
   /// Devuelve la lista o lanza excepción — el llamador decide si mostrar error.
   Future<List<Map<String, dynamic>>> fetchDestacados({int limite = 10}) async {
-    // El NLP service en Render free tier puede tardar ~50s en despertar.
-    // Se usan 70s para dar margen suficiente tras cold start.
     final resp = await _dio
         .get('/destacados', queryParameters: {'limite': limite})
-        .timeout(const Duration(seconds: 70));
+        .timeout(const Duration(seconds: 90));
     final list = (resp.data['destacados'] as List?) ?? [];
     return list.cast<Map<String, dynamic>>();
   }
