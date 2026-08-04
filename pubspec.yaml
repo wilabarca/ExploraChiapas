@@ -84,8 +84,8 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/inicio.png
-    - assets/images/ExploraChiapas Logo.png
+    - assets/images/maya.png
+    - assets/images/iconoapp.jpg
     # si tenías más assets antes, agrégalos aquí también
     # - assets/fonts/algo.ttf
   # An image asset can refer to one or more resolution-specific "variants", see

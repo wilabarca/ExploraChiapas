@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 
-/// Logo circular del colibrí, usado en Login y Registro. Sin halo de
-/// color detrás — solo el círculo blanco con el pájaro, más grande para
-/// que resalte.
+/// Logo circular oficial (nuevo branding "iconoapp"), usado en Login y
+/// Registro. Sin halo de color detrás — solo el círculo blanco con el
+/// ícono, más grande para que resalte.
 class AuthBirdLogo extends StatelessWidget {
   final double size;
 
@@ -27,9 +27,11 @@ class AuthBirdLogo extends StatelessWidget {
           ),
         ],
       ),
-      child: Image.asset(
-        'assets/images/ExploraChiapas Logo.png',
-        fit: BoxFit.contain,
+      // ClipOval evita que las esquinas del JPG (rectangular) se asomen
+      // fuera del círculo blanco si su relación de aspecto no es 1:1 —
+      // BoxFit.contain ya evita recortes/deformación del propio ícono.
+      child: ClipOval(
+        child: Image.asset('assets/images/iconoapp.jpg', fit: BoxFit.contain),
       ),
     );
   }

@@ -22,7 +22,9 @@ class ProfileContactInfo extends StatelessWidget {
       _InfoItem(
         icon: Icons.phone_outlined,
         label: 'Teléfono',
-        value: (telefono == null || telefono!.isEmpty) ? 'No registrado' : telefono!,
+        value: (telefono == null || telefono!.isEmpty)
+            ? 'No registrado'
+            : telefono!,
       ),
       _InfoItem(
         icon: Icons.calendar_today_outlined,
@@ -48,7 +50,10 @@ class ProfileContactInfo extends StatelessWidget {
                   children: [
                     Text(
                       item.label,
-                      style: const TextStyle(fontSize: 11, color: Color(0xFF999999)),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF999999),
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -72,8 +77,18 @@ class ProfileContactInfo extends StatelessWidget {
 
   String _formatearFecha(DateTime fecha) {
     const meses = [
-      'ene', 'feb', 'mar', 'abr', 'may', 'jun',
-      'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+      'ene',
+      'feb',
+      'mar',
+      'abr',
+      'may',
+      'jun',
+      'jul',
+      'ago',
+      'sep',
+      'oct',
+      'nov',
+      'dic',
     ];
     return '${fecha.day} ${meses[fecha.month - 1]}. ${fecha.year}';
   }
@@ -84,5 +99,9 @@ class _InfoItem {
   final String label;
   final String value;
 
-  const _InfoItem({required this.icon, required this.label, required this.value});
+  const _InfoItem({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
 }

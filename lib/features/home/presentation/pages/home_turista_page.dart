@@ -310,7 +310,8 @@ class _HomeTuristaPageState extends State<HomeTuristaPage>
                         return Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                           child: _SeccionError(
-                            message: 'No se pudieron cargar los destinos.\nVerifica tu conexión.',
+                            message:
+                                'No se pudieron cargar los destinos.\nVerifica tu conexión.',
                             onRetry: _cargarDestacadosML,
                           ),
                         );

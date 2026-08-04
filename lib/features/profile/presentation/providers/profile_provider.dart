@@ -149,4 +149,17 @@ class ProfileProvider extends ChangeNotifier {
     _errorStatusCode = null;
     notifyListeners();
   }
+
+  /// A diferencia de [resetStatus], también borra el perfil cargado en
+  /// memoria. `ProfileProvider` es un singleton de la app (vive todo el
+  /// proceso): sin esto, cerrar sesión e iniciar con otra cuenta dejaba
+  /// el perfil del usuario anterior visible hasta el próximo `loadPerfil`.
+  void limpiar() {
+    _perfil = null;
+    _status = ProfileStatus.idle;
+    _errorMessage = null;
+    _errorStatusCode = null;
+    _subiendoFoto = false;
+    notifyListeners();
+  }
 }

@@ -9,6 +9,5 @@ class GetPerfilUseCase {
   final IProfileRepository _repository;
   GetPerfilUseCase(this._repository);
 
-  Future<Either<Failure, PerfilEntity>> call() =>
-      _repository.getProfile();
+  Future<Either<Failure, PerfilEntity>> call() => _repository.getProfile();
 }

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/di/injector.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -14,6 +15,7 @@ import '../../../favoritos/domain/entities/favorito.dart';
 import '../../../favoritos/presentation/providers/favoritos_provider.dart';
 import '../../../../core/utils/uuid_utils.dart';
 import '../../domain/usecases/get_ubicacion_destino_usecase.dart';
+import '../../domain/usecases/get_destino_by_id_usecase.dart';
 import '../../../resena/domain/entities/DestinoResenaEntity.dart';
 import '../../../resena/presentation/pages/escribir_resena_page.dart';
 import '../../../resena/presentation/providers/ResenasProvider.dart';
@@ -196,7 +198,15 @@ class _LugarDetailPageState extends State<LugarDetailPage>
   bool get _tieneCoords => widget.lat != null && widget.lng != null;
   bool get _tieneLocationId =>
       widget.locationId != null && widget.locationId!.trim().isNotEmpty;
-  bool get _puedeIrAlLugar => _tieneCoords || _tieneLocationId;
+  // Destino real del backend (no una recomendación de la IA): aunque quien
+  // navegó hasta aquí no haya pasado lat/lng ni locationId directamente
+  // (ej. al entrar desde el feed de reseñas), su propio `id` alcanza para
+  // resolver la ubicación real vía `/destinations/{id}` → `locationId` →
+  // `/locations/{id}`, así que el botón puede mostrarse igual.
+  bool get _esDestinoReal =>
+      widget.targetType == 'destination' && esUuidValido(widget.id);
+  bool get _puedeIrAlLugar =>
+      _tieneCoords || _tieneLocationId || _esDestinoReal;
 
   Future<void> _irAlLugar() async {
     if (_ubicandoLugar) return;
@@ -204,11 +214,28 @@ class _LugarDetailPageState extends State<LugarDetailPage>
       _abrirMapaRuta(widget.lat!, widget.lng!);
       return;
     }
-    if (!_tieneLocationId) return;
+
+    if (_tieneLocationId) {
+      await _resolverPorLocationId(widget.locationId!);
+      return;
+    }
+
+    if (!_esDestinoReal) return;
     setState(() => _ubicandoLugar = true);
-    final result = await getIt<GetUbicacionDestinoUseCase>()(
-      id: widget.locationId!,
-    );
+    final destinoResult = await getIt<GetDestinoByIdUseCase>()(id: widget.id);
+    if (!mounted) return;
+    final locationId = destinoResult.fold((_) => null, (d) => d.locationId);
+    if (locationId == null || locationId.trim().isEmpty) {
+      setState(() => _ubicandoLugar = false);
+      _mostrarError('Este lugar todavía no tiene coordenadas registradas.');
+      return;
+    }
+    await _resolverPorLocationId(locationId);
+  }
+
+  Future<void> _resolverPorLocationId(String locationId) async {
+    setState(() => _ubicandoLugar = true);
+    final result = await getIt<GetUbicacionDestinoUseCase>()(id: locationId);
     if (!mounted) return;
     setState(() => _ubicandoLugar = false);
     result.fold(
@@ -240,6 +267,16 @@ class _LugarDetailPageState extends State<LugarDetailPage>
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(mensaje)));
+  }
+
+  void _compartir() {
+    SharePlus.instance.share(
+      ShareParams(
+        text: widget.descripcion != null && widget.descripcion!.isNotEmpty
+            ? '¡Visita ${widget.nombre} en ExploraChiapas!\n${widget.descripcion}'
+            : '¡Visita ${widget.nombre} en ExploraChiapas!',
+      ),
+    );
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
@@ -298,36 +335,47 @@ class _LugarDetailPageState extends State<LugarDetailPage>
                         icon: Icons.arrow_back_ios_new_rounded,
                         onTap: () => Navigator.pop(context),
                       ),
-                      Consumer<FavoritosProvider>(
-                        builder: (context, favProvider, _) {
-                          final esFav = favProvider.esFavorito(
-                            FavoritoTargetType.destination,
-                            widget.id,
-                          );
-                          return GestureDetector(
-                            onTapDown: (_) =>
-                                setState(() => _favPresionado = true),
-                            onTapUp: (_) =>
-                                setState(() => _favPresionado = false),
-                            onTapCancel: () =>
-                                setState(() => _favPresionado = false),
-                            onTap: () => favProvider.toggleFavorito(
-                              targetType: FavoritoTargetType.destination,
-                              targetId: widget.id,
-                            ),
-                            child: AnimatedScale(
-                              scale: _favPresionado ? 0.85 : 1.0,
-                              duration: const Duration(milliseconds: 120),
-                              curve: Curves.easeOut,
-                              child: _FloatButton(
-                                icon: esFav
-                                    ? Icons.favorite_rounded
-                                    : Icons.favorite_border_rounded,
-                                iconColor: esFav ? Colors.red : Colors.white,
-                              ),
-                            ),
-                          );
-                        },
+                      Row(
+                        children: [
+                          _FloatButton(
+                            icon: Icons.share_outlined,
+                            onTap: _compartir,
+                          ),
+                          const SizedBox(width: 10),
+                          Consumer<FavoritosProvider>(
+                            builder: (context, favProvider, _) {
+                              final esFav = favProvider.esFavorito(
+                                FavoritoTargetType.destination,
+                                widget.id,
+                              );
+                              return GestureDetector(
+                                onTapDown: (_) =>
+                                    setState(() => _favPresionado = true),
+                                onTapUp: (_) =>
+                                    setState(() => _favPresionado = false),
+                                onTapCancel: () =>
+                                    setState(() => _favPresionado = false),
+                                onTap: () => favProvider.toggleFavorito(
+                                  targetType: FavoritoTargetType.destination,
+                                  targetId: widget.id,
+                                ),
+                                child: AnimatedScale(
+                                  scale: _favPresionado ? 0.85 : 1.0,
+                                  duration: const Duration(milliseconds: 120),
+                                  curve: Curves.easeOut,
+                                  child: _FloatButton(
+                                    icon: esFav
+                                        ? Icons.favorite_rounded
+                                        : Icons.favorite_border_rounded,
+                                    iconColor: esFav
+                                        ? Colors.red
+                                        : Colors.white,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -689,7 +737,7 @@ class _LugarDetailPageState extends State<LugarDetailPage>
 
   Widget _buildBottomBar() {
     final irBtn = _ActionButton(
-      label: _ubicandoLugar ? 'Ubicando...' : 'Ir al lugar',
+      label: _ubicandoLugar ? 'Trazando...' : 'Trazar ruta',
       icon: _ubicandoLugar
           ? const SizedBox(
               width: 18,
@@ -699,7 +747,11 @@ class _LugarDetailPageState extends State<LugarDetailPage>
                 color: Colors.white,
               ),
             )
-          : const Icon(Icons.near_me_rounded, color: Colors.white, size: 20),
+          : const Icon(
+              Icons.directions_outlined,
+              color: Colors.white,
+              size: 20,
+            ),
       color: const Color(0xFF1565C0),
       onTap: _ubicandoLugar ? null : _irAlLugar,
     );

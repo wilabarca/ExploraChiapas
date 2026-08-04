@@ -11,7 +11,7 @@ class AuthLogo extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         image: const DecorationImage(
-          image: AssetImage('assets/images/inicio.png'),
+          image: AssetImage('assets/images/maya.png'),
           fit: BoxFit.cover,
         ),
       ),

@@ -15,9 +15,6 @@ class GetResenasUseCase {
     required String targetType,
     required String targetId,
   }) {
-    return _repository.getResenas(
-      targetType: targetType,
-      targetId: targetId,
-    );
+    return _repository.getResenas(targetType: targetType, targetId: targetId);
   }
 }

@@ -13,7 +13,8 @@ class SeleccionarUbicacionPage extends StatefulWidget {
   const SeleccionarUbicacionPage({super.key, this.ubicacionInicial});
 
   @override
-  State<SeleccionarUbicacionPage> createState() => _SeleccionarUbicacionPageState();
+  State<SeleccionarUbicacionPage> createState() =>
+      _SeleccionarUbicacionPageState();
 }
 
 class _SeleccionarUbicacionPageState extends State<SeleccionarUbicacionPage> {
@@ -25,10 +26,12 @@ class _SeleccionarUbicacionPageState extends State<SeleccionarUbicacionPage> {
   String _municipio = '';
   bool _buscandoDireccion = false;
 
-  final _dio = Dio(BaseOptions(
-    connectTimeout: const Duration(seconds: 10),
-    receiveTimeout: const Duration(seconds: 15),
-  ));
+  final _dio = Dio(
+    BaseOptions(
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 15),
+    ),
+  );
 
   @override
   void initState() {
@@ -52,9 +55,9 @@ class _SeleccionarUbicacionPageState extends State<SeleccionarUbicacionPage> {
           'format': 'json',
           'accept-language': 'es',
         },
-        options: Options(headers: {
-          'User-Agent': 'ExploraChiapas/1.0 (educational project)',
-        }),
+        options: Options(
+          headers: {'User-Agent': 'ExploraChiapas/1.0 (educational project)'},
+        ),
       );
 
       final data = resp.data is String
@@ -68,7 +71,8 @@ class _SeleccionarUbicacionPageState extends State<SeleccionarUbicacionPage> {
         if (address['suburb'] != null) address['suburb'].toString(),
       ];
 
-      final municipioRaw = address['municipality']?.toString() ??
+      final municipioRaw =
+          address['municipality']?.toString() ??
           address['city']?.toString() ??
           address['town']?.toString() ??
           address['village']?.toString() ??
@@ -134,7 +138,11 @@ class _SeleccionarUbicacionPageState extends State<SeleccionarUbicacionPage> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(
               children: [
-                Icon(Icons.touch_app_outlined, size: 18, color: cs.onPrimaryContainer),
+                Icon(
+                  Icons.touch_app_outlined,
+                  size: 18,
+                  color: cs.onPrimaryContainer,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -225,7 +233,9 @@ class _SeleccionarUbicacionPageState extends State<SeleccionarUbicacionPage> {
                   const SizedBox(height: 6),
                   if (_municipio.isNotEmpty)
                     Text(
-                      _municipio.isNotEmpty ? '$_municipio, Chiapas' : 'Chiapas',
+                      _municipio.isNotEmpty
+                          ? '$_municipio, Chiapas'
+                          : 'Chiapas',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,

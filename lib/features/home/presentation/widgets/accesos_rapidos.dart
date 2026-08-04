@@ -6,26 +6,14 @@ class AccesosRapidos extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accesos = [
-      {
-        'icono': Icons.map_outlined,
-        'label': 'Mapa',
-        'ruta': '/mapa',
-      },
+      {'icono': Icons.map_outlined, 'label': 'Mapa', 'ruta': '/mapa'},
       {
         'icono': Icons.favorite_outline,
         'label': 'Favoritos',
         'ruta': '/favoritos',
       },
-      {
-        'icono': Icons.event_outlined,
-        'label': 'Eventos',
-        'ruta': '/eventos',
-      },
-      {
-        'icono': Icons.near_me_outlined,
-        'label': 'Cerca',
-        'ruta': '/cerca',
-      },
+      {'icono': Icons.event_outlined, 'label': 'Eventos', 'ruta': '/eventos'},
+      {'icono': Icons.near_me_outlined, 'label': 'Cerca', 'ruta': '/cerca'},
       {
         'icono': Icons.add_location_alt_outlined,
         'label': 'Recomendar',

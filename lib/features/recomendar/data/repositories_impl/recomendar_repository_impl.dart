@@ -33,12 +33,14 @@ class RecomendarRepositoryImpl implements RecomendarRepository {
     required String categoryId,
     required String locationId,
   }) {
-    return _execute(() => _remoteDataSource.crearPropuesta(
-          name: name,
-          description: description,
-          categoryId: categoryId,
-          locationId: locationId,
-        ));
+    return _execute(
+      () => _remoteDataSource.crearPropuesta(
+        name: name,
+        description: description,
+        categoryId: categoryId,
+        locationId: locationId,
+      ),
+    );
   }
 
   @override
@@ -46,10 +48,12 @@ class RecomendarRepositoryImpl implements RecomendarRepository {
     required String proposalId,
     required List<XFile> imagenes,
   }) {
-    return _execute(() => _remoteDataSource.subirImagenes(
-          proposalId: proposalId,
-          imagenes: imagenes,
-        ));
+    return _execute(
+      () => _remoteDataSource.subirImagenes(
+        proposalId: proposalId,
+        imagenes: imagenes,
+      ),
+    );
   }
 
   @override

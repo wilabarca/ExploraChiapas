@@ -10,8 +10,7 @@ class RegisterUseCase {
 
   RegisterUseCase(this._repository);
 
-  Future<Either<Failure, Map<String, dynamic>>> call(
-      UsuarioRegistro usuario) {
+  Future<Either<Failure, Map<String, dynamic>>> call(UsuarioRegistro usuario) {
     return _repository.register(usuario);
   }
 }

@@ -8,7 +8,12 @@ import '../../domain/usecases/remove_favorito_usecase.dart';
 
 enum FavoritosStatus { idle, loading, success, error }
 
-@injectable
+// Antes @injectable (factory: una instancia nueva por cada getIt<>()).
+// Debe ser singleton: `AuthProvider` también lo pide en su constructor
+// para poder limpiarlo al cambiar de sesión, y necesita ser EXACTAMENTE
+// la misma instancia que usa el árbol de widgets (app.dart), no una
+// copia aislada sin ningún listener.
+@lazySingleton
 class FavoritosProvider extends ChangeNotifier {
   final GetFavoritosUseCase _getFavoritos;
   final AddFavoritoUseCase _addFavorito;

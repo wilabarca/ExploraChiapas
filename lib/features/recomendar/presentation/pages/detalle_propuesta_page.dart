@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/propuesta_destino.dart';
+import '../../../destinos/presentation/pages/mapa_ruta_page.dart';
 
 class DetallePropuestaPage extends StatelessWidget {
   final PropuestaDestino propuesta;
@@ -37,8 +38,11 @@ class DetallePropuestaPage extends StatelessWidget {
                       ),
                       errorWidget: (_, __, ___) => Container(
                         color: cs.surfaceContainer,
-                        child: Icon(Icons.image_not_supported_outlined,
-                            color: cs.onSurface.withValues(alpha: 0.3), size: 48),
+                        child: Icon(
+                          Icons.image_not_supported_outlined,
+                          color: cs.onSurface.withValues(alpha: 0.3),
+                          size: 48,
+                        ),
                       ),
                     ),
                   )
@@ -67,24 +71,33 @@ class DetallePropuestaPage extends StatelessWidget {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.info_outline,
-                              color: cs.onErrorContainer, size: 18),
+                          Icon(
+                            Icons.info_outline,
+                            color: cs.onErrorContainer,
+                            size: 18,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Motivo de rechazo',
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: cs.onErrorContainer,
-                                        fontSize: 13)),
+                                Text(
+                                  'Motivo de rechazo',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: cs.onErrorContainer,
+                                    fontSize: 13,
+                                  ),
+                                ),
                                 const SizedBox(height: 4),
-                                Text(propuesta.rejectionReason!,
-                                    style: TextStyle(
-                                        color: cs.onErrorContainer,
-                                        fontSize: 13,
-                                        height: 1.4)),
+                                Text(
+                                  propuesta.rejectionReason!,
+                                  style: TextStyle(
+                                    color: cs.onErrorContainer,
+                                    fontSize: 13,
+                                    height: 1.4,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -111,9 +124,10 @@ class DetallePropuestaPage extends StatelessWidget {
                               'Esta recomendación fue aprobada y ahora forma '
                               'parte de ExploraChiapas.',
                               style: TextStyle(
-                                  color: cs.onPrimaryContainer,
-                                  fontSize: 13,
-                                  height: 1.4),
+                                color: cs.onPrimaryContainer,
+                                fontSize: 13,
+                                height: 1.4,
+                              ),
                             ),
                           ),
                         ],
@@ -141,16 +155,19 @@ class DetallePropuestaPage extends StatelessWidget {
                   Text(
                     propuesta.name,
                     style: const TextStyle(
-                        fontSize: 22, fontWeight: FontWeight.bold),
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   if (propuesta.categoryName != null)
                     Text(
                       propuesta.categoryName!,
                       style: TextStyle(
-                          fontSize: 14,
-                          color: cs.primary,
-                          fontWeight: FontWeight.w500),
+                        fontSize: 14,
+                        color: cs.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   const SizedBox(height: 16),
 
@@ -161,9 +178,10 @@ class DetallePropuestaPage extends StatelessWidget {
                     Text(
                       propuesta.description!,
                       style: TextStyle(
-                          fontSize: 14,
-                          color: cs.onSurface.withValues(alpha: 0.8),
-                          height: 1.5),
+                        fontSize: 14,
+                        color: cs.onSurface.withValues(alpha: 0.8),
+                        height: 1.5,
+                      ),
                     ),
                     const SizedBox(height: 20),
                   ],
@@ -175,7 +193,9 @@ class DetallePropuestaPage extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        border: Border.all(color: cs.outline.withValues(alpha: 0.5)),
+                        border: Border.all(
+                          color: cs.outline.withValues(alpha: 0.5),
+                        ),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -190,22 +210,27 @@ class DetallePropuestaPage extends StatelessWidget {
                                   '${propuesta.location!.municipality}, '
                                   '${propuesta.location!.state}',
                                   style: const TextStyle(
-                                      fontWeight: FontWeight.w600, fontSize: 14),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
                                 ),
                                 if (propuesta.location!.address.isNotEmpty)
                                   Text(
                                     propuesta.location!.address,
                                     style: TextStyle(
-                                        fontSize: 12,
-                                        color:
-                                            cs.onSurface.withValues(alpha: 0.6)),
+                                      fontSize: 12,
+                                      color: cs.onSurface.withValues(
+                                        alpha: 0.6,
+                                      ),
+                                    ),
                                   ),
                                 Text(
                                   '${propuesta.location!.latitude.toStringAsFixed(6)}, '
                                   '${propuesta.location!.longitude.toStringAsFixed(6)}',
                                   style: TextStyle(
-                                      fontSize: 11,
-                                      color: cs.onSurface.withValues(alpha: 0.4)),
+                                    fontSize: 11,
+                                    color: cs.onSurface.withValues(alpha: 0.4),
+                                  ),
                                 ),
                               ],
                             ),
@@ -213,21 +238,46 @@ class DetallePropuestaPage extends StatelessWidget {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => MapaRutaPage(
+                              nombre: propuesta.name,
+                              destLat: propuesta.location!.latitude,
+                              destLng: propuesta.location!.longitude,
+                            ),
+                          ),
+                        ),
+                        icon: const Icon(Icons.directions_outlined, size: 18),
+                        label: const Text('Trazar ruta'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1565C0),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 20),
                   ],
 
                   // ── Fotografías ───────────────────────────────────────────
                   if (propuesta.images.isNotEmpty) ...[
-                    _SeccionTitulo(
-                        'Fotografías (${propuesta.images.length})'),
+                    _SeccionTitulo('Fotografías (${propuesta.images.length})'),
                     const SizedBox(height: 10),
                     SizedBox(
                       height: 120,
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         itemCount: propuesta.images.length,
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(width: 8),
+                        separatorBuilder: (_, __) => const SizedBox(width: 8),
                         itemBuilder: (_, i) {
                           final img = propuesta.images[i];
                           return ClipRRect(
@@ -241,14 +291,18 @@ class DetallePropuestaPage extends StatelessWidget {
                                 width: 120,
                                 color: cs.surfaceContainer,
                                 child: const Center(
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2)),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
                               ),
                               errorWidget: (_, __, ___) => Container(
                                 width: 120,
                                 color: cs.surfaceContainer,
-                                child: Icon(Icons.image_not_supported_outlined,
-                                    color: cs.onSurface.withValues(alpha: 0.3)),
+                                child: Icon(
+                                  Icons.image_not_supported_outlined,
+                                  color: cs.onSurface.withValues(alpha: 0.3),
+                                ),
                               ),
                             ),
                           );
@@ -265,8 +319,9 @@ class DetallePropuestaPage extends StatelessWidget {
                     Text(
                       _formatearFecha(propuesta.createdAt!),
                       style: TextStyle(
-                          fontSize: 14,
-                          color: cs.onSurface.withValues(alpha: 0.7)),
+                        fontSize: 14,
+                        color: cs.onSurface.withValues(alpha: 0.7),
+                      ),
                     ),
                     const SizedBox(height: 24),
                   ],
@@ -281,8 +336,18 @@ class DetallePropuestaPage extends StatelessWidget {
 
   String _formatearFecha(DateTime fecha) {
     const meses = [
-      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+      'enero',
+      'febrero',
+      'marzo',
+      'abril',
+      'mayo',
+      'junio',
+      'julio',
+      'agosto',
+      'septiembre',
+      'octubre',
+      'noviembre',
+      'diciembre',
     ];
     return '${fecha.day} de ${meses[fecha.month - 1]} de ${fecha.year}';
   }
@@ -343,9 +408,14 @@ class _ChipEstado extends StatelessWidget {
         children: [
           Icon(icono, color: fg, size: 16),
           const SizedBox(width: 6),
-          Text(etiqueta,
-              style: TextStyle(
-                  color: fg, fontWeight: FontWeight.w600, fontSize: 13)),
+          Text(
+            etiqueta,
+            style: TextStyle(
+              color: fg,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+          ),
         ],
       ),
     );

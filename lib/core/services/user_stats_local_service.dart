@@ -26,4 +26,14 @@ class UserStatsLocalService {
     await prefs.setInt(_keyResenasCreadas, actual);
     return actual;
   }
+
+  /// Este contador vive en `SharedPreferences`, que es POR DISPOSITIVO,
+  /// no por usuario — si no se limpia al cerrar sesión (o al iniciar una
+  /// nueva), un usuario distinto en el mismo dispositivo hereda el
+  /// conteo del usuario anterior. Se llama desde `AuthProvider` en cada
+  /// cambio de sesión.
+  Future<void> resetResenasCreadas() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyResenasCreadas);
+  }
 }

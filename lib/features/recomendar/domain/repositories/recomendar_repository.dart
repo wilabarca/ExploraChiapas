@@ -9,9 +9,7 @@ import '../entities/ubicacion_propuesta.dart';
 abstract class RecomendarRepository {
   Future<Either<Failure, List<Categoria>>> getCategorias();
 
-  Future<Either<Failure, String>> crearUbicacion(
-    UbicacionPropuesta ubicacion,
-  );
+  Future<Either<Failure, String>> crearUbicacion(UbicacionPropuesta ubicacion);
 
   Future<Either<Failure, PropuestaDestino>> crearPropuesta({
     required String name,

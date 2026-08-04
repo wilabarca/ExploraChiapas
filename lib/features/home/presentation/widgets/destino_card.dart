@@ -245,7 +245,14 @@ class _TiempoChip extends StatelessWidget {
       children: [
         Icon(icono, size: 13, color: color),
         const SizedBox(height: 1),
-        Text(_texto, style: TextStyle(fontSize: 9, color: color, fontWeight: FontWeight.w600)),
+        Text(
+          _texto,
+          style: TextStyle(
+            fontSize: 9,
+            color: color,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ],
     );
   }

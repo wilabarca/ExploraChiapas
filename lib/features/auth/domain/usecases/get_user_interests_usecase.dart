@@ -9,12 +9,9 @@ import '../repositories/auth_repository.dart';
 class GetUserInterestsUseCase {
   final AuthRepository _repository;
 
-  GetUserInterestsUseCase(
-    this._repository,
-  );
+  GetUserInterestsUseCase(this._repository);
 
-  Future<Either<Failure, UserInterests>>
-      call() {
+  Future<Either<Failure, UserInterests>> call() {
     return _repository.getUserInterests();
   }
 }

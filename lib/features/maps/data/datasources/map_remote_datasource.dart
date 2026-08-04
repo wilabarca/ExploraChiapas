@@ -145,6 +145,32 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
   // vez de inventarle coordenadas.
   @override
   Future<List<DestinationModel>> getDestinations({String? tipo}) async {
+    final all = await _fetchDestinosReales();
+    if (all == null) return _mockPorTipo(tipo);
+
+    if (tipo == null) return all;
+    final filtered = all
+        .where((d) => d.tipo.toLowerCase() == tipo.toLowerCase())
+        .toList();
+    return filtered.isEmpty ? _mockPorTipo(tipo) : filtered;
+  }
+
+  List<DestinationModel> _mockPorTipo(String? tipo) {
+    final data = tipo == null
+        ? _mockDestinations
+        : _mockDestinations.where((d) => d['tipo'] == tipo).toList();
+    return data
+        .map((json) => DestinationModel.fromJson(json, esMock: true))
+        .toList();
+  }
+
+  // Extraído de `getDestinations` para reutilizarlo también en
+  // `getDestinationsNearby` — antes esta última ni siquiera llamaba al
+  // backend, devolvía directo el mock (`Future.delayed` + datos
+  // hardcodeados), y como además nadie la invocaba desde ninguna
+  // pantalla, "buscar lugares cercanos con radio configurable" no
+  // existía de verdad pese a que la firma del método ya lo prometía.
+  Future<List<DestinationModel>?> _fetchDestinosReales() async {
     try {
       final resultados = await Future.wait([
         _apiClient.get(AppConstants.destinationsEndpoint),
@@ -210,26 +236,11 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
         );
       }
 
-      if (tipo != null) {
-        final filtered = all
-            .where((d) => d.tipo.toLowerCase() == tipo.toLowerCase())
-            .toList();
-        if (filtered.isEmpty) throw Exception('no_match');
-        return filtered;
-      }
       return all;
     } catch (e, st) {
-      debugPrint(
-        '[MapRemoteDatasource] getDestinations($tipo) falló, usando mock: $e',
-      );
+      debugPrint('[MapRemoteDatasource] _fetchDestinosReales falló: $e');
       debugPrintStack(stackTrace: st);
-      await Future.delayed(const Duration(milliseconds: 300));
-      final data = tipo == null
-          ? _mockDestinations
-          : _mockDestinations.where((d) => d['tipo'] == tipo).toList();
-      return data
-          .map((json) => DestinationModel.fromJson(json, esMock: true))
-          .toList();
+      return null;
     }
   }
 
@@ -253,10 +264,40 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
     required double lng,
     required double radioKm,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    return _mockDestinations
-        .map((json) => DestinationModel.fromJson(json, esMock: true))
-        .toList();
+    final all = await _fetchDestinosReales();
+    if (all == null) {
+      // Sin conexión al backend: no hay forma de saber qué tan cerca
+      // está el mock del usuario real, así que se devuelve vacío en vez
+      // de aparentar cercanía con datos de muestra.
+      return [];
+    }
+
+    final conDistancia =
+        all
+            .map((d) => (d, _distanciaKm(lat, lng, d.lat, d.lng)))
+            .where((par) => par.$2 <= radioKm)
+            .toList()
+          ..sort((a, b) => a.$2.compareTo(b.$2));
+
+    return conDistancia.map((par) => par.$1).toList();
+  }
+
+  static double _distanciaKm(
+    double lat1,
+    double lng1,
+    double lat2,
+    double lng2,
+  ) {
+    const r = 6371.0;
+    final dLat = (lat2 - lat1) * math.pi / 180;
+    final dLng = (lng2 - lng1) * math.pi / 180;
+    final a =
+        math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(lat1 * math.pi / 180) *
+            math.cos(lat2 * math.pi / 180) *
+            math.sin(dLng / 2) *
+            math.sin(dLng / 2);
+    return r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
   }
 
   @override
@@ -273,13 +314,21 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
       return _rutasOsrm(originLat, originLng, destLat, destLng);
     } else {
       final costingValhalla = perfil == 'foot' ? 'pedestrian' : 'bicycle';
-      return _rutaValhalla(originLat, originLng, destLat, destLng, costingValhalla);
+      return _rutaValhalla(
+        originLat,
+        originLng,
+        destLat,
+        destLng,
+        costingValhalla,
+      );
     }
   }
 
   Future<List<RouteInfo>> _rutasOsrm(
-    double originLat, double originLng,
-    double destLat, double destLng,
+    double originLat,
+    double originLng,
+    double destLat,
+    double destLng,
   ) async {
     final dio = Dio(
       BaseOptions(
@@ -311,7 +360,9 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
 
     final routes = response.data?['routes'] as List<dynamic>?;
     if (routes == null || routes.isEmpty) {
-      throw Exception('No se encontró una ruta hacia ese destino por carretera.');
+      throw Exception(
+        'No se encontró una ruta hacia ese destino por carretera.',
+      );
     }
 
     return routes.map((route) {
@@ -333,8 +384,10 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
   // Valhalla maneja redes OSM incompletas con modelos de costo, lo que da
   // mejores tiempos peatonales/ciclistas que OSRM en zonas rurales de Chiapas.
   Future<List<RouteInfo>> _rutaValhalla(
-    double originLat, double originLng,
-    double destLat, double destLng,
+    double originLat,
+    double originLng,
+    double destLat,
+    double destLng,
     String costing,
   ) async {
     final dio = Dio(
@@ -348,7 +401,8 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
       final response = await dio.get<Map<String, dynamic>>(
         'https://valhalla.openstreetmap.de/route',
         queryParameters: {
-          'json': '{"locations":[{"lon":$originLng,"lat":$originLat},'
+          'json':
+              '{"locations":[{"lon":$originLng,"lat":$originLat},'
               '{"lon":$destLng,"lat":$destLat}],'
               '"costing":"$costing",'
               '"shape_format":"geojson"}',
@@ -362,7 +416,8 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
         return [_fallbackHaversine(originLat, originLng, destLat, destLng)];
       }
 
-      final distMeters = ((summary['length'] as num?)?.toDouble() ?? 0.0) * 1000;
+      final distMeters =
+          ((summary['length'] as num?)?.toDouble() ?? 0.0) * 1000;
       final durSeconds = (summary['time'] as num?)?.toDouble() ?? 0.0;
 
       // Extraer polilínea del primer leg
@@ -370,15 +425,25 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
       List<List<double>> points;
       if (shape is Map) {
         // GeoJSON LineString
-        final coords = (shape['coordinates'] as List<dynamic>).cast<List<dynamic>>();
+        final coords = (shape['coordinates'] as List<dynamic>)
+            .cast<List<dynamic>>();
         points = coords
             .map((c) => [(c[1] as num).toDouble(), (c[0] as num).toDouble()])
             .toList();
       } else {
-        points = [[originLat, originLng], [destLat, destLng]];
+        points = [
+          [originLat, originLng],
+          [destLat, destLng],
+        ];
       }
 
-      return [RouteInfo(points: points, distanceMeters: distMeters, durationSeconds: durSeconds)];
+      return [
+        RouteInfo(
+          points: points,
+          distanceMeters: distMeters,
+          durationSeconds: durSeconds,
+        ),
+      ];
     } on DioException {
       // Si Valhalla falla, vuelve a estimación desde distancia
       return [_fallbackHaversine(originLat, originLng, destLat, destLng)];
@@ -393,21 +458,24 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
   // OSRM maneja bien autopistas largas; el error real está en zonas urbanas.
   static double _factorCorreccion(double metros) {
     final km = metros / 1000;
-    if (km < 15) return 1.4;   // urbano: semáforos, tráfico, topes
-    if (km < 80) return 1.1;   // carretera libre / mix con autopista
-    return 1.05;               // autopista/carretera federal larga
+    if (km < 15) return 1.4; // urbano: semáforos, tráfico, topes
+    if (km < 80) return 1.1; // carretera libre / mix con autopista
+    return 1.05; // autopista/carretera federal larga
   }
 
   // Respaldo cuando OSRM no está disponible: Haversine × 1.35 tortuosidad,
   // 35 km/h promedio, polilínea de dos puntos (línea recta indicativa).
   static RouteInfo _fallbackHaversine(
-    double lat1, double lng1,
-    double lat2, double lng2,
+    double lat1,
+    double lng1,
+    double lat2,
+    double lng2,
   ) {
     const r = 6371000.0;
     final dLat = (lat2 - lat1) * math.pi / 180;
     final dLng = (lng2 - lng1) * math.pi / 180;
-    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+    final a =
+        math.sin(dLat / 2) * math.sin(dLat / 2) +
         math.cos(lat1 * math.pi / 180) *
             math.cos(lat2 * math.pi / 180) *
             math.sin(dLng / 2) *
@@ -415,7 +483,10 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
     final lineaRecta = r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
     final distanciaMetros = lineaRecta * 1.35;
     return RouteInfo(
-      points: [[lat1, lng1], [lat2, lng2]],
+      points: [
+        [lat1, lng1],
+        [lat2, lng2],
+      ],
       distanceMeters: distanciaMetros,
       durationSeconds: distanciaMetros / (35000 / 3600),
     );

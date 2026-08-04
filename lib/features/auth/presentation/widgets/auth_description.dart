@@ -25,11 +25,7 @@ class AuthDescription extends StatelessWidget {
           'Descubre rutas únicas y apoya a las\n'
           'comunidades locales.',
           textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Colors.white70,
-            fontSize: 16,
-            height: 1.6,
-          ),
+          style: TextStyle(color: Colors.white70, fontSize: 16, height: 1.6),
         ),
       ],
     );

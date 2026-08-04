@@ -4,6 +4,7 @@ import '../../../home/presentation/widgets/home_app_bar.dart';
 import '../../../home/presentation/widgets/custom_bottom_nav_bar.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/fade_slide_in.dart';
+import 'lugares_cercanos_page.dart';
 import 'rutas_urbanas_page.dart';
 
 // Imágenes decorativas de categoría — mismas URLs ya usadas en el resto
@@ -44,7 +45,10 @@ class _ExplorarCercaPageState extends State<ExplorarCercaPage> {
     }
   }
 
-  void _irAMapa() => Navigator.pushNamed(context, '/mapa');
+  void _irALugaresCercanos() => Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => const LugaresCercanosPage()),
+  );
 
   void _irARecomendar() => Navigator.pushNamed(context, '/recomendar');
 
@@ -91,7 +95,9 @@ class _ExplorarCercaPageState extends State<ExplorarCercaPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(
-                              child: _DescubrimientoCard(onVerMapa: _irAMapa),
+                              child: _DescubrimientoCard(
+                                onVerMapa: _irALugaresCercanos,
+                              ),
                             ),
                             const SizedBox(width: 16),
                             Expanded(
@@ -103,7 +109,7 @@ class _ExplorarCercaPageState extends State<ExplorarCercaPage> {
                         )
                       : Column(
                           children: [
-                            _DescubrimientoCard(onVerMapa: _irAMapa),
+                            _DescubrimientoCard(onVerMapa: _irALugaresCercanos),
                             const SizedBox(height: 16),
                             _RutasUrbanasCard(onExplorar: _irARutasUrbanas),
                           ],
@@ -426,8 +432,8 @@ class _DescubrimientoCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Visualiza un mapa interactivo con los destinos más '
-            'fascinantes y servicios esenciales a tu alrededor.',
+            'Busca destinos reales en un radio ajustable alrededor de '
+            'tu ubicación actual, ordenados por distancia.',
             style: TextStyle(fontSize: 13, color: Colors.white70, height: 1.4),
           ),
           const SizedBox(height: 18),
@@ -449,7 +455,7 @@ class _DescubrimientoCard extends StatelessWidget {
                 children: const [
                   Flexible(
                     child: Text(
-                      'Ver mapa y lista',
+                      'Buscar cerca de mí',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(

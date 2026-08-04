@@ -24,8 +24,9 @@ class ChatBubble extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Column(
-        crossAxisAlignment:
-            esUsuario ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment: esUsuario
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
         children: [
           Container(
             constraints: BoxConstraints(
@@ -64,10 +65,7 @@ class ChatBubble extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             hora,
-            style: TextStyle(
-              fontSize: 11,
-              color: AppColors.textHint(context),
-            ),
+            style: TextStyle(fontSize: 11, color: AppColors.textHint(context)),
           ),
         ],
       ),

@@ -8,9 +8,9 @@ enum _ModoTransporte { carro, moto, pie, bici }
 
 class DestinationBottomSheet extends StatefulWidget {
   final DestinationEntity destino;
-  final RouteInfo? routeInfo;       // driving (carro/moto)
-  final RouteInfo? routePie;        // foot
-  final RouteInfo? routeBici;       // bike
+  final RouteInfo? routeInfo; // driving (carro/moto)
+  final RouteInfo? routePie; // foot
+  final RouteInfo? routeBici; // bike
   final bool esRecomendado;
   final VoidCallback onVerRuta;
   final VoidCallback? onRecalcular;
@@ -64,7 +64,11 @@ class _DestinationBottomSheetState extends State<DestinationBottomSheet> {
         // < 5 km urbano plano: 18 km/h
         // < 30 km semi-plano: 17 km/h
         // >= 30 km montaña/largo: 8.5 km/h
-        final velBici = distKm < 5 ? 18.0 : distKm < 30 ? 17.0 : 8.5;
+        final velBici = distKm < 5
+            ? 18.0
+            : distKm < 30
+            ? 17.0
+            : 8.5;
         return (distKm / velBici * 60).round();
     }
   }
@@ -303,14 +307,21 @@ class _DestinationBottomSheetState extends State<DestinationBottomSheet> {
             GestureDetector(
               onTap: widget.onRecalcular,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.primaryContainer(context),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.refresh, size: 15, color: AppColors.primary(context)),
+                    Icon(
+                      Icons.refresh,
+                      size: 15,
+                      color: AppColors.primary(context),
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       'Recalcular ruta',
@@ -492,7 +503,12 @@ class _ModoTab extends StatelessWidget {
   final String label;
   final bool activo;
   final VoidCallback onTap;
-  const _ModoTab({required this.icon, required this.label, required this.activo, required this.onTap});
+  const _ModoTab({
+    required this.icon,
+    required this.label,
+    required this.activo,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -503,20 +519,30 @@ class _ModoTab extends StatelessWidget {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: activo ? AppColors.primary(context) : AppColors.surfaceContainer(context),
+            color: activo
+                ? AppColors.primary(context)
+                : AppColors.surfaceContainer(context),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 20, color: activo ? AppColors.onPrimary(context) : AppColors.textSecondary(context)),
+              Icon(
+                icon,
+                size: 20,
+                color: activo
+                    ? AppColors.onPrimary(context)
+                    : AppColors.textSecondary(context),
+              ),
               const SizedBox(height: 3),
               Text(
                 label,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: activo ? AppColors.onPrimary(context) : AppColors.textSecondary(context),
+                  color: activo
+                      ? AppColors.onPrimary(context)
+                      : AppColors.textSecondary(context),
                 ),
               ),
             ],

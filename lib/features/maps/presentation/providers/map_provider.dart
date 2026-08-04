@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -138,8 +138,10 @@ class MapProvider extends ChangeNotifier {
 
     try {
       final rutas = await _getRoute(
-        originLat: originLat, originLng: originLng,
-        destLat: destino.lat, destLng: destino.lng,
+        originLat: originLat,
+        originLng: originLng,
+        destLat: destino.lat,
+        destLng: destino.lng,
       );
       _allRoutes = rutas;
       _routePie = null;
@@ -206,7 +208,8 @@ class MapProvider extends ChangeNotifier {
     // más cercano al usuario y suma los segmentos restantes hasta el destino.
     // Es mucho más preciso que Haversine × factor porque sigue el camino real.
     final restanteMetros = _distanciaRestanteEnRuta(
-      pos.latitude, pos.longitude,
+      pos.latitude,
+      pos.longitude,
       base.points,
     );
 
@@ -224,7 +227,8 @@ class MapProvider extends ChangeNotifier {
   // Recorre los puntos de la ruta para encontrar el segmento más cercano
   // al usuario, luego suma todos los segmentos desde ahí hasta el final.
   static double _distanciaRestanteEnRuta(
-    double userLat, double userLng,
+    double userLat,
+    double userLng,
     List<List<double>> points,
   ) {
     double minDist = double.infinity;
@@ -241,21 +245,26 @@ class MapProvider extends ChangeNotifier {
     double restante = 0;
     for (int i = puntoMasCercano; i < points.length - 1; i++) {
       restante += _haversineMetros(
-        points[i][0], points[i][1],
-        points[i + 1][0], points[i + 1][1],
+        points[i][0],
+        points[i][1],
+        points[i + 1][0],
+        points[i + 1][1],
       );
     }
     return restante;
   }
 
   static double _haversineMetros(
-    double lat1, double lng1,
-    double lat2, double lng2,
+    double lat1,
+    double lng1,
+    double lat2,
+    double lng2,
   ) {
     const r = 6371000.0;
     final dLat = (lat2 - lat1) * math.pi / 180;
     final dLng = (lng2 - lng1) * math.pi / 180;
-    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+    final a =
+        math.sin(dLat / 2) * math.sin(dLat / 2) +
         math.cos(lat1 * math.pi / 180) *
             math.cos(lat2 * math.pi / 180) *
             math.sin(dLng / 2) *

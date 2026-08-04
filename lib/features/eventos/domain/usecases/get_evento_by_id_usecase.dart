@@ -11,11 +11,7 @@ class GetEventoByIdUseCase {
 
   const GetEventoByIdUseCase(this._repository);
 
-  Future<Either<Failure, Evento>> call({
-    required String id,
-  }) {
-    return _repository.getEventoById(
-      id: id,
-    );
+  Future<Either<Failure, Evento>> call({required String id}) {
+    return _repository.getEventoById(id: id);
   }
 }

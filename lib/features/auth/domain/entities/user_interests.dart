@@ -3,11 +3,7 @@ class UserInterest {
   final String name;
   final String? icon;
 
-  const UserInterest({
-    required this.id,
-    required this.name,
-    this.icon,
-  });
+  const UserInterest({required this.id, required this.name, this.icon});
 }
 
 class UserInterests {

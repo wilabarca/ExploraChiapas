@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -1037,7 +1037,8 @@ class _MapPageState extends State<MapPage>
                     DestinationBottomSheet(
                       destino: selected,
                       routeInfo: provider.enNavegacion
-                          ? (provider.routeInfoRestante ?? provider.selectedRouteInfo)
+                          ? (provider.routeInfoRestante ??
+                                provider.selectedRouteInfo)
                           : provider.selectedRouteInfo,
                       routePie: provider.routePie,
                       routeBici: provider.routeBici,

@@ -11,9 +11,7 @@ class GetDestinoByIdUseCase {
 
   const GetDestinoByIdUseCase(this._repository);
 
-  Future<Either<Failure, Destino>> call({
-    required String id,
-  }) {
+  Future<Either<Failure, Destino>> call({required String id}) {
     return _repository.getDestinoById(id: id);
   }
 }

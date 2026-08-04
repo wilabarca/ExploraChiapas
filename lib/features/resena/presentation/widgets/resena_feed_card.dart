@@ -145,7 +145,7 @@ class ResenaFeedCard extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ResenaAvatar(userId: resena.userId, radius: 16),
+                    ResenaAvatar(resena: resena, radius: 16),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
@@ -155,7 +155,10 @@ class ResenaFeedCard extends StatelessWidget {
                             children: [
                               Flexible(
                                 child: Text(
-                                  esMia ? 'Tú' : 'Viajero ExploraChiapas',
+                                  esMia
+                                      ? 'Tú'
+                                      : (resena.userName ??
+                                            'Viajero ExploraChiapas'),
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontSize: 12.5,

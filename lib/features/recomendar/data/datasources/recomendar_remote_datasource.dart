@@ -76,7 +76,9 @@ class RecomendarRemoteDataSourceImpl implements RecomendarRemoteDataSource {
         final id = data['id']?.toString();
         if (id != null && id.isNotEmpty) return id;
       }
-      throw const ServerException(message: 'El servidor no devolvió un ID de ubicación');
+      throw const ServerException(
+        message: 'El servidor no devolvió un ID de ubicación',
+      );
     }
     throw ServerException(
       message: _extractMessage(response.data, 'Error al crear la ubicación'),
@@ -108,7 +110,9 @@ class RecomendarRemoteDataSourceImpl implements RecomendarRemoteDataSource {
       if (data is Map<String, dynamic>) {
         return PropuestaDestinoModel.fromJson(data);
       }
-      throw const ServerException(message: 'Respuesta de propuesta con formato inválido');
+      throw const ServerException(
+        message: 'Respuesta de propuesta con formato inválido',
+      );
     }
     throw ServerException(
       message: _extractMessage(response.data, 'Error al crear la propuesta'),
@@ -123,10 +127,12 @@ class RecomendarRemoteDataSourceImpl implements RecomendarRemoteDataSource {
   }) async {
     final formData = FormData();
     for (final img in imagenes) {
-      formData.files.add(MapEntry(
-        'imagenes',
-        await MultipartFile.fromFile(img.path, filename: img.name),
-      ));
+      formData.files.add(
+        MapEntry(
+          'imagenes',
+          await MultipartFile.fromFile(img.path, filename: img.name),
+        ),
+      );
     }
 
     final response = await _apiClient.post(
@@ -136,7 +142,10 @@ class RecomendarRemoteDataSourceImpl implements RecomendarRemoteDataSource {
 
     if (response.statusCode != 200 && response.statusCode != 201) {
       throw ServerException(
-        message: _extractMessage(response.data, 'Error al subir las fotografías'),
+        message: _extractMessage(
+          response.data,
+          'Error al subir las fotografías',
+        ),
         statusCode: response.statusCode,
       );
     }
@@ -159,7 +168,10 @@ class RecomendarRemoteDataSourceImpl implements RecomendarRemoteDataSource {
       throw const ServerException(message: 'Formato de propuestas inválido');
     }
     throw ServerException(
-      message: _extractMessage(response.data, 'Error al obtener tus recomendaciones'),
+      message: _extractMessage(
+        response.data,
+        'Error al obtener tus recomendaciones',
+      ),
       statusCode: response.statusCode,
     );
   }

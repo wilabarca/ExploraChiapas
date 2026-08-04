@@ -43,9 +43,9 @@ class PropuestaDestinoModel extends PropuestaDestino {
       createdDestinationId: json['createdDestinationId']?.toString(),
       images: imagesJson is List
           ? imagesJson
-              .whereType<Map<String, dynamic>>()
-              .map(ImagenPropuestaModel.fromJson)
-              .toList()
+                .whereType<Map<String, dynamic>>()
+                .map(ImagenPropuestaModel.fromJson)
+                .toList()
           : const [],
       createdAt: createdAt,
     );

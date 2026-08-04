@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/profanity_filter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/profile_provider.dart';
@@ -107,6 +108,26 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   Future<void> _guardar() async {
+    // `GET /reviews` ahora devuelve este nombre y se muestra públicamente
+    // en cada reseña que el usuario escriba — se bloquea el lenguaje
+    // inapropiado antes de guardarlo, igual que en el resto de campos
+    // visibles para otros usuarios.
+    if (ProfanityFilter.contiene(_nombreCtrl.text)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Tu nombre contiene lenguaje inapropiado, revísalo.',
+          ),
+          backgroundColor: AppColors.error(context),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+      return;
+    }
+
     final provider = context.read<ProfileProvider>();
     final success = await provider.updatePerfil(
       nombre: _nombreCtrl.text.trim(),

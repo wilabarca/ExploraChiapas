@@ -46,14 +46,30 @@ class _PlanificarRutaPageState extends State<PlanificarRutaPage> {
     Icons.diamond_outlined,
   ];
 
+  // El motor NLP de `/planear` (capa de extracción de entidades) solo
+  // reconoce el presupuesto cuando el texto trae un MONTO NUMÉRICO
+  // explícito ("500 pesos") — palabras cualitativas como "Económico" o
+  // "Moderado" nunca se extraen y el campo `parametros.presupuesto`
+  // siempre queda en null, así que el ML ignoraba por completo la
+  // selección del usuario (verificado contra el backend real). Se
+  // traduce cada nivel a un monto aproximado por persona/día para que el
+  // NLU sí lo capture, sin cambiar lo que el usuario ve en pantalla.
+  static const _montoPresupuesto = {
+    'Económico': 300,
+    'Moderado': 600,
+    'Premium': 1200,
+  };
+
   Future<void> _generarRuta() async {
     if (_tiposSeleccionados.isEmpty) return;
     setState(() => _generando = true);
 
     final tipos = _tiposSeleccionados.join(', ');
+    final monto = _montoPresupuesto[_presupuesto];
     final mensaje =
         'Quiero una ruta de turismo de $tipos en Chiapas, '
-        'con presupuesto $_presupuesto, disponible por $_tiempo. '
+        'con presupuesto $_presupuesto de aproximadamente $monto pesos '
+        'por persona, disponible por $_tiempo. '
         'Recomiéndame lugares, restaurantes y actividades.';
 
     await context.read<ChatProvider>().enviarMensaje(mensaje);

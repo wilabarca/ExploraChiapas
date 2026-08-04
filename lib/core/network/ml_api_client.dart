@@ -27,9 +27,7 @@ class MlApiClient {
   // Llamar esto cuando el usuario abre la pantalla de chat.
   Future<void> warmup() async {
     try {
-      await _dio
-          .get('/warmup')
-          .timeout(const Duration(seconds: 15));
+      await _dio.get('/warmup').timeout(const Duration(seconds: 15));
     } catch (_) {
       // silencioso — es solo un ping preventivo
     }
@@ -73,7 +71,9 @@ class MlApiClient {
         final message =
             e.response?.data?['error'] ?? e.message ?? 'Error del servidor';
         throw ServerException(
-            message: message.toString(), statusCode: statusCode);
+          message: message.toString(),
+          statusCode: statusCode,
+        );
     }
   }
 }

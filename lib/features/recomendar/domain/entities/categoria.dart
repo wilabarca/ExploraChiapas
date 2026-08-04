@@ -3,9 +3,5 @@ class Categoria {
   final String nombre;
   final String? icono;
 
-  const Categoria({
-    required this.id,
-    required this.nombre,
-    this.icono,
-  });
+  const Categoria({required this.id, required this.nombre, this.icono});
 }
