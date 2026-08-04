@@ -18,10 +18,10 @@ class RecomendacionModel extends RecomendacionEntity {
 
     if (recomendacion == null) {
       return RecomendacionModel(
-        mensaje:                   json['mensaje'] as String,
-        itinerario:                [],
-        costoTotal:                0,
-        tiempoTotalHoras:          0,
+        mensaje: json['mensaje'] as String,
+        itinerario: [],
+        costoTotal: 0,
+        tiempoTotalHoras: 0,
         reglasAsociacionAplicadas: [],
       );
     }
@@ -31,12 +31,12 @@ class RecomendacionModel extends RecomendacionEntity {
         recomendacion['reglas_asociacion_aplicadas'] as List<dynamic>? ?? [];
 
     return RecomendacionModel(
-      mensaje:                   json['mensaje'] as String,
-      itinerario:                itinerarioJson
+      mensaje: json['mensaje'] as String,
+      itinerario: itinerarioJson
           .map((item) => ActividadModel.fromJson(item as Map<String, dynamic>))
           .toList(),
-      costoTotal:                (recomendacion['costo_total'] as num).toDouble(),
-      tiempoTotalHoras:          (recomendacion['tiempo_total_horas'] as num).toDouble(),
+      costoTotal: (recomendacion['costo_total'] as num).toDouble(),
+      tiempoTotalHoras: (recomendacion['tiempo_total_horas'] as num).toDouble(),
       reglasAsociacionAplicadas: reglasJson.cast<String>(),
     );
   }

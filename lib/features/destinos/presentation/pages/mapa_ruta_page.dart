@@ -27,28 +27,40 @@ String _osrmPerfil(_ModoTransporte m) {
 // Minutos por kilómetro para el fallback de línea recta
 double _factorFallback(_ModoTransporte m) {
   switch (m) {
-    case _ModoTransporte.carro: return 1.4;
-    case _ModoTransporte.moto: return 1.0;
-    case _ModoTransporte.caminando: return 12.0;
-    case _ModoTransporte.bicicleta: return 5.0;
+    case _ModoTransporte.carro:
+      return 1.4;
+    case _ModoTransporte.moto:
+      return 1.0;
+    case _ModoTransporte.caminando:
+      return 12.0;
+    case _ModoTransporte.bicicleta:
+      return 5.0;
   }
 }
 
 IconData _iconoModo(_ModoTransporte m) {
   switch (m) {
-    case _ModoTransporte.carro: return Icons.directions_car_filled;
-    case _ModoTransporte.moto: return Icons.two_wheeler;
-    case _ModoTransporte.caminando: return Icons.directions_walk;
-    case _ModoTransporte.bicicleta: return Icons.pedal_bike;
+    case _ModoTransporte.carro:
+      return Icons.directions_car_filled;
+    case _ModoTransporte.moto:
+      return Icons.two_wheeler;
+    case _ModoTransporte.caminando:
+      return Icons.directions_walk;
+    case _ModoTransporte.bicicleta:
+      return Icons.pedal_bike;
   }
 }
 
 String _labelModo(_ModoTransporte m) {
   switch (m) {
-    case _ModoTransporte.carro: return 'Carro';
-    case _ModoTransporte.moto: return 'Moto';
-    case _ModoTransporte.caminando: return 'A pie';
-    case _ModoTransporte.bicicleta: return 'Bici';
+    case _ModoTransporte.carro:
+      return 'Carro';
+    case _ModoTransporte.moto:
+      return 'Moto';
+    case _ModoTransporte.caminando:
+      return 'A pie';
+    case _ModoTransporte.bicicleta:
+      return 'Bici';
   }
 }
 
@@ -507,14 +519,18 @@ class _MapaRutaPageState extends State<MapaRutaPage> {
       // Selector de modo de transporte
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: _ModoTransporte.values.map((m) => _ChipModo(
-          icono: _iconoModo(m),
-          label: _labelModo(m),
-          seleccionado: _modo == m,
-          onTap: () => _cambiarModo(m),
-          color: AppColors.primary(context),
-          colorContainer: AppColors.primaryContainer(context),
-        )).toList(),
+        children: _ModoTransporte.values
+            .map(
+              (m) => _ChipModo(
+                icono: _iconoModo(m),
+                label: _labelModo(m),
+                seleccionado: _modo == m,
+                onTap: () => _cambiarModo(m),
+                color: AppColors.primary(context),
+                colorContainer: AppColors.primaryContainer(context),
+              ),
+            )
+            .toList(),
       ),
       const SizedBox(height: 12),
       // Métricas

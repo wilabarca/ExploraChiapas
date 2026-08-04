@@ -24,7 +24,10 @@ class ChatMensaje {
 
 enum ChatStatus { idle, enviando, error }
 
-@injectable
+// Antes @injectable (factory). Debe ser singleton por la misma razón que
+// FavoritosProvider: AuthProvider lo referencia para limpiarlo al cambiar
+// de sesión y necesita apuntar a la misma instancia que usa la UI.
+@lazySingleton
 class ChatProvider extends ChangeNotifier {
   final EnviarMensajeUseCase _enviarMensajeUseCase;
   final ConversacionRemoteDatasource _convDatasource;
@@ -34,7 +37,8 @@ class ChatProvider extends ChangeNotifier {
   // ── Mensajes visibles ──────────────────────────────────
   final List<ChatMensaje> _mensajes = [
     ChatMensaje(
-      contenido: '¡Hola! Soy tu asistente de ExploraChiapas. ¿A donde te '
+      contenido:
+          '¡Hola! Soy tu asistente de ExploraChiapas. ¿A donde te '
           'gustaria ir? Por ejemplo:\n"Quiero ir a Suchiapa, somos 2 '
           'personas, presupuesto de \$500, tengo medio dia".',
       hora: _horaActual(),
@@ -69,25 +73,31 @@ class ChatProvider extends ChangeNotifier {
     if (textoLimpio.isEmpty) return;
 
     if (ProfanityFilter.contiene(textoLimpio)) {
-      _mensajes.add(ChatMensaje(
-        contenido: ProfanityFilter.censurar(textoLimpio),
-        hora: _horaActual(),
-        tipo: BubbleType.user,
-      ));
-      _mensajes.add(ChatMensaje(
-        contenido: 'Por favor utiliza un lenguaje apropiado para continuar.',
-        hora: _horaActual(),
-        tipo: BubbleType.bot,
-      ));
+      _mensajes.add(
+        ChatMensaje(
+          contenido: ProfanityFilter.censurar(textoLimpio),
+          hora: _horaActual(),
+          tipo: BubbleType.user,
+        ),
+      );
+      _mensajes.add(
+        ChatMensaje(
+          contenido: 'Por favor utiliza un lenguaje apropiado para continuar.',
+          hora: _horaActual(),
+          tipo: BubbleType.bot,
+        ),
+      );
       notifyListeners();
       return;
     }
 
-    _mensajes.add(ChatMensaje(
-      contenido: textoLimpio,
-      hora: _horaActual(),
-      tipo: BubbleType.user,
-    ));
+    _mensajes.add(
+      ChatMensaje(
+        contenido: textoLimpio,
+        hora: _horaActual(),
+        tipo: BubbleType.user,
+      ),
+    );
     _status = ChatStatus.enviando;
     _errorMessage = null;
     notifyListeners();
@@ -116,20 +126,24 @@ class ChatProvider extends ChangeNotifier {
         final mensaje = failure is NetworkFailure
             ? 'Sin conexión a internet. Verifica tu red e intenta de nuevo.'
             : failure.message;
-        _mensajes.add(ChatMensaje(
-          contenido: mensaje,
-          hora: _horaActual(),
-          tipo: BubbleType.bot,
-        ));
+        _mensajes.add(
+          ChatMensaje(
+            contenido: mensaje,
+            hora: _horaActual(),
+            tipo: BubbleType.bot,
+          ),
+        );
       },
       (recomendacion) {
         _status = ChatStatus.idle;
-        _mensajes.add(ChatMensaje(
-          contenido: recomendacion.mensaje,
-          hora: _horaActual(),
-          tipo: BubbleType.bot,
-          itinerario: recomendacion.itinerario,
-        ));
+        _mensajes.add(
+          ChatMensaje(
+            contenido: recomendacion.mensaje,
+            hora: _horaActual(),
+            tipo: BubbleType.bot,
+            itinerario: recomendacion.itinerario,
+          ),
+        );
         // Acumular en historial Groq
         _historialGroq.add({'rol': 'user', 'contenido': textoLimpio});
         _historialGroq.add({'rol': 'bot', 'contenido': recomendacion.mensaje});
@@ -144,12 +158,15 @@ class ChatProvider extends ChangeNotifier {
   // ── Nueva conversación ─────────────────────────────────
   void nuevaConversacion() {
     _mensajes.clear();
-    _mensajes.add(ChatMensaje(
-      contenido: '¡Hola! Soy tu asistente de ExploraChiapas. ¿A donde te '
-          'gustaria ir?',
-      hora: _horaActual(),
-      tipo: BubbleType.bot,
-    ));
+    _mensajes.add(
+      ChatMensaje(
+        contenido:
+            '¡Hola! Soy tu asistente de ExploraChiapas. ¿A donde te '
+            'gustaria ir?',
+        hora: _horaActual(),
+        tipo: BubbleType.bot,
+      ),
+    );
     _historialGroq.clear();
     _conversacionId = null;
     _esPrimerMensajeReal = true;
@@ -168,11 +185,13 @@ class ChatProvider extends ChangeNotifier {
 
       for (final msg in conv.mensajes) {
         final tipo = msg.rol == 'user' ? BubbleType.user : BubbleType.bot;
-        _mensajes.add(ChatMensaje(
-          contenido: msg.contenido,
-          hora: _formatearFecha(msg.creadoEn),
-          tipo: tipo,
-        ));
+        _mensajes.add(
+          ChatMensaje(
+            contenido: msg.contenido,
+            hora: _formatearFecha(msg.creadoEn),
+            tipo: tipo,
+          ),
+        );
         _historialGroq.add({'rol': msg.rol, 'contenido': msg.contenido});
       }
 

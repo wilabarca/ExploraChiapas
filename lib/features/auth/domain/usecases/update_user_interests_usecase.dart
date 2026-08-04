@@ -9,16 +9,11 @@ import '../repositories/auth_repository.dart';
 class UpdateUserInterestsUseCase {
   final AuthRepository _repository;
 
-  UpdateUserInterestsUseCase(
-    this._repository,
-  );
+  UpdateUserInterestsUseCase(this._repository);
 
-  Future<Either<Failure, UserInterests>>
-      call({
+  Future<Either<Failure, UserInterests>> call({
     required List<String> categoryIds,
   }) {
-    return _repository.updateUserInterests(
-      categoryIds: categoryIds,
-    );
+    return _repository.updateUserInterests(categoryIds: categoryIds);
   }
 }

@@ -19,6 +19,7 @@ abstract class IMapRemoteDatasource {
     required double originLng,
     required double destLat,
     required double destLng,
+    String perfil = 'driving',
   });
 }
 
@@ -144,6 +145,32 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
   // vez de inventarle coordenadas.
   @override
   Future<List<DestinationModel>> getDestinations({String? tipo}) async {
+    final all = await _fetchDestinosReales();
+    if (all == null) return _mockPorTipo(tipo);
+
+    if (tipo == null) return all;
+    final filtered = all
+        .where((d) => d.tipo.toLowerCase() == tipo.toLowerCase())
+        .toList();
+    return filtered.isEmpty ? _mockPorTipo(tipo) : filtered;
+  }
+
+  List<DestinationModel> _mockPorTipo(String? tipo) {
+    final data = tipo == null
+        ? _mockDestinations
+        : _mockDestinations.where((d) => d['tipo'] == tipo).toList();
+    return data
+        .map((json) => DestinationModel.fromJson(json, esMock: true))
+        .toList();
+  }
+
+  // Extraído de `getDestinations` para reutilizarlo también en
+  // `getDestinationsNearby` — antes esta última ni siquiera llamaba al
+  // backend, devolvía directo el mock (`Future.delayed` + datos
+  // hardcodeados), y como además nadie la invocaba desde ninguna
+  // pantalla, "buscar lugares cercanos con radio configurable" no
+  // existía de verdad pese a que la firma del método ya lo prometía.
+  Future<List<DestinationModel>?> _fetchDestinosReales() async {
     try {
       final resultados = await Future.wait([
         _apiClient.get(AppConstants.destinationsEndpoint),
@@ -209,26 +236,11 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
         );
       }
 
-      if (tipo != null) {
-        final filtered = all
-            .where((d) => d.tipo.toLowerCase() == tipo.toLowerCase())
-            .toList();
-        if (filtered.isEmpty) throw Exception('no_match');
-        return filtered;
-      }
       return all;
     } catch (e, st) {
-      debugPrint(
-        '[MapRemoteDatasource] getDestinations($tipo) falló, usando mock: $e',
-      );
+      debugPrint('[MapRemoteDatasource] _fetchDestinosReales falló: $e');
       debugPrintStack(stackTrace: st);
-      await Future.delayed(const Duration(milliseconds: 300));
-      final data = tipo == null
-          ? _mockDestinations
-          : _mockDestinations.where((d) => d['tipo'] == tipo).toList();
-      return data
-          .map((json) => DestinationModel.fromJson(json, esMock: true))
-          .toList();
+      return null;
     }
   }
 
@@ -252,10 +264,40 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
     required double lng,
     required double radioKm,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    return _mockDestinations
-        .map((json) => DestinationModel.fromJson(json, esMock: true))
-        .toList();
+    final all = await _fetchDestinosReales();
+    if (all == null) {
+      // Sin conexión al backend: no hay forma de saber qué tan cerca
+      // está el mock del usuario real, así que se devuelve vacío en vez
+      // de aparentar cercanía con datos de muestra.
+      return [];
+    }
+
+    final conDistancia =
+        all
+            .map((d) => (d, _distanciaKm(lat, lng, d.lat, d.lng)))
+            .where((par) => par.$2 <= radioKm)
+            .toList()
+          ..sort((a, b) => a.$2.compareTo(b.$2));
+
+    return conDistancia.map((par) => par.$1).toList();
+  }
+
+  static double _distanciaKm(
+    double lat1,
+    double lng1,
+    double lat2,
+    double lng2,
+  ) {
+    const r = 6371.0;
+    final dLat = (lat2 - lat1) * math.pi / 180;
+    final dLng = (lng2 - lng1) * math.pi / 180;
+    final a =
+        math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(lat1 * math.pi / 180) *
+            math.cos(lat2 * math.pi / 180) *
+            math.sin(dLng / 2) *
+            math.sin(dLng / 2);
+    return r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
   }
 
   @override
@@ -264,7 +306,30 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
     required double originLng,
     required double destLat,
     required double destLng,
+    String perfil = 'driving',
   }) async {
+    // Driving → OSRM (rápido, rutas de carretera buenas para México)
+    // Foot/bike → Valhalla (maneja mejor datos OSM incompletos en Chiapas)
+    if (perfil == 'driving') {
+      return _rutasOsrm(originLat, originLng, destLat, destLng);
+    } else {
+      final costingValhalla = perfil == 'foot' ? 'pedestrian' : 'bicycle';
+      return _rutaValhalla(
+        originLat,
+        originLng,
+        destLat,
+        destLng,
+        costingValhalla,
+      );
+    }
+  }
+
+  Future<List<RouteInfo>> _rutasOsrm(
+    double originLat,
+    double originLng,
+    double destLat,
+    double destLng,
+  ) async {
     final dio = Dio(
       BaseOptions(
         connectTimeout: const Duration(seconds: 10),
@@ -284,11 +349,8 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
         },
       );
     } on DioException catch (e) {
-      if (e.type == DioExceptionType.connectionError) {
-        // Sin internet: devuelve estimación Haversine para poder mostrar algo.
-        return [_fallbackHaversine(originLat, originLng, destLat, destLng)];
-      }
-      if (e.type == DioExceptionType.connectionTimeout ||
+      if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout ||
           e.type == DioExceptionType.sendTimeout) {
         return [_fallbackHaversine(originLat, originLng, destLat, destLng)];
@@ -296,8 +358,7 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
       throw Exception('No se pudo calcular la ruta. Intenta de nuevo.');
     }
 
-    final body = response.data;
-    final routes = body?['routes'] as List<dynamic>?;
+    final routes = response.data?['routes'] as List<dynamic>?;
     if (routes == null || routes.isEmpty) {
       throw Exception(
         'No se encontró una ruta hacia ese destino por carretera.',
@@ -312,35 +373,109 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
           .toList();
       final rawMeters = (route['distance'] as num?)?.toDouble() ?? 0.0;
       final rawSeconds = (route['duration'] as num?)?.toDouble() ?? 0.0;
-      // Factor diferenciado: OSRM usa velocidades teóricas que no reflejan
-      // la realidad de Chiapas (topes, curvas de montaña, terracería).
-      final factor = _factorCorreccion(rawMeters);
       return RouteInfo(
         points: points,
         distanceMeters: rawMeters,
-        durationSeconds: rawSeconds * factor,
+        durationSeconds: rawSeconds * _factorCorreccion(rawMeters),
       );
     }).toList();
   }
 
-  // < 20 km → 1.2x urbano, 20–80 km → 1.4x semi-rural, > 80 km → 1.6x montaña
+  // Valhalla maneja redes OSM incompletas con modelos de costo, lo que da
+  // mejores tiempos peatonales/ciclistas que OSRM en zonas rurales de Chiapas.
+  Future<List<RouteInfo>> _rutaValhalla(
+    double originLat,
+    double originLng,
+    double destLat,
+    double destLng,
+    String costing,
+  ) async {
+    final dio = Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 12),
+        receiveTimeout: const Duration(seconds: 12),
+      ),
+    );
+
+    try {
+      final response = await dio.get<Map<String, dynamic>>(
+        'https://valhalla.openstreetmap.de/route',
+        queryParameters: {
+          'json':
+              '{"locations":[{"lon":$originLng,"lat":$originLat},'
+              '{"lon":$destLng,"lat":$destLat}],'
+              '"costing":"$costing",'
+              '"shape_format":"geojson"}',
+        },
+      );
+
+      final trip = response.data?['trip'] as Map<String, dynamic>?;
+      final summary = trip?['summary'] as Map<String, dynamic>?;
+      final legs = trip?['legs'] as List<dynamic>?;
+      if (summary == null || legs == null || legs.isEmpty) {
+        return [_fallbackHaversine(originLat, originLng, destLat, destLng)];
+      }
+
+      final distMeters =
+          ((summary['length'] as num?)?.toDouble() ?? 0.0) * 1000;
+      final durSeconds = (summary['time'] as num?)?.toDouble() ?? 0.0;
+
+      // Extraer polilínea del primer leg
+      final shape = (legs[0] as Map<String, dynamic>)['shape'];
+      List<List<double>> points;
+      if (shape is Map) {
+        // GeoJSON LineString
+        final coords = (shape['coordinates'] as List<dynamic>)
+            .cast<List<dynamic>>();
+        points = coords
+            .map((c) => [(c[1] as num).toDouble(), (c[0] as num).toDouble()])
+            .toList();
+      } else {
+        points = [
+          [originLat, originLng],
+          [destLat, destLng],
+        ];
+      }
+
+      return [
+        RouteInfo(
+          points: points,
+          distanceMeters: distMeters,
+          durationSeconds: durSeconds,
+        ),
+      ];
+    } on DioException {
+      // Si Valhalla falla, vuelve a estimación desde distancia
+      return [_fallbackHaversine(originLat, originLng, destLat, destLng)];
+    }
+  }
+
+  // Factores calibrados con datos reales de OSRM vs Google Maps en Chiapas:
+  // - Tuxtla→Chiapa de Corzo (15.6km): OSRM 17min, real 25min → 1.48x
+  // - Tuxtla→San Cristóbal (60.9km):   OSRM 56min, real 60min → 1.07x
+  // - Tuxtla→Tonalá (144.8km):         OSRM 115min, real 123min → 1.07x
+  // - Tuxtla→Palenque (275km):         OSRM 257min, real 262min → 1.02x
+  // OSRM maneja bien autopistas largas; el error real está en zonas urbanas.
   static double _factorCorreccion(double metros) {
     final km = metros / 1000;
-    if (km < 20) return 1.2;
-    if (km < 80) return 1.4;
-    return 1.6;
+    if (km < 15) return 1.4; // urbano: semáforos, tráfico, topes
+    if (km < 80) return 1.1; // carretera libre / mix con autopista
+    return 1.05; // autopista/carretera federal larga
   }
 
   // Respaldo cuando OSRM no está disponible: Haversine × 1.35 tortuosidad,
   // 35 km/h promedio, polilínea de dos puntos (línea recta indicativa).
   static RouteInfo _fallbackHaversine(
-    double lat1, double lng1,
-    double lat2, double lng2,
+    double lat1,
+    double lng1,
+    double lat2,
+    double lng2,
   ) {
     const r = 6371000.0;
     final dLat = (lat2 - lat1) * math.pi / 180;
     final dLng = (lng2 - lng1) * math.pi / 180;
-    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+    final a =
+        math.sin(dLat / 2) * math.sin(dLat / 2) +
         math.cos(lat1 * math.pi / 180) *
             math.cos(lat2 * math.pi / 180) *
             math.sin(dLng / 2) *
@@ -348,7 +483,10 @@ class MapRemoteDatasourceImpl implements IMapRemoteDatasource {
     final lineaRecta = r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
     final distanciaMetros = lineaRecta * 1.35;
     return RouteInfo(
-      points: [[lat1, lng1], [lat2, lng2]],
+      points: [
+        [lat1, lng1],
+        [lat2, lng2],
+      ],
       distanceMeters: distanciaMetros,
       durationSeconds: distanciaMetros / (35000 / 3600),
     );

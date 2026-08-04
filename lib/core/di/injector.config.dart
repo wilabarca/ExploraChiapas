@@ -228,7 +228,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i905.GetPromocionesUseCase>(
       () => _i905.GetPromocionesUseCase(gh<_i558.PromocionesRepository>()),
     );
-    gh.factory<_i116.ChatProvider>(
+    gh.lazySingleton<_i116.ChatProvider>(
       () => _i116.ChatProvider(
         gh<_i301.EnviarMensajeUseCase>(),
         gh<_i498.ConversacionRemoteDatasource>(),
@@ -302,7 +302,7 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i757.SecureSessionStorage>(),
       ),
     );
-    gh.factory<_i63.FavoritosProvider>(
+    gh.lazySingleton<_i63.FavoritosProvider>(
       () => _i63.FavoritosProvider(
         gh<_i629.GetFavoritosUseCase>(),
         gh<_i536.AddFavoritoUseCase>(),
@@ -408,17 +408,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i429.GetDestinoByIdUseCase>(),
       ),
     );
-    gh.factory<_i1054.AuthProvider>(
-      () => _i1054.AuthProvider(
-        gh<_i188.LoginUseCase>(),
-        gh<_i941.RegisterUseCase>(),
-        gh<_i568.GetProfileUseCase>(),
-        gh<_i787.AuthRepository>(),
-        gh<_i128.GetUserInterestsUseCase>(),
-        gh<_i70.UpdateUserInterestsUseCase>(),
-        gh<_i757.SecureSessionStorage>(),
-      ),
-    );
     gh.factory<_i392.CrearResenaUseCase>(
       () => _i392.CrearResenaUseCase(gh<_i908.ResenasRepository>()),
     );
@@ -452,13 +441,28 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i453.UploadFotoPerfilUseCase>(),
       ),
     );
-    gh.factory<_i112.ResenasProvider>(
+    gh.lazySingleton<_i112.ResenasProvider>(
       () => _i112.ResenasProvider(
         gh<_i33.GetResenasUseCase>(),
         gh<_i392.CrearResenaUseCase>(),
         gh<_i918.EditarResenaUseCase>(),
         gh<_i123.EliminarResenaUseCase>(),
         gh<_i16.UserStatsLocalService>(),
+      ),
+    );
+    gh.factory<_i1054.AuthProvider>(
+      () => _i1054.AuthProvider(
+        gh<_i188.LoginUseCase>(),
+        gh<_i941.RegisterUseCase>(),
+        gh<_i568.GetProfileUseCase>(),
+        gh<_i787.AuthRepository>(),
+        gh<_i128.GetUserInterestsUseCase>(),
+        gh<_i70.UpdateUserInterestsUseCase>(),
+        gh<_i757.SecureSessionStorage>(),
+        gh<_i919.ProfileProvider>(),
+        gh<_i63.FavoritosProvider>(),
+        gh<_i112.ResenasProvider>(),
+        gh<_i116.ChatProvider>(),
       ),
     );
     return this;

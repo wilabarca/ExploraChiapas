@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/press_scale.dart';
 
+/// Botón de Welcome (Registro/Inicio de sesión). Solo se usa en esta
+/// pantalla — el efecto de presión es un escalado sutil (`PressScale`,
+/// mismo patrón ya reutilizado en el resto de la app) en vez del ripple
+/// por defecto de `ElevatedButton`, para una sensación más "premium" y
+/// consistente con el rediseño.
 class AuthButton extends StatelessWidget {
   final String text;
   final bool isPrimary;
@@ -14,43 +21,44 @@ class AuthButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ConstrainedBox garantiza altura minima accesible y ancho flexible
-    return ConstrainedBox(
-      constraints: const BoxConstraints(
-        minHeight: 52,
-        minWidth: double.infinity,
-      ),
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: isPrimary
-              ? const Color(0xFF008F45)
-              : Colors.transparent,
-          elevation: 0,
-          side: isPrimary
+    return PressScale(
+      onTap: onPressed,
+      scaleAbajo: 0.97,
+      child: Container(
+        width: double.infinity,
+        constraints: const BoxConstraints(minHeight: 54),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: isPrimary ? AppColors.primary(context) : Colors.transparent,
+          borderRadius: BorderRadius.circular(30),
+          border: isPrimary
               ? null
-              : const BorderSide(color: Colors.white38, width: 1),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
+              : Border.all(
+                  color: AppColors.primary(context).withValues(alpha: 0.4),
+                  width: 1.4,
+                ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               text,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
-                fontSize: 15,
+              style: TextStyle(
+                color: isPrimary
+                    ? AppColors.onPrimary(context)
+                    : AppColors.primary(context),
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
               ),
             ),
-            if (isPrimary)
-              const Padding(
-                padding: EdgeInsets.only(left: 10),
-                child: Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+            if (isPrimary) ...[
+              const SizedBox(width: 8),
+              Icon(
+                Icons.arrow_forward_rounded,
+                size: 18,
+                color: AppColors.onPrimary(context),
               ),
+            ],
           ],
         ),
       ),

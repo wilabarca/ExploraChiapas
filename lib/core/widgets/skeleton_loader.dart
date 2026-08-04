@@ -30,9 +30,10 @@ class _SkeletonBoxState extends State<SkeletonBox>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     )..repeat(reverse: true);
-    _anim = Tween<double>(begin: 0.4, end: 1.0).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
+    _anim = Tween<double>(
+      begin: 0.4,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -44,7 +45,9 @@ class _SkeletonBoxState extends State<SkeletonBox>
   @override
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
-    final baseColor = isDark ? const Color(0xFF2C2C2C) : const Color(0xFFE0E0E0);
+    final baseColor = isDark
+        ? const Color(0xFF2C2C2C)
+        : const Color(0xFFE0E0E0);
 
     return FadeTransition(
       opacity: _anim,
@@ -65,11 +68,7 @@ class SkeletonDestinoCard extends StatelessWidget {
   final double height;
   final double width;
 
-  const SkeletonDestinoCard({
-    super.key,
-    this.height = 210,
-    this.width = 180,
-  });
+  const SkeletonDestinoCard({super.key, this.height = 210, this.width = 180});
 
   @override
   Widget build(BuildContext context) {
@@ -125,10 +124,8 @@ class SkeletonCardRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20),
         itemCount: count,
         separatorBuilder: (_, __) => const SizedBox(width: 12),
-        itemBuilder: (_, __) => SkeletonDestinoCard(
-          height: cardHeight,
-          width: cardWidth,
-        ),
+        itemBuilder: (_, __) =>
+            SkeletonDestinoCard(height: cardHeight, width: cardWidth),
       ),
     );
   }

@@ -33,9 +33,10 @@ class _AppSplash extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Image.asset(
-                      'assets/images/ExploraChiapas Logo.png',
+                      'assets/images/iconoapp.jpg',
                       width: 88,
                       height: 88,
+                      fit: BoxFit.contain,
                     ),
                     const SizedBox(height: 16),
                     const Text(

@@ -11,11 +11,7 @@ class GetEventosUseCase {
 
   const GetEventosUseCase(this._repository);
 
-  Future<Either<Failure, List<Evento>>> call({
-    bool? proximas,
-  }) {
-    return _repository.getEventos(
-      proximas: proximas,
-    );
+  Future<Either<Failure, List<Evento>>> call({bool? proximas}) {
+    return _repository.getEventos(proximas: proximas);
   }
 }

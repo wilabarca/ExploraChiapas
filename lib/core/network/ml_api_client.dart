@@ -27,9 +27,7 @@ class MlApiClient {
   // Llamar esto cuando el usuario abre la pantalla de chat.
   Future<void> warmup() async {
     try {
-      await _dio
-          .get('/warmup')
-          .timeout(const Duration(seconds: 15));
+      await _dio.get('/warmup').timeout(const Duration(seconds: 15));
     } catch (_) {
       // silencioso — es solo un ping preventivo
     }
@@ -37,9 +35,11 @@ class MlApiClient {
 
   /// Devuelve la lista o lanza excepción — el llamador decide si mostrar error.
   Future<List<Map<String, dynamic>>> fetchDestacados({int limite = 10}) async {
+    // El NLP service en Render free tier puede tardar ~50s en despertar.
+    // Se usan 70s para dar margen suficiente tras cold start.
     final resp = await _dio
         .get('/destacados', queryParameters: {'limite': limite})
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 70));
     final list = (resp.data['destacados'] as List?) ?? [];
     return list.cast<Map<String, dynamic>>();
   }
@@ -71,7 +71,9 @@ class MlApiClient {
         final message =
             e.response?.data?['error'] ?? e.message ?? 'Error del servidor';
         throw ServerException(
-            message: message.toString(), statusCode: statusCode);
+          message: message.toString(),
+          statusCode: statusCode,
+        );
     }
   }
 }

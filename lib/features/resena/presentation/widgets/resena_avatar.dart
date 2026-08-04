@@ -2,45 +2,47 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../domain/entities/resena_entity.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../profile/presentation/providers/profile_provider.dart';
 import '../utils/resena_display_utils.dart';
 
 /// Avatar de autor de reseña, reutilizable en cualquier tarjeta de
-/// reseñas (`ResenaCard`, `ResenaFeedCard`, futuras). Centraliza la
-/// única regla real disponible hoy: la API de reseñas solo devuelve
-/// `userId` — nunca nombre ni foto de quien la escribió (confirmado en
-/// el backend: `reviews` no hace JOIN contra `usuario`, y no existe un
-/// `GET /users/{id}` público para resolverlo del lado del cliente).
-///
-/// Por eso el alcance real de "mostrar la foto de perfil en las
-/// reseñas" es: cuando la reseña es del usuario que la está viendo
-/// (`esMia`), se usa su propia foto ya disponible vía [ProfileProvider]
-/// (la misma que se ve en el Home/Perfil). Para reseñas de otros
-/// usuarios se mantiene el círculo de iniciales por color — no se
-/// inventa ni se simula una foto ajena.
+/// reseñas (`ResenaCard`, `ResenaFeedCard`, futuras). `GET /reviews`
+/// ahora devuelve `userName`/`userImageUrl` embebidos (antes solo daba
+/// `userId`) — se usan cuando el backend los trae, con el círculo de
+/// iniciales por color como respaldo para reseñas antiguas o si el
+/// backend no tuviera esos campos para ese usuario en particular.
 class ResenaAvatar extends StatelessWidget {
-  final String userId;
+  final Resena resena;
   final double radius;
 
-  const ResenaAvatar({super.key, required this.userId, this.radius = 18});
+  const ResenaAvatar({super.key, required this.resena, this.radius = 18});
 
   @override
   Widget build(BuildContext context) {
     final miId = context.watch<AuthProvider>().usuario?.id;
-    final esMia = miId != null && miId == userId;
-    final color = ResenaDisplayUtils.colorPorUsuario(userId);
+    final esMia = miId != null && miId == resena.userId;
+    final color = ResenaDisplayUtils.colorPorUsuario(resena.userId);
 
-    String? fotoUrl;
-    if (esMia) {
+    var fotoUrl = resena.userImageUrl;
+    if ((fotoUrl == null || fotoUrl.isEmpty) && esMia) {
+      // Respaldo: si por algún motivo el backend no trae la foto en esta
+      // reseña puntual pero sí sabemos que es la propia, se usa la del
+      // perfil actual (misma fuente que Home/Perfil).
       final perfil = context.watch<ProfileProvider>().perfil;
       if (perfil != null && perfil.ImgUrl.isNotEmpty) {
         fotoUrl = perfil.ImgUrl;
       }
     }
 
+    final textoIniciales =
+        resena.userName != null && resena.userName!.isNotEmpty
+        ? ResenaDisplayUtils.inicialesDeNombre(resena.userName!)
+        : ResenaDisplayUtils.iniciales(resena.userId);
+
     final iniciales = Text(
-      ResenaDisplayUtils.iniciales(userId),
+      textoIniciales,
       style: TextStyle(
         color: color,
         fontWeight: FontWeight.bold,
@@ -48,7 +50,7 @@ class ResenaAvatar extends StatelessWidget {
       ),
     );
 
-    if (fotoUrl == null) {
+    if (fotoUrl == null || fotoUrl.isEmpty) {
       return CircleAvatar(
         radius: radius,
         backgroundColor: color.withValues(alpha: 0.15),

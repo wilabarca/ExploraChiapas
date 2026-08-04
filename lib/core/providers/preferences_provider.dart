@@ -2,32 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PreferencesProvider extends ChangeNotifier {
-  static const _kIdioma              = 'pref_idioma';
-  static const _kUnidades            = 'pref_unidades';
-  static const _kTema                = 'pref_tema';
-  static const _kMoneda              = 'pref_moneda';
-  static const _kCompartirUbicacion  = 'pref_compartir_ubicacion';
-  static const _kCompartirHistorial  = 'pref_compartir_historial';
-  static const _kMostrarPerfil       = 'pref_mostrar_perfil_publico';
-  static const _kPresupuesto         = 'pref_presupuesto';
-  static const _kTiempoViaje         = 'pref_tiempo_viaje';
+  static const _kIdioma = 'pref_idioma';
+  static const _kUnidades = 'pref_unidades';
+  static const _kTema = 'pref_tema';
+  static const _kMoneda = 'pref_moneda';
+  static const _kCompartirUbicacion = 'pref_compartir_ubicacion';
+  static const _kCompartirHistorial = 'pref_compartir_historial';
+  static const _kMostrarPerfil = 'pref_mostrar_perfil_publico';
+  static const _kPresupuesto = 'pref_presupuesto';
+  static const _kTiempoViaje = 'pref_tiempo_viaje';
 
-  String _idioma   = 'Español';
+  String _idioma = 'Español';
   String _unidades = 'km';
-  String _tema     = 'Claro';
-  String _moneda   = 'MXN';
-  bool _compartirUbicacion  = false;
-  bool _compartirHistorial  = false;
+  String _tema = 'Claro';
+  String _moneda = 'MXN';
+  bool _compartirUbicacion = false;
+  bool _compartirHistorial = false;
   bool _mostrarPerfilPublico = true;
   String _presupuesto = 'Moderado';
   String _tiempoViaje = '1 día';
 
-  String get idioma   => _idioma;
+  String get idioma => _idioma;
   String get unidades => _unidades;
-  String get tema     => _tema;
-  String get moneda   => _moneda;
-  bool get compartirUbicacion   => _compartirUbicacion;
-  bool get compartirHistorial   => _compartirHistorial;
+  String get tema => _tema;
+  String get moneda => _moneda;
+  bool get compartirUbicacion => _compartirUbicacion;
+  bool get compartirHistorial => _compartirHistorial;
   bool get mostrarPerfilPublico => _mostrarPerfilPublico;
   String get presupuesto => _presupuesto;
   String get tiempoViaje => _tiempoViaje;
@@ -40,13 +40,13 @@ class PreferencesProvider extends ChangeNotifier {
 
   Future<void> cargar() async {
     final prefs = await SharedPreferences.getInstance();
-    _idioma   = prefs.getString(_kIdioma)   ?? 'Español';
+    _idioma = prefs.getString(_kIdioma) ?? 'Español';
     _unidades = prefs.getString(_kUnidades) ?? 'km';
-    _tema     = prefs.getString(_kTema)     ?? 'Claro';
-    _moneda   = prefs.getString(_kMoneda)   ?? 'MXN';
-    _compartirUbicacion  = prefs.getBool(_kCompartirUbicacion)  ?? false;
-    _compartirHistorial  = prefs.getBool(_kCompartirHistorial)  ?? false;
-    _mostrarPerfilPublico = prefs.getBool(_kMostrarPerfil)       ?? true;
+    _tema = prefs.getString(_kTema) ?? 'Claro';
+    _moneda = prefs.getString(_kMoneda) ?? 'MXN';
+    _compartirUbicacion = prefs.getBool(_kCompartirUbicacion) ?? false;
+    _compartirHistorial = prefs.getBool(_kCompartirHistorial) ?? false;
+    _mostrarPerfilPublico = prefs.getBool(_kMostrarPerfil) ?? true;
     _presupuesto = prefs.getString(_kPresupuesto) ?? 'Moderado';
     _tiempoViaje = prefs.getString(_kTiempoViaje) ?? '1 día';
     notifyListeners();

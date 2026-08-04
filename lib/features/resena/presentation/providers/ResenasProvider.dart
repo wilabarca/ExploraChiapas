@@ -14,7 +14,10 @@ enum PublicarStatus { idle, loading, success, error }
 
 enum EdicionStatus { idle, loading, success, error }
 
-@injectable
+// Antes @injectable (factory). Debe ser singleton por la misma razón que
+// FavoritosProvider: AuthProvider lo referencia para limpiarlo al cambiar
+// de sesión y necesita apuntar a la misma instancia que usa la UI.
+@lazySingleton
 class ResenasProvider extends ChangeNotifier {
   final GetResenasUseCase _getResenas;
   final CrearResenaUseCase _crearResena;
@@ -209,6 +212,23 @@ class ResenasProvider extends ChangeNotifier {
   void resetEdicionStatus() {
     _edicionStatus = EdicionStatus.idle;
     _edicionError = null;
+    notifyListeners();
+  }
+
+  /// `ResenasProvider` es un singleton de la app (vive todo el proceso):
+  /// sin esto, cerrar sesión e iniciar con otra cuenta dejaba las reseñas
+  /// y el contador local (`_statsLocal`, por dispositivo) del usuario
+  /// anterior visibles hasta la próxima carga explícita.
+  Future<void> limpiar() async {
+    _resenas = const [];
+    _status = ResenasStatus.idle;
+    _errorMessage = null;
+    _publicarStatus = PublicarStatus.idle;
+    _publicarError = null;
+    _edicionStatus = EdicionStatus.idle;
+    _edicionError = null;
+    _misResenasCount = 0;
+    await _statsLocal.resetResenasCreadas();
     notifyListeners();
   }
 }

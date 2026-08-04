@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/utils/profanity_filter.dart';
 import '../../domain/entities/ubicacion_propuesta.dart';
 import '../providers/recomendar_provider.dart';
 import 'seleccionar_ubicacion_page.dart';
@@ -76,11 +77,13 @@ class _RecomendarLugarPageState extends State<RecomendarLugarPage> {
 
   void _mostrarError(String mensaje) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(mensaje),
-      backgroundColor: Theme.of(context).colorScheme.error,
-      behavior: SnackBarBehavior.floating,
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensaje),
+        backgroundColor: Theme.of(context).colorScheme.error,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   bool _validar() {
@@ -95,6 +98,18 @@ class _RecomendarLugarPageState extends State<RecomendarLugarPage> {
     }
     if (_imagenes.isEmpty) {
       _mostrarError('Agrega al menos 1 fotografía.');
+      return false;
+    }
+    // El nombre y la descripción de una propuesta aprobada se vuelven
+    // contenido público (el destino real que ven todos los usuarios) —
+    // se bloquea el lenguaje inapropiado igual que ya se hace al
+    // escribir una reseña, antes de que llegue a moderación.
+    if (ProfanityFilter.contiene(_nombreCtrl.text) ||
+        ProfanityFilter.contiene(_descripcionCtrl.text)) {
+      _mostrarError(
+        'El nombre o la descripción contienen lenguaje '
+        'inapropiado, revísalos.',
+      );
       return false;
     }
     return true;
@@ -133,7 +148,8 @@ class _RecomendarLugarPageState extends State<RecomendarLugarPage> {
           );
         }
 
-        final enviando = provider.status == RecomendarStatus.creandoUbicacion ||
+        final enviando =
+            provider.status == RecomendarStatus.creandoUbicacion ||
             provider.status == RecomendarStatus.creandoPropuesta ||
             provider.status == RecomendarStatus.subiendoImagenes;
 
@@ -168,7 +184,8 @@ class _RecomendarLugarPageState extends State<RecomendarLugarPage> {
                         prefixIcon: Icon(Icons.place_outlined),
                       ),
                       validator: (v) {
-                        if (v == null || v.trim().isEmpty) return 'El nombre es obligatorio';
+                        if (v == null || v.trim().isEmpty)
+                          return 'El nombre es obligatorio';
                         if (v.trim().length < 3) return 'Mínimo 3 caracteres';
                         return null;
                       },
@@ -180,9 +197,11 @@ class _RecomendarLugarPageState extends State<RecomendarLugarPage> {
                     const SizedBox(height: 8),
                     _SelectorCategoria(
                       categorias: provider.categorias,
-                      cargando: provider.status == RecomendarStatus.loadingCategorias,
+                      cargando:
+                          provider.status == RecomendarStatus.loadingCategorias,
                       seleccionadaId: _categoriaSeleccionadaId,
-                      onSeleccionar: (id) => setState(() => _categoriaSeleccionadaId = id),
+                      onSeleccionar: (id) =>
+                          setState(() => _categoriaSeleccionadaId = id),
                     ),
                     const SizedBox(height: 16),
 
@@ -201,8 +220,10 @@ class _RecomendarLugarPageState extends State<RecomendarLugarPage> {
                         alignLabelWithHint: true,
                       ),
                       validator: (v) {
-                        if (v == null || v.trim().isEmpty) return 'La descripción es obligatoria';
-                        if (v.trim().length < 10) return 'Describe el lugar con más detalle';
+                        if (v == null || v.trim().isEmpty)
+                          return 'La descripción es obligatoria';
+                        if (v.trim().length < 10)
+                          return 'Describe el lugar con más detalle';
                         return null;
                       },
                     ),
@@ -218,30 +239,29 @@ class _RecomendarLugarPageState extends State<RecomendarLugarPage> {
                     const SizedBox(height: 20),
 
                     // ── Fotografías ──────────────────────────────────────────
-                    Row(children: [
-                      _label('Fotografías *  '),
-                      Text(
-                        '${_imagenes.length}/5',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: _imagenes.length >= 5
-                              ? Theme.of(context).colorScheme.error
-                              : Theme.of(context)
-                                  .colorScheme
-                                  .onSurface
-                                  .withValues(alpha: 0.5),
+                    Row(
+                      children: [
+                        _label('Fotografías *  '),
+                        Text(
+                          '${_imagenes.length}/5',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: _imagenes.length >= 5
+                                ? Theme.of(context).colorScheme.error
+                                : Theme.of(context).colorScheme.onSurface
+                                      .withValues(alpha: 0.5),
+                          ),
                         ),
-                      ),
-                    ]),
+                      ],
+                    ),
                     const SizedBox(height: 4),
                     Text(
                       'Mínimo 1, máximo 5. La primera foto será la portada.',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withValues(alpha: 0.5),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.5),
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -270,8 +290,12 @@ class _RecomendarLugarPageState extends State<RecomendarLugarPage> {
                       child: ElevatedButton(
                         onPressed: enviando ? null : _enviar,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.primary,
-                          foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primary,
+                          foregroundColor: Theme.of(
+                            context,
+                          ).colorScheme.onPrimary,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -302,7 +326,10 @@ class _RecomendarLugarPageState extends State<RecomendarLugarPage> {
                       child: TextButton(
                         onPressed: enviando
                             ? null
-                            : () => Navigator.pushNamed(context, '/mis-propuestas'),
+                            : () => Navigator.pushNamed(
+                                context,
+                                '/mis-propuestas',
+                              ),
                         child: const Text('Ver mis recomendaciones'),
                       ),
                     ),
@@ -318,9 +345,9 @@ class _RecomendarLugarPageState extends State<RecomendarLugarPage> {
   }
 
   Widget _label(String texto) => Text(
-        texto,
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-      );
+    texto,
+    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+  );
 }
 
 // ── Widgets ────────────────────────────────────────────────────────────────────
@@ -346,7 +373,10 @@ class _BannerInfo extends StatelessWidget {
               'información y fotografías del sitio. Nuestro equipo revisará tu '
               'recomendación antes de publicarla como un destino oficial.',
               style: TextStyle(
-                  fontSize: 13, color: cs.onPrimaryContainer, height: 1.4),
+                fontSize: 13,
+                color: cs.onPrimaryContainer,
+                height: 1.4,
+              ),
             ),
           ),
         ],
@@ -410,7 +440,10 @@ class _SelectorUbicacion extends StatelessWidget {
   final UbicacionPropuesta? ubicacion;
   final VoidCallback onSeleccionar;
 
-  const _SelectorUbicacion({required this.ubicacion, required this.onSeleccionar});
+  const _SelectorUbicacion({
+    required this.ubicacion,
+    required this.onSeleccionar,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -423,7 +456,9 @@ class _SelectorUbicacion extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(double.infinity, 48),
           side: BorderSide(color: cs.outline),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
     }
@@ -447,17 +482,19 @@ class _SelectorUbicacion extends StatelessWidget {
                   Text(
                     '${ubicacion!.municipality}, ${ubicacion!.state}',
                     style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: cs.onSurface),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: cs.onSurface,
+                    ),
                   ),
                   if (ubicacion!.address.isNotEmpty &&
                       ubicacion!.address != 'Chiapas, México')
                     Text(
                       ubicacion!.address,
                       style: TextStyle(
-                          fontSize: 12,
-                          color: cs.onSurface.withValues(alpha: 0.6)),
+                        fontSize: 12,
+                        color: cs.onSurface.withValues(alpha: 0.6),
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -465,8 +502,9 @@ class _SelectorUbicacion extends StatelessWidget {
                     '${ubicacion!.latitude.toStringAsFixed(6)}, '
                     '${ubicacion!.longitude.toStringAsFixed(6)}',
                     style: TextStyle(
-                        fontSize: 11,
-                        color: cs.onSurface.withValues(alpha: 0.4)),
+                      fontSize: 11,
+                      color: cs.onSurface.withValues(alpha: 0.4),
+                    ),
                   ),
                 ],
               ),
@@ -513,10 +551,16 @@ class _SelectorImagenes extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.add_a_photo_outlined, color: cs.primary, size: 26),
+                    Icon(
+                      Icons.add_a_photo_outlined,
+                      color: cs.primary,
+                      size: 26,
+                    ),
                     const SizedBox(height: 4),
-                    Text('Agregar',
-                        style: TextStyle(fontSize: 11, color: cs.primary)),
+                    Text(
+                      'Agregar',
+                      style: TextStyle(fontSize: 11, color: cs.primary),
+                    ),
                   ],
                 ),
               ),
@@ -556,9 +600,14 @@ class _SelectorImagenes extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(2),
                       decoration: const BoxDecoration(
-                          color: Colors.black54, shape: BoxShape.circle),
-                      child: const Icon(Icons.close,
-                          color: Colors.white, size: 14),
+                        color: Colors.black54,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 14,
+                      ),
                     ),
                   ),
                 ),
@@ -567,17 +616,22 @@ class _SelectorImagenes extends StatelessWidget {
                     bottom: 4,
                     left: 4,
                     child: Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: cs.primary,
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: Text('Portada',
-                          style: TextStyle(
-                              fontSize: 9,
-                              color: cs.onPrimary,
-                              fontWeight: FontWeight.bold)),
+                      child: Text(
+                        'Portada',
+                        style: TextStyle(
+                          fontSize: 9,
+                          color: cs.onPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
               ],
@@ -619,34 +673,40 @@ class _IndicadorProgreso extends StatelessWidget {
           final terminado = i < currentIndex;
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(children: [
-              if (terminado)
-                Icon(Icons.check_circle, color: cs.primary, size: 16)
-              else if (activo)
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: cs.primary),
-                )
-              else
-                Icon(Icons.radio_button_unchecked,
+            child: Row(
+              children: [
+                if (terminado)
+                  Icon(Icons.check_circle, color: cs.primary, size: 16)
+                else if (activo)
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: cs.primary,
+                    ),
+                  )
+                else
+                  Icon(
+                    Icons.radio_button_unchecked,
                     color: cs.onPrimaryContainer.withValues(alpha: 0.4),
-                    size: 16),
-              const SizedBox(width: 10),
-              Text(
-                paso.$2,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: activo
-                      ? cs.onPrimaryContainer
-                      : terminado
-                          ? cs.primary
-                          : cs.onPrimaryContainer.withValues(alpha: 0.5),
-                  fontWeight: activo ? FontWeight.w600 : FontWeight.normal,
+                    size: 16,
+                  ),
+                const SizedBox(width: 10),
+                Text(
+                  paso.$2,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: activo
+                        ? cs.onPrimaryContainer
+                        : terminado
+                        ? cs.primary
+                        : cs.onPrimaryContainer.withValues(alpha: 0.5),
+                    fontWeight: activo ? FontWeight.w600 : FontWeight.normal,
+                  ),
                 ),
-              ),
-            ]),
+              ],
+            ),
           );
         }).toList(),
       ),
@@ -678,20 +738,26 @@ class _BannerError extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [
-            Icon(Icons.error_outline, color: cs.onErrorContainer, size: 18),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(mensaje,
-                  style: TextStyle(fontSize: 13, color: cs.onErrorContainer)),
-            ),
-          ]),
+          Row(
+            children: [
+              Icon(Icons.error_outline, color: cs.onErrorContainer, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  mensaje,
+                  style: TextStyle(fontSize: 13, color: cs.onErrorContainer),
+                ),
+              ),
+            ],
+          ),
           if (puedeReintentar) ...[
             const SizedBox(height: 8),
             TextButton(
               onPressed: onReintentar,
-              child: Text('Reintentar subida de fotos',
-                  style: TextStyle(color: cs.onErrorContainer)),
+              child: Text(
+                'Reintentar subida de fotos',
+                style: TextStyle(color: cs.onErrorContainer),
+              ),
             ),
           ],
         ],
@@ -727,16 +793,18 @@ class _PantallaExito extends StatelessWidget {
                     color: cs.primaryContainer,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.check_circle_outline,
-                      size: 48, color: cs.primary),
+                  child: Icon(
+                    Icons.check_circle_outline,
+                    size: 48,
+                    color: cs.primary,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 Text(
                   'Recomendación enviada',
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
@@ -760,7 +828,8 @@ class _PantallaExito extends StatelessWidget {
                       backgroundColor: cs.primary,
                       foregroundColor: cs.onPrimary,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
                     child: const Text('Ver mis recomendaciones'),
                   ),

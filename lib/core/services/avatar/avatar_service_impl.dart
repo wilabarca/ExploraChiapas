@@ -1,8 +1,6 @@
-import 'package:image_picker/image_picker.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../utils/app_constants.dart';
-import '../cloudinary/cloudinary_service.dart';
 import 'avatar_service.dart';
 
 @LazySingleton(as: AvatarService)
@@ -25,16 +23,6 @@ class AvatarServiceImpl implements AvatarService {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(AppConstants.fotoPerfil) ??
         '$_dicebearUrl?seed=default';
-  }
-
-  @override
-  Future<String> subirFotoReal(XFile foto) async {
-    final url = await CloudinaryService.subirImagen(
-      foto,
-      folder: AppConstants.cloudFolderAvatares,
-    );
-    await _guardarUrl(url);
-    return url;
   }
 
   @override

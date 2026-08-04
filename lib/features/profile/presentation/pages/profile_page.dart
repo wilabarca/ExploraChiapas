@@ -126,7 +126,18 @@ class _ProfilePageState extends State<ProfilePage> {
         builder: (context, provider, _) {
           final perfil = provider.perfil;
 
-          if (provider.status == ProfileStatus.loading && perfil == null) {
+          // `perfil == null` no siempre significa "falló la carga": justo
+          // después de cerrar sesión (o borrar la cuenta), `AuthProvider`
+          // limpia este provider (`ProfileProvider.limpiar()`) mientras
+          // esta misma pantalla sigue montada un instante antes de navegar
+          // a Login — eso ponía `perfil` en null con `status: idle`, y
+          // como este Consumer no distinguía ese caso de un error real de
+          // red, mostraba por un momento la pantalla de "No se pudo
+          // cargar el perfil" (el usuario la percibía como un mensaje de
+          // "verifica tu conexión") justo antes de aterrizar en Login.
+          // Solo se muestra el estado de error cuando `status` confirma
+          // que la carga falló de verdad.
+          if (perfil == null && provider.status != ProfileStatus.error) {
             return Center(
               child: CircularProgressIndicator(
                 color: AppColors.primary(context),

@@ -93,7 +93,9 @@ class ConversacionRemoteDatasource {
   }
 
   Future<ConversacionConMensajesModel> obtener(String id) async {
-    final response = await _api.get('${AppConstants.conversacionesEndpoint}/$id');
+    final response = await _api.get(
+      '${AppConstants.conversacionesEndpoint}/$id',
+    );
     final data = (response.data as Map<String, dynamic>)['data'];
     return ConversacionConMensajesModel.fromJson(data as Map<String, dynamic>);
   }

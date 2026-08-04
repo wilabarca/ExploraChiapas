@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import '../error/exceptions.dart';
 import '../navigation/app_navigator.dart';
@@ -30,26 +30,29 @@ class ApiClient {
       InterceptorsWrapper(
         onRequest: (options, handler) async {
           final token = await _secureStorage.getToken();
-          debugPrint(
-            '🔑 JWT interceptor: ${token != null ? "SÍ (${token.length} chars)" : "❌ NO HAY TOKEN"}',
-          );
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
           }
-          debugPrint('➡️  ${options.method} ${options.baseUrl}${options.path}');
-          debugPrint('📋 Headers: ${options.headers}');
+          if (kDebugMode) {
+            debugPrint('${options.method} ${options.path}');
+          }
           handler.next(options);
         },
         onResponse: (response, handler) {
-          debugPrint(
-            '✅ ${response.statusCode} ${response.requestOptions.path}',
-          );
+          if (kDebugMode) {
+            debugPrint(
+              '${response.statusCode} ${response.requestOptions.path}',
+            );
+          }
           handler.next(response);
         },
         onError: (error, handler) async {
-          debugPrint(
-            '❌ Error ${error.response?.statusCode}: ${error.response?.data}',
-          );
+          if (kDebugMode) {
+            debugPrint(
+              'Error ${error.response?.statusCode} '
+              '${error.requestOptions.path}',
+            );
+          }
           // Un 401 en login/registro significa "credenciales inválidas",
           // no "tu sesión expiró": no debe disparar el logout global ni
           // sacar al usuario de la pantalla donde está escribiendo. Antes
@@ -95,18 +98,13 @@ class ApiClient {
   // sin romper las llamadas existentes que pasan un Map normal.
   Future<Response> post(String path, {dynamic data}) async {
     try {
-      debugPrint('📤 POST: $_baseUrl$path');
-      debugPrint(
-        '📦 Body: ${data is FormData ? "FormData (multipart)" : data}',
-      );
+      if (kDebugMode) debugPrint('POST $path');
       final response = await _dio.post(path, data: data);
-      debugPrint('📥 Response ${response.statusCode}: ${response.data}');
       return response;
     } on DioException catch (e) {
-      debugPrint('💥 DioError POST: ${e.type} - ${e.message}');
-      debugPrint(
-        '📥 Response: ${e.response?.statusCode} - ${e.response?.data}',
-      );
+      if (kDebugMode) {
+        debugPrint('DioError POST $path: ${e.type}');
+      }
       _handleDioError(e);
     }
     throw const ServerException(message: 'Error desconocido');
@@ -117,19 +115,13 @@ class ApiClient {
     Map<String, dynamic>? queryParameters,
   }) async {
     try {
-      debugPrint('📤 GET: $_baseUrl$path');
-      final token = await _secureStorage.getToken();
-      debugPrint(
-        '🔑 JWT en secure storage: ${token != null ? "SÍ (${token.substring(0, token.length.clamp(0, 30))}...)" : "❌ NO HAY TOKEN"}',
-      );
+      if (kDebugMode) debugPrint('GET $path');
       final response = await _dio.get(path, queryParameters: queryParameters);
-      debugPrint('📥 Response ${response.statusCode}: ${response.data}');
       return response;
     } on DioException catch (e) {
-      debugPrint('💥 DioError GET: ${e.type} - ${e.message}');
-      debugPrint(
-        '📥 Response: ${e.response?.statusCode} - ${e.response?.data}',
-      );
+      if (kDebugMode) {
+        debugPrint('DioError GET $path: ${e.type}');
+      }
       _handleDioError(e);
     }
     throw const ServerException(message: 'Error desconocido');
@@ -137,16 +129,13 @@ class ApiClient {
 
   Future<Response> patch(String path, {Map<String, dynamic>? data}) async {
     try {
-      debugPrint('📤 PATCH: $_baseUrl$path');
-      debugPrint('📦 Body: $data');
+      if (kDebugMode) debugPrint('PATCH $path');
       final response = await _dio.patch(path, data: data);
-      debugPrint('📥 Response ${response.statusCode}: ${response.data}');
       return response;
     } on DioException catch (e) {
-      debugPrint('💥 DioError PATCH: ${e.type} - ${e.message}');
-      debugPrint(
-        '📥 Response: ${e.response?.statusCode} - ${e.response?.data}',
-      );
+      if (kDebugMode) {
+        debugPrint('DioError PATCH $path: ${e.type}');
+      }
       _handleDioError(e);
     }
     throw const ServerException(message: 'Error desconocido');
@@ -154,22 +143,15 @@ class ApiClient {
 
   Future<Response> put(String path, {dynamic data}) async {
     try {
-      debugPrint('📤 PUT: $_baseUrl$path');
-      debugPrint('📦 Body: $data');
+      if (kDebugMode) debugPrint('PUT $path');
 
       final response = await _dio.put(path, data: data);
 
-      debugPrint('📥 Response ${response.statusCode}: ${response.data}');
-
       return response;
     } on DioException catch (e) {
-      debugPrint('💥 DioError PUT: ${e.type} - ${e.message}');
-
-      debugPrint(
-        '📥 Response: '
-        '${e.response?.statusCode} - '
-        '${e.response?.data}',
-      );
+      if (kDebugMode) {
+        debugPrint('DioError PUT $path: ${e.type}');
+      }
 
       _handleDioError(e);
     }
@@ -181,15 +163,13 @@ class ApiClient {
 
   Future<Response> delete(String path) async {
     try {
-      debugPrint('📤 DELETE: $_baseUrl$path');
+      if (kDebugMode) debugPrint('DELETE $path');
       final response = await _dio.delete(path);
-      debugPrint('📥 Response ${response.statusCode}: ${response.data}');
       return response;
     } on DioException catch (e) {
-      debugPrint('💥 DioError DELETE: ${e.type} - ${e.message}');
-      debugPrint(
-        '📥 Response: ${e.response?.statusCode} - ${e.response?.data}',
-      );
+      if (kDebugMode) {
+        debugPrint('DioError DELETE $path: ${e.type}');
+      }
       _handleDioError(e);
     }
     throw const ServerException(message: 'Error desconocido');

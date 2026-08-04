@@ -8,7 +8,9 @@ enum _ModoTransporte { carro, moto, pie, bici }
 
 class DestinationBottomSheet extends StatefulWidget {
   final DestinationEntity destino;
-  final RouteInfo? routeInfo;
+  final RouteInfo? routeInfo; // driving (carro/moto)
+  final RouteInfo? routePie; // foot
+  final RouteInfo? routeBici; // bike
   final bool esRecomendado;
   final VoidCallback onVerRuta;
   final VoidCallback? onRecalcular;
@@ -21,6 +23,8 @@ class DestinationBottomSheet extends StatefulWidget {
     super.key,
     required this.destino,
     this.routeInfo,
+    this.routePie,
+    this.routeBici,
     this.esRecomendado = false,
     required this.onVerRuta,
     this.onRecalcular,
@@ -37,29 +41,53 @@ class DestinationBottomSheet extends StatefulWidget {
 class _DestinationBottomSheetState extends State<DestinationBottomSheet> {
   _ModoTransporte _modo = _ModoTransporte.carro;
 
-  // Velocidades promedio en Chiapas por modo (km/h)
-  static const _velocidades = {
-    _ModoTransporte.carro: 0.0,  // usa durationMinutes de OSRM
-    _ModoTransporte.moto: 45.0,
-    _ModoTransporte.pie: 5.0,
-    _ModoTransporte.bici: 12.0,
-  };
-
-  double? get _distanciaKm => widget.routeInfo?.distanceKm ?? widget.distanceKm;
-
+  // Velocidades calibradas con datos reales de Google Maps en Chiapas:
+  // - Suchiapa→Corpus Cristi (0.75 km): pie 10 min, bici 2 min
+  // - Tuxtla→Chiapa de Corzo (15.1 km): pie 3h 20min, bici 52 min
+  // - Tuxtla→San Cristóbal (58.9 km): pie 19h 31min, bici 7h 6min
   int? _tiempoParaModo(_ModoTransporte modo) {
-    final dist = _distanciaKm;
-    if (dist == null) return null;
-    if (modo == _ModoTransporte.carro) {
-      return widget.routeInfo?.durationMinutes ?? widget.durationMinutes;
+    final driving = widget.routeInfo;
+    if (driving == null) return null;
+    final distKm = driving.distanceKm;
+    final carMin = driving.durationMinutes;
+    switch (modo) {
+      case _ModoTransporte.carro:
+        return carMin;
+      case _ModoTransporte.moto:
+        return (carMin * 0.90).round();
+      case _ModoTransporte.pie:
+        // < 30 km terreno plano/urbano: 4.5 km/h
+        // >= 30 km montaña/largo: 3.0 km/h (pendientes pronunciadas)
+        final velPie = distKm < 30 ? 4.5 : 3.0;
+        return (distKm / velPie * 60).round();
+      case _ModoTransporte.bici:
+        // < 5 km urbano plano: 18 km/h
+        // < 30 km semi-plano: 17 km/h
+        // >= 30 km montaña/largo: 8.5 km/h
+        final velBici = distKm < 5
+            ? 18.0
+            : distKm < 30
+            ? 17.0
+            : 8.5;
+        return (distKm / velBici * 60).round();
     }
-    final vel = _velocidades[modo]!;
-    return (dist / vel * 60).round();
   }
+
+  String _distanciaParaModo(_ModoTransporte modo) {
+    final driving = widget.routeInfo;
+    if (driving == null) return '-- km';
+    // Todos los modos muestran la distancia de carretera (la más confiable).
+    // A pie y Bici suelen tener rutas más directas pero OSM no las tiene bien
+    // mapeadas en Chiapas, así que evitamos inventar datos.
+    return driving.distanceText;
+  }
+
+  bool get _hayRutasCalculadas => widget.routeInfo != null;
 
   @override
   Widget build(BuildContext context) {
     final durationModo = _tiempoParaModo(_modo);
+    final distanciaLabel = _distanciaParaModo(_modo);
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
       decoration: BoxDecoration(
@@ -274,55 +302,37 @@ class _DestinationBottomSheetState extends State<DestinationBottomSheet> {
             ],
           ),
 
-          if (routeInfo != null) ...[
+          if (widget.routeInfo != null && widget.onRecalcular != null) ...[
             const SizedBox(height: 14),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppColors.primaryContainer(context),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.route_outlined,
-                    size: 18,
-                    color: AppColors.primary(context),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${routeInfo!.distanceText} · ${routeInfo!.durationText}',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
+            GestureDetector(
+              onTap: widget.onRecalcular,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryContainer(context),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.refresh,
+                      size: 15,
                       color: AppColors.primary(context),
                     ),
-                  ),
-                  const Spacer(),
-                  if (onRecalcular != null)
-                    GestureDetector(
-                      onTap: onRecalcular,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.refresh,
-                            size: 15,
-                            color: AppColors.primary(context),
-                          ),
-                          const SizedBox(width: 3),
-                          Text(
-                            'Recalcular',
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.primary(context),
-                            ),
-                          ),
-                        ],
+                    const SizedBox(width: 6),
+                    Text(
+                      'Recalcular ruta',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary(context),
                       ),
                     ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],
@@ -340,7 +350,7 @@ class _DestinationBottomSheetState extends State<DestinationBottomSheet> {
 
           const SizedBox(height: 20),
 
-          if (_distanciaKm != null) ...[
+          if (_hayRutasCalculadas) ...[
             // Tabs de modo de transporte
             Row(
               children: [
@@ -386,7 +396,7 @@ class _DestinationBottomSheetState extends State<DestinationBottomSheet> {
                 if (durationModo != null) const SizedBox(width: 10),
                 _InfoChip(
                   icon: Icons.straighten_rounded,
-                  label: '${_distanciaKm!.toStringAsFixed(1)} km',
+                  label: distanciaLabel,
                 ),
               ],
             ),
@@ -493,7 +503,12 @@ class _ModoTab extends StatelessWidget {
   final String label;
   final bool activo;
   final VoidCallback onTap;
-  const _ModoTab({required this.icon, required this.label, required this.activo, required this.onTap});
+  const _ModoTab({
+    required this.icon,
+    required this.label,
+    required this.activo,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -504,20 +519,30 @@ class _ModoTab extends StatelessWidget {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: activo ? AppColors.primary(context) : AppColors.surfaceContainer(context),
+            color: activo
+                ? AppColors.primary(context)
+                : AppColors.surfaceContainer(context),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 20, color: activo ? AppColors.onPrimary(context) : AppColors.textSecondary(context)),
+              Icon(
+                icon,
+                size: 20,
+                color: activo
+                    ? AppColors.onPrimary(context)
+                    : AppColors.textSecondary(context),
+              ),
               const SizedBox(height: 3),
               Text(
                 label,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: activo ? AppColors.onPrimary(context) : AppColors.textSecondary(context),
+                  color: activo
+                      ? AppColors.onPrimary(context)
+                      : AppColors.textSecondary(context),
                 ),
               ),
             ],

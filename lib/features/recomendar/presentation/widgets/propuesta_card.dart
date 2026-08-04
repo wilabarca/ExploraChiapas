@@ -7,7 +7,11 @@ class PropuestaCard extends StatelessWidget {
   final PropuestaDestino propuesta;
   final VoidCallback onTap;
 
-  const PropuestaCard({super.key, required this.propuesta, required this.onTap});
+  const PropuestaCard({
+    super.key,
+    required this.propuesta,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -38,36 +42,48 @@ class PropuestaCard extends StatelessWidget {
                         height: 90,
                         color: cs.surfaceContainer,
                         child: const Center(
-                            child: CircularProgressIndicator(strokeWidth: 2)),
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
                       ),
                       errorWidget: (_, __, ___) => Container(
                         width: 90,
                         height: 90,
                         color: cs.surfaceContainer,
-                        child: Icon(Icons.place_outlined,
-                            color: cs.onSurface.withValues(alpha: 0.3), size: 32),
+                        child: Icon(
+                          Icons.place_outlined,
+                          color: cs.onSurface.withValues(alpha: 0.3),
+                          size: 32,
+                        ),
                       ),
                     )
                   : Container(
                       width: 90,
                       height: 90,
                       color: cs.surfaceContainer,
-                      child: Icon(Icons.place_outlined,
-                          color: cs.onSurface.withValues(alpha: 0.3), size: 32),
+                      child: Icon(
+                        Icons.place_outlined,
+                        color: cs.onSurface.withValues(alpha: 0.3),
+                        size: 32,
+                      ),
                     ),
             ),
 
             // ── Info ─────────────────────────────────────────────────────────
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       propuesta.name,
                       style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 14),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -76,38 +92,46 @@ class PropuestaCard extends StatelessWidget {
                       Text(
                         propuesta.categoryName!,
                         style: TextStyle(
-                            fontSize: 12,
-                            color: cs.primary,
-                            fontWeight: FontWeight.w500),
+                          fontSize: 12,
+                          color: cs.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
                     if (propuesta.location != null) ...[
                       const SizedBox(height: 2),
-                      Row(children: [
-                        Icon(Icons.location_on_outlined,
-                            size: 12, color: cs.onSurface.withValues(alpha: 0.5)),
-                        const SizedBox(width: 2),
-                        Expanded(
-                          child: Text(
-                            propuesta.location!.municipality,
-                            style: TextStyle(
-                                fontSize: 12,
-                                color: cs.onSurface.withValues(alpha: 0.6)),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on_outlined,
+                            size: 12,
+                            color: cs.onSurface.withValues(alpha: 0.5),
                           ),
-                        ),
-                      ]),
+                          const SizedBox(width: 2),
+                          Expanded(
+                            child: Text(
+                              propuesta.location!.municipality,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: cs.onSurface.withValues(alpha: 0.6),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                     if (propuesta.createdAt != null) ...[
                       const SizedBox(height: 2),
                       Text(
                         _fechaCorta(propuesta.createdAt!),
                         style: TextStyle(
-                            fontSize: 11,
-                            color: cs.onSurface.withValues(alpha: 0.4)),
+                          fontSize: 11,
+                          color: cs.onSurface.withValues(alpha: 0.4),
+                        ),
                       ),
                     ],
                   ],
@@ -168,8 +192,7 @@ class _BadgeEstado extends StatelessWidget {
       ),
       child: Text(
         etiqueta,
-        style: TextStyle(
-            color: fg, fontSize: 10, fontWeight: FontWeight.bold),
+        style: TextStyle(color: fg, fontSize: 10, fontWeight: FontWeight.bold),
       ),
     );
   }

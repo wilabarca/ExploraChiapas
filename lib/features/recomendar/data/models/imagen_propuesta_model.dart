@@ -17,7 +17,8 @@ class ImagenPropuestaModel extends ImagenPropuesta {
 
     return ImagenPropuestaModel(
       id: json['id']?.toString() ?? '',
-      imageUrl: json['imageUrl']?.toString() ?? json['image_url']?.toString() ?? '',
+      imageUrl:
+          json['imageUrl']?.toString() ?? json['image_url']?.toString() ?? '',
       order: _parseInt(json['order']) ?? 0,
       createdAt: createdAt,
     );

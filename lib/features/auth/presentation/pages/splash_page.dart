@@ -48,6 +48,13 @@ class _SplashPageState extends State<SplashPage> {
     }
 
     final authProvider = context.read<AuthProvider>();
+
+    // Vuelve a vincular el dispositivo con el usuario en OneSignal — sin
+    // esto, un usuario que reabre la app sin volver a loguearse no recibe
+    // notificaciones dirigidas a él.
+    await authProvider.restoreSession();
+    if (!mounted) return;
+
     final interests = await authProvider.loadUserInterests();
     if (!mounted) return;
 
@@ -85,9 +92,10 @@ class _SplashPageState extends State<SplashPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Image.asset(
-                    'assets/images/ExploraChiapas Logo.png',
+                    'assets/images/iconoapp.jpg',
                     width: 88,
                     height: 88,
+                    fit: BoxFit.contain,
                   ),
                   const SizedBox(height: 16),
                   const Text(

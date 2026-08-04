@@ -1,4 +1,5 @@
-﻿import 'dart:async';
+import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../domain/entities/destination_entity.dart';
@@ -41,6 +42,16 @@ class MapProvider extends ChangeNotifier {
   // Ultimo destino con ruta calculada - permite recalcular sin que
   // la UI tenga que volver a pasar el destino.
   DestinationEntity? _ultimoDestinoRuta;
+
+  // Rutas reales por perfil de transporte (foot y bike de OSRM)
+  RouteInfo? _routePie;
+  RouteInfo? _routeBici;
+  RouteInfo? get routePie => _routePie;
+  RouteInfo? get routeBici => _routeBici;
+
+  // Distancia/tiempo restante actualizado en tiempo real por GPS
+  RouteInfo? _routeInfoRestante;
+  RouteInfo? get routeInfoRestante => _routeInfoRestante;
 
   String? _routeError;
   String? get routeError => _routeError;
@@ -85,6 +96,9 @@ class MapProvider extends ChangeNotifier {
     _allRoutes = [];
     _selectedRouteIndex = 0;
     _ultimoDestinoRuta = null;
+    _routePie = null;
+    _routeBici = null;
+    _routeInfoRestante = null;
     _detenerNavegacion();
     notifyListeners();
   }
@@ -130,11 +144,15 @@ class MapProvider extends ChangeNotifier {
         destLng: destino.lng,
       );
       _allRoutes = rutas;
+      _routePie = null;
+      _routeBici = null;
       _selectedRouteIndex = 0;
       _routeError = null;
       notifyListeners();
     } catch (e) {
       _allRoutes = [];
+      _routePie = null;
+      _routeBici = null;
       _routeError = e.toString().replaceFirst('Exception: ', '');
       notifyListeners();
       return false;
@@ -167,6 +185,7 @@ class MapProvider extends ChangeNotifier {
         ).listen((pos) {
           _userPosition = pos;
           _userHeading = pos.heading;
+          _actualizarRestante(pos);
           notifyListeners();
         });
   }
@@ -177,6 +196,80 @@ class MapProvider extends ChangeNotifier {
     _enNavegacion = false;
     _userPosition = null;
     _userHeading = 0;
+    _routeInfoRestante = null;
+  }
+
+  void _actualizarRestante(Position pos) {
+    final destino = _ultimoDestinoRuta;
+    final base = selectedRouteInfo;
+    if (destino == null || base == null || base.points.length < 2) return;
+
+    // Usa la geometría real de la polilínea OSRM: busca el punto de la ruta
+    // más cercano al usuario y suma los segmentos restantes hasta el destino.
+    // Es mucho más preciso que Haversine × factor porque sigue el camino real.
+    final restanteMetros = _distanciaRestanteEnRuta(
+      pos.latitude,
+      pos.longitude,
+      base.points,
+    );
+
+    final speedMs = base.distanceMeters > 0
+        ? base.distanceMeters / base.durationSeconds
+        : (35000 / 3600);
+
+    _routeInfoRestante = RouteInfo(
+      points: base.points,
+      distanceMeters: restanteMetros,
+      durationSeconds: restanteMetros / speedMs,
+    );
+  }
+
+  // Recorre los puntos de la ruta para encontrar el segmento más cercano
+  // al usuario, luego suma todos los segmentos desde ahí hasta el final.
+  static double _distanciaRestanteEnRuta(
+    double userLat,
+    double userLng,
+    List<List<double>> points,
+  ) {
+    double minDist = double.infinity;
+    int puntoMasCercano = 0;
+
+    for (int i = 0; i < points.length; i++) {
+      final d = _haversineMetros(userLat, userLng, points[i][0], points[i][1]);
+      if (d < minDist) {
+        minDist = d;
+        puntoMasCercano = i;
+      }
+    }
+
+    double restante = 0;
+    for (int i = puntoMasCercano; i < points.length - 1; i++) {
+      restante += _haversineMetros(
+        points[i][0],
+        points[i][1],
+        points[i + 1][0],
+        points[i + 1][1],
+      );
+    }
+    return restante;
+  }
+
+  static double _haversineMetros(
+    double lat1,
+    double lng1,
+    double lat2,
+    double lng2,
+  ) {
+    const r = 6371000.0;
+    final dLat = (lat2 - lat1) * math.pi / 180;
+    final dLng = (lng2 - lng1) * math.pi / 180;
+    final a =
+        math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(lat1 * math.pi / 180) *
+            math.cos(lat2 * math.pi / 180) *
+            math.sin(dLng / 2) *
+            math.sin(dLng / 2);
+    return r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
   }
 
   @override

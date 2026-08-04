@@ -4,6 +4,8 @@ class ResenaModel extends Resena {
   const ResenaModel({
     required super.id,
     required super.userId,
+    super.userName,
+    super.userImageUrl,
     required super.targetType,
     required super.targetId,
     required super.rating,
@@ -15,6 +17,8 @@ class ResenaModel extends Resena {
     return ResenaModel(
       id: json['id'] as String,
       userId: json['userId'] as String,
+      userName: json['userName'] as String?,
+      userImageUrl: json['userImageUrl'] as String?,
       targetType: json['targetType'] as String,
       targetId: json['targetId'] as String,
       rating: json['rating'] as int,

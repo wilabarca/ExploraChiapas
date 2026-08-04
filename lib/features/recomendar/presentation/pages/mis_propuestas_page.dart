@@ -56,7 +56,8 @@ class _MisPropuestasPageState extends State<MisPropuestasPage> {
 
           if (provider.status == MisPropuestasStatus.error) {
             return _PantallaError(
-              mensaje: provider.errorMessage ??
+              mensaje:
+                  provider.errorMessage ??
                   'No pudimos cargar tus recomendaciones.',
               onReintentar: provider.cargar,
             );
@@ -104,7 +105,11 @@ class _PantallaVacia extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.place_outlined, size: 64, color: cs.primary.withValues(alpha: 0.4)),
+            Icon(
+              Icons.place_outlined,
+              size: 64,
+              color: cs.primary.withValues(alpha: 0.4),
+            ),
             const SizedBox(height: 16),
             const Text(
               'Aún no tienes recomendaciones',
@@ -115,7 +120,9 @@ class _PantallaVacia extends StatelessWidget {
             Text(
               'Propón un lugar que conozcas y ayúdanos a enriquecer el mapa de Chiapas.',
               style: TextStyle(
-                  fontSize: 14, color: cs.onSurface.withValues(alpha: 0.6)),
+                fontSize: 14,
+                color: cs.onSurface.withValues(alpha: 0.6),
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -145,12 +152,19 @@ class _PantallaError extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.wifi_off_outlined, size: 56, color: cs.error.withValues(alpha: 0.6)),
+            Icon(
+              Icons.wifi_off_outlined,
+              size: 56,
+              color: cs.error.withValues(alpha: 0.6),
+            ),
             const SizedBox(height: 16),
             Text(
               mensaje,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: cs.onSurface.withValues(alpha: 0.7)),
+              style: TextStyle(
+                fontSize: 14,
+                color: cs.onSurface.withValues(alpha: 0.7),
+              ),
             ),
             const SizedBox(height: 20),
             OutlinedButton.icon(

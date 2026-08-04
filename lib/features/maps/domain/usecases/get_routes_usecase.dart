@@ -10,10 +10,12 @@ class GetRouteUseCase {
     required double originLng,
     required double destLat,
     required double destLng,
+    String perfil = 'driving',
   }) => _repository.getRoutes(
     originLat: originLat,
     originLng: originLng,
     destLat: destLat,
     destLng: destLng,
+    perfil: perfil,
   );
 }

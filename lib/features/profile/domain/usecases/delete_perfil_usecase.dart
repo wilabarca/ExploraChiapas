@@ -8,6 +8,5 @@ class DeletePerfilUseCase {
   final IProfileRepository _repository;
   DeletePerfilUseCase(this._repository);
 
-  Future<Either<Failure, void>> call() =>
-      _repository.deleteProfile();
+  Future<Either<Failure, void>> call() => _repository.deleteProfile();
 }

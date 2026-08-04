@@ -11,8 +11,6 @@ import '../../domain/entities/usuario_registro.dart';
 import '../../../../core/utils/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 
-const int _minPasswordLength = 8;
-
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
 
@@ -54,10 +52,7 @@ class _RegisterPageState extends State<RegisterPage> {
     final nombreError = ValidadoresAuth.nombre(_nombreCtrl.text);
     final emailError = ValidadoresAuth.email(_emailCtrl.text);
     final telefonoError = ValidadoresAuth.telefono(_telefonoCtrl.text);
-    final passwordError = ValidadoresAuth.password(
-      _passCtrl.text,
-      minLength: _minPasswordLength,
-    );
+    final passwordError = ValidadoresAuth.password(_passCtrl.text);
     final confirmError = ValidadoresAuth.confirmarPassword(
       _passCtrl.text,
       _confirmCtrl.text,
@@ -308,6 +303,9 @@ class _FormularioRegistro extends StatelessWidget {
             label: 'NOMBRE',
             hint: 'Tu nombre completo',
             icon: Icons.person_outline,
+            inputFormatters: [
+              LengthLimitingTextInputFormatter(ValidadoresAuth.nombreMaxLength),
+            ],
             errorText: nombreError,
           ),
           const SizedBox(height: 16),
@@ -317,21 +315,28 @@ class _FormularioRegistro extends StatelessWidget {
             hint: 'explorador@selva.com',
             icon: Icons.mail_outline,
             keyboardType: TextInputType.emailAddress,
+            inputFormatters: [
+              LengthLimitingTextInputFormatter(ValidadoresAuth.emailMaxLength),
+            ],
             errorText: emailError,
           ),
           const SizedBox(height: 16),
           RegisterField(
             controller: telefonoCtrl,
             label: 'TELÉFONO',
-            hint: '10 dígitos',
+            hint: 'Entre 10 y 15 dígitos',
             icon: Icons.phone_outlined,
             keyboardType: TextInputType.phone,
             // Bloquea directamente cualquier caracter que no sea dígito y
-            // limita la longitud a 10 mientras se escribe, además de la
-            // validación que se muestra al enviar.
+            // limita la longitud máxima mientras se escribe, además de la
+            // validación (mínimo 10) que se muestra al enviar. El límite
+            // superior (15) cubre formatos internacionales para turistas
+            // extranjeros, no solo el nacional de 10 dígitos.
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(ValidadoresAuth.telefonoDigitos),
+              LengthLimitingTextInputFormatter(
+                ValidadoresAuth.telefonoMaxDigitos,
+              ),
             ],
             errorText: telefonoError,
           ),
@@ -339,9 +344,16 @@ class _FormularioRegistro extends StatelessWidget {
           RegisterField(
             controller: passCtrl,
             label: 'CONTRASEÑA',
-            hint: 'Mínimo $_minPasswordLength caracteres',
+            hint:
+                'Mínimo ${ValidadoresAuth.passwordMinLength} caracteres, '
+                'con mayúscula, minúscula y número',
             icon: Icons.lock_outline,
             isPassword: true,
+            inputFormatters: [
+              LengthLimitingTextInputFormatter(
+                ValidadoresAuth.passwordMaxLength,
+              ),
+            ],
             errorText: passwordError,
           ),
           const SizedBox(height: 16),
@@ -351,6 +363,11 @@ class _FormularioRegistro extends StatelessWidget {
             hint: 'Vuelve a escribirla',
             icon: Icons.lock_outline,
             isPassword: true,
+            inputFormatters: [
+              LengthLimitingTextInputFormatter(
+                ValidadoresAuth.passwordMaxLength,
+              ),
+            ],
             errorText: confirmError,
           ),
           const SizedBox(height: 18),

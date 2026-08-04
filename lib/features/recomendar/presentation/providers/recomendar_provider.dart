@@ -110,9 +110,9 @@ class RecomendarProvider extends ChangeNotifier {
         notifyListeners();
         return;
       }
-      _propuestaIdCreada = propuestaResult.getOrElse(
-        () => throw StateError('propuesta vacía'),
-      ).id;
+      _propuestaIdCreada = propuestaResult
+          .getOrElse(() => throw StateError('propuesta vacía'))
+          .id;
     }
 
     // ── Paso 3: subir fotografías ────────────────────────────────────────────
@@ -142,9 +142,7 @@ class RecomendarProvider extends ChangeNotifier {
   }
 
   /// Permite reintentar solo la subida de imágenes cuando la propuesta ya existe
-  Future<void> reintentarImagenes({
-    required List<XFile> imagenes,
-  }) async {
+  Future<void> reintentarImagenes({required List<XFile> imagenes}) async {
     if (_propuestaIdCreada == null) return;
     _errorMessage = null;
     _status = RecomendarStatus.subiendoImagenes;
@@ -157,8 +155,7 @@ class RecomendarProvider extends ChangeNotifier {
     result.fold(
       (failure) {
         _status = RecomendarStatus.error;
-        _errorMessage =
-            '${failure.message}. Intenta de nuevo.';
+        _errorMessage = '${failure.message}. Intenta de nuevo.';
       },
       (_) {
         _propuestaIdExito = _propuestaIdCreada;
@@ -170,7 +167,9 @@ class RecomendarProvider extends ChangeNotifier {
   }
 
   void reiniciar() {
-    _status = _categorias.isEmpty ? RecomendarStatus.idle : RecomendarStatus.listo;
+    _status = _categorias.isEmpty
+        ? RecomendarStatus.idle
+        : RecomendarStatus.listo;
     _errorMessage = null;
     _propuestaIdCreada = null;
     _propuestaIdExito = null;

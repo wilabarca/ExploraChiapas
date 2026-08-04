@@ -4,17 +4,16 @@ import 'package:provider/provider.dart';
 import '../../domain/entities/resena_entity.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/profanity_filter.dart';
 import '../providers/ResenasProvider.dart';
 import '../utils/resena_display_utils.dart';
 import 'resena_avatar.dart';
 import 'star_rating.dart';
 
-/// ⚠️ La API solo devuelve `userId`, no nombre ni foto del usuario
-/// (confirmado en el código del backend: los reviews nunca hacen JOIN
-/// contra la tabla `usuario`). Por eso no se puede mostrar un nombre
-/// real todavía — se distingue a cada autor con un color/identificador
-/// consistente en vez de un ícono genérico igual para todos, y se
-/// marca "Tú" cuando la reseña es del usuario actual.
+/// `GET /reviews` devuelve `userName`/`userImageUrl` embebidos — se
+/// muestra el nombre real del autor (respaldo "Viajero ExploraChiapas"
+/// solo para reseñas antiguas sin ese campo), y "Tú" cuando la reseña es
+/// del usuario actual.
 class ResenaCard extends StatelessWidget {
   final Resena resena;
 
@@ -44,7 +43,7 @@ class ResenaCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              ResenaAvatar(userId: resena.userId, radius: 18),
+              ResenaAvatar(resena: resena, radius: 18),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -54,7 +53,9 @@ class ResenaCard extends StatelessWidget {
                       children: [
                         Flexible(
                           child: Text(
-                            esMia ? 'Tú' : 'Viajero ExploraChiapas',
+                            esMia
+                                ? 'Tú'
+                                : (resena.userName ?? 'Viajero ExploraChiapas'),
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: 13,
@@ -223,6 +224,22 @@ class _EditarResenaSheetState extends State<_EditarResenaSheet> {
   }
 
   Future<void> _guardar() async {
+    // Al crear una reseña ya se bloqueaba el lenguaje inapropiado
+    // (`escribir_resena_page.dart`), pero al EDITARLA no había ningún
+    // filtro — un usuario podía publicar un comentario limpio y luego
+    // cambiarlo por uno con groserías sin que nada lo detectara.
+    if (ProfanityFilter.contiene(_comentarioCtrl.text)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Tu comentario contiene lenguaje inapropiado, revísalo.',
+          ),
+          backgroundColor: AppColors.error(context),
+        ),
+      );
+      return;
+    }
+
     final provider = context.read<ResenasProvider>();
     final exito = await provider.editarResena(
       id: widget.resena.id,

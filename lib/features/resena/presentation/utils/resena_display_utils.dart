@@ -15,19 +15,35 @@ class ResenaDisplayUtils {
     Color(0xFF00838F),
   ];
 
-  /// ⚠️ La API solo devuelve `userId`, no nombre ni foto del usuario
-  /// (confirmado: los reviews nunca hacen JOIN contra la tabla
-  /// `usuario`). Se distingue a cada autor con un color/iniciales
-  /// consistentes derivados del propio `userId` en vez de un ícono
-  /// genérico igual para todos.
+  /// Color consistente por autor (usado como fondo del avatar y, si no
+  /// hay foto, detrás de las iniciales) — derivado del propio `userId`.
   static Color colorPorUsuario(String userId) {
     final hash = userId.codeUnits.fold<int>(0, (acc, c) => acc + c);
     return coloresAvatar[hash % coloresAvatar.length];
   }
 
+  /// Respaldo cuando no hay `userName` (reseñas de antes de que el
+  /// backend empezara a devolverlo, o algún caso sin nombre registrado).
   static String iniciales(String userId) {
     final limpio = userId.replaceAll('-', '');
     return limpio.isEmpty ? '?' : limpio.substring(0, 2).toUpperCase();
+  }
+
+  /// Iniciales a partir del nombre real (`userName`) que ahora devuelve
+  /// `GET /reviews` — una palabra usa sus 2 primeras letras, dos o más
+  /// palabras usan la inicial de cada una de las dos primeras.
+  static String inicialesDeNombre(String nombre) {
+    final palabras = nombre
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
+    if (palabras.isEmpty) return '?';
+    if (palabras.length == 1) {
+      final p = palabras.first;
+      return (p.length >= 2 ? p.substring(0, 2) : p).toUpperCase();
+    }
+    return (palabras[0][0] + palabras[1][0]).toUpperCase();
   }
 
   static String tiempoRelativo(DateTime fecha) {

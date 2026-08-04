@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -112,13 +114,20 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
 
     setState(() => _uploading = true);
     try {
-      // 1. Subir a Cloudinary y guardar URL en SharedPreferences
-      final url = await getIt<AvatarService>().subirFotoReal(foto);
-
-      // 2. Sincronizar la URL al backend para que persista entre sesiones
-      if (mounted) {
-        await context.read<ProfileProvider>().updatePerfil(fotoPerfilUrl: url);
-        setState(() => _localUrl = url);
+      // Sube el archivo autenticado directo al backend (mismo flujo que
+      // ya usa EditProfilePage) — antes se mandaba sin autenticación a
+      // Cloudinary con un upload preset "unsigned", evitando cualquier
+      // validación del servidor.
+      final provider = context.read<ProfileProvider>();
+      final exito = await provider.subirFotoPerfil(File(foto.path));
+      if (!mounted) return;
+      if (!exito) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(provider.errorMessage ?? 'No se pudo subir la foto'),
+            backgroundColor: AppColors.error(context),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {

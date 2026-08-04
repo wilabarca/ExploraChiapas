@@ -24,10 +24,7 @@ class PermitirAccesoPage extends StatelessWidget {
           Positioned.fill(
             child: Opacity(
               opacity: 0.08,
-              child: Image.asset(
-                'assets/images/inicio.png',
-                fit: BoxFit.cover,
-              ),
+              child: Image.asset('assets/images/maya.png', fit: BoxFit.cover),
             ),
           ),
           SafeArea(
@@ -37,8 +34,9 @@ class PermitirAccesoPage extends StatelessWidget {
                 children: [
                   const SizedBox(height: 40),
                   Image.asset(
-                    'assets/images/ExploraChiapas Logo.png',
+                    'assets/images/iconoapp.jpg',
                     height: 60,
+                    fit: BoxFit.contain,
                     errorBuilder: (_, __, ___) => const Text(
                       'ExploraChiapas',
                       style: TextStyle(
@@ -55,7 +53,9 @@ class PermitirAccesoPage extends StatelessWidget {
                       color: Colors.white.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
-                          color: Colors.white.withOpacity(0.2), width: 1),
+                        color: Colors.white.withOpacity(0.2),
+                        width: 1,
+                      ),
                     ),
                     child: Column(
                       children: [
@@ -125,17 +125,17 @@ class PermitirAccesoPage extends StatelessWidget {
                       onPressed: () =>
                           Navigator.pushReplacementNamed(context, '/home'),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.white54, width: 1.5),
+                        side: const BorderSide(
+                          color: Colors.white54,
+                          width: 1.5,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
                       child: const Text(
                         'Ahora no',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                        ),
+                        style: TextStyle(color: Colors.white, fontSize: 16),
                       ),
                     ),
                   ),

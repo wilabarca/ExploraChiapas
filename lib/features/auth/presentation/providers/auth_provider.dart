@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/usecases/login_usecase.dart';
@@ -13,6 +13,10 @@ import '../../domain/usecases/update_user_interests_usecase.dart';
 import '../../domain/entities/user_interests.dart';
 import '../../../../core/services/notifications/onesignal_service.dart';
 import '../../../../core/storage/secure_session_storage.dart';
+import '../../../profile/presentation/providers/profile_provider.dart';
+import '../../../favoritos/presentation/providers/favoritos_provider.dart';
+import '../../../resena/presentation/providers/ResenasProvider.dart';
+import '../../../Chat/presentation/providers/chat_provider.dart';
 
 enum AuthStatus { idle, loading, success, error }
 
@@ -25,6 +29,10 @@ class AuthProvider extends ChangeNotifier {
   final GetUserInterestsUseCase _getUserInterestsUseCase;
   final UpdateUserInterestsUseCase _updateUserInterestsUseCase;
   final SecureSessionStorage _secureStorage;
+  final ProfileProvider _profileProvider;
+  final FavoritosProvider _favoritosProvider;
+  final ResenasProvider _resenasProvider;
+  final ChatProvider _chatProvider;
 
   AuthProvider(
     this._loginUseCase,
@@ -34,7 +42,25 @@ class AuthProvider extends ChangeNotifier {
     this._getUserInterestsUseCase,
     this._updateUserInterestsUseCase,
     this._secureStorage,
+    this._profileProvider,
+    this._favoritosProvider,
+    this._resenasProvider,
+    this._chatProvider,
   );
+
+  // Todos estos providers son singletons de la app (viven todo el
+  // proceso, ver `injector.dart`): sin invalidarlos explícitamente en
+  // cada frontera de sesión, un usuario nuevo heredaba en memoria el
+  // perfil, favoritos, reseñas y conversación del usuario anterior hasta
+  // que alguna pantalla disparaba una recarga manual. Se llama tanto al
+  // iniciar sesión (por si quedó basura de una sesión previa mal cerrada)
+  // como al cerrar sesión (para no dejar nada detrás).
+  Future<void> _limpiarEstadoDeOtrosUsuarios() async {
+    _profileProvider.limpiar();
+    _favoritosProvider.limpiar();
+    _chatProvider.nuevaConversacion();
+    await _resenasProvider.limpiar();
+  }
 
   AuthStatus _status = AuthStatus.idle;
   AuthStatus get status => _status;
@@ -61,6 +87,7 @@ class AuthProvider extends ChangeNotifier {
   // ── Login ─────────────────────────────────────────────────
   Future<bool> login({required String email, required String password}) async {
     _setLoading();
+    await _limpiarEstadoDeOtrosUsuarios();
 
     final loginResult = await _loginUseCase(email: email, password: password);
 
@@ -74,7 +101,7 @@ class AuthProvider extends ChangeNotifier {
 
         // ✅ Guardar JWT en almacenamiento seguro (Keystore/Keychain)
         await _secureStorage.setToken(token);
-        debugPrint('✅ JWT guardado: ${token.substring(0, 30)}...');
+        if (kDebugMode) debugPrint('JWT guardado en almacenamiento seguro');
 
         return true;
       },
@@ -110,6 +137,7 @@ class AuthProvider extends ChangeNotifier {
   // ── Login con Google ─────────────────────────────────────
   Future<bool> loginWithGoogle({required String idToken}) async {
     _setLoading();
+    await _limpiarEstadoDeOtrosUsuarios();
 
     final loginResult = await _authRepository.loginWithGoogle(idToken: idToken);
 
@@ -143,6 +171,31 @@ class AuthProvider extends ChangeNotifier {
         await _secureStorage.setUserEmail(usuario.email);
         await OneSignalService.loginUser(usuario.id);
         _setSuccess();
+        return true;
+      },
+    );
+  }
+
+  // ── Restaurar sesión (splash) ────────────────────────────
+
+  /// Se llama al arrancar la app con un JWT ya guardado. Sin esto, un
+  /// usuario que reabre la app (sin volver a hacer login explícito) nunca
+  /// vuelve a llamar OneSignal.login(external_id) — el dispositivo queda
+  /// sin vincular al usuario en OneSignal y no recibe pushes dirigidos a
+  /// él, aunque el JWT siga siendo válido.
+  Future<bool> restoreSession() async {
+    final profileResult = await _getProfileUseCase();
+
+    return profileResult.fold(
+      (failure) async {
+        debugPrint(
+          '⚠️ Perfil no cargado al restaurar sesión: ${failure.message}',
+        );
+        return false;
+      },
+      (usuario) async {
+        _usuario = usuario;
+        await OneSignalService.loginUser(usuario.id);
         return true;
       },
     );
@@ -270,6 +323,7 @@ class AuthProvider extends ChangeNotifier {
     // Limpia JWT + datos de usuario cacheados (almacenamiento seguro).
     await _secureStorage.clearSession();
     await OneSignalService.logoutUser();
+    await _limpiarEstadoDeOtrosUsuarios();
 
     // Limpiar estado en memoria.
     _token = null;

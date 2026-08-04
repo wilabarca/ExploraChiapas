@@ -3,7 +3,7 @@ class NegocioHorario {
   final String negocioId;
   final String diaSemana; // 'Lunes', 'Martes', ...
   final String? horaApertura; // '09:00'
-  final String? horaCierre;   // '18:00'
+  final String? horaCierre; // '18:00'
   final bool cerrado;
 
   const NegocioHorario({
