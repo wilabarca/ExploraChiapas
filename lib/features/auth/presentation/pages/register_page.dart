@@ -156,52 +156,61 @@ class _RegisterPageState extends State<RegisterPage> {
     return Scaffold(
       backgroundColor: AppColors.background(context),
       body: SafeArea(
-        child: Center(
-          // ConstrainedBox: en pantallas anchas (tablets) el formulario no
-          // se estira de borde a borde, queda centrado y legible.
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 440),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 28),
-              child: Column(
-                children: [
-                  SizedBox(height: size.height * 0.05),
-                  const AuthBirdLogo(),
-                  SizedBox(height: size.height * 0.035),
-                  const _Encabezado(),
-                  SizedBox(height: size.height * 0.035),
-                  _FormularioRegistro(
-                    tipoUsuario: _tipoUsuario,
-                    onTipoUsuarioChanged: (val) =>
-                        setState(() => _tipoUsuario = val),
-                    nombreCtrl: _nombreCtrl,
-                    emailCtrl: _emailCtrl,
-                    telefonoCtrl: _telefonoCtrl,
-                    passCtrl: _passCtrl,
-                    confirmCtrl: _confirmCtrl,
-                    nombreError: _nombreError,
-                    emailError: _emailError,
-                    telefonoError: _telefonoError,
-                    passwordError: _passwordError,
-                    confirmError: _confirmError,
-                    aceptoTerminos: _aceptoTerminos,
-                    onAceptoTerminosChanged: (val) =>
-                        setState(() => _aceptoTerminos = val),
-                    onAbrirTerminos: () => _abrirUrl(AppConstants.terminosUrl),
-                    onAbrirPrivacidad: () =>
-                        _abrirUrl(AppConstants.privacidadUrl),
-                    isLoading: isLoading,
-                    onSubmit: _handleRegister,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 440),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 28,
+                        vertical: 24, // Added padding for top/bottom breathing room
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const AuthBirdLogo(),
+                          SizedBox(height: size.height * 0.035),
+                          const _Encabezado(),
+                          SizedBox(height: size.height * 0.035),
+                          _FormularioRegistro(
+                            tipoUsuario: _tipoUsuario,
+                            onTipoUsuarioChanged: (val) =>
+                                setState(() => _tipoUsuario = val),
+                            nombreCtrl: _nombreCtrl,
+                            emailCtrl: _emailCtrl,
+                            telefonoCtrl: _telefonoCtrl,
+                            passCtrl: _passCtrl,
+                            confirmCtrl: _confirmCtrl,
+                            nombreError: _nombreError,
+                            emailError: _emailError,
+                            telefonoError: _telefonoError,
+                            passwordError: _passwordError,
+                            confirmError: _confirmError,
+                            aceptoTerminos: _aceptoTerminos,
+                            onAceptoTerminosChanged: (val) =>
+                                setState(() => _aceptoTerminos = val),
+                            onAbrirTerminos: () => _abrirUrl(AppConstants.terminosUrl),
+                            onAbrirPrivacidad: () =>
+                                _abrirUrl(AppConstants.privacidadUrl),
+                            isLoading: isLoading,
+                            onSubmit: _handleRegister,
+                          ),
+                          SizedBox(height: size.height * 0.03),
+                          _EnlaceLogin(
+                            onTap: () => Navigator.pushNamed(context, '/login'),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  SizedBox(height: size.height * 0.03),
-                  _EnlaceLogin(
-                    onTap: () => Navigator.pushNamed(context, '/login'),
-                  ),
-                  SizedBox(height: size.height * 0.03),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );

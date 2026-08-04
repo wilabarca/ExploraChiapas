@@ -38,3 +38,15 @@ class CacheException implements Exception {
   @override
   String toString() => 'CacheException: $message';
 }
+
+class CertificatePinningException implements Exception {
+  final String message;
+
+  const CertificatePinningException({
+    this.message =
+        'No se pudo verificar la identidad del servidor. La conexión fue cancelada por seguridad.',
+  });
+
+  @override
+  String toString() => message;
+}

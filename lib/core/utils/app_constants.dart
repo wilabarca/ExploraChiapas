@@ -1,9 +1,11 @@
 class AppConstants {
   AppConstants._();
 
-  static const String serverBaseUrl = 'https://explora-chiapas.onrender.com';
+  static const String gatewayHost = 'api-gateway-explorachiapas.onrender.com';
 
-  static const String baseUrl = 'https://explora-chiapas.onrender.com/v1/api';
+  static const String serverBaseUrl = 'https://api-gateway-explorachiapas.onrender.com';
+
+  static const String baseUrl = 'https://api-gateway-explorachiapas.onrender.com/v1/api';
 
   // Endpoints de autenticación y usuarios
   static const String registerEndpoint = '/users/register';
@@ -64,7 +66,7 @@ class AppConstants {
   static const String reviewTargetBusiness = 'business';
   static const String reviewTargetLocation = 'location';
 
-  static const String mlServiceBaseUrl = 'http://18.213.180.41';
+  static const String mlServiceBaseUrl = 'https://api-gateway-explorachiapas.onrender.com/ml';
   static const String planearEndpoint = '/planear';
 
   // Endpoints de historial de chat

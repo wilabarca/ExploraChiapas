@@ -257,9 +257,10 @@ lib/
 
 | Servicio | URL | Descripción |
 |----------|-----|-------------|
-| Backend REST | `https://explora-chiapas.onrender.com/v1/api` | Auth, usuarios, destinos, eventos, favoritos |
-| NLP Service (Capa 1) | `https://nlp-service-6hvo.onrender.com` | Extracción de parámetros con Groq + redacción de itinerario |
-| ML Engine (Capa 2) | *(configurar en `ML_ENGINE_URL`)* | K-Means, Apriori, Knapsack 0/1 |
+| API Gateway | `https://api-gateway-explorachiapas.onrender.com` | Punto de entrada único seguro (Certificate Pinning) |
+| Backend REST | `/v1/api` (Vía Gateway) | Auth, usuarios, destinos, eventos, favoritos |
+| NLP Service (Capa 1) | `/ml` (Vía Gateway) | Extracción de parámetros con Groq + redacción de itinerario |
+| ML Engine (Capa 2) | *(Uso interno desde NLP)* | K-Means, Apriori, Knapsack 0/1 |
 | OSRM | `https://router.project-osrm.org` | Rutas reales en el mapa |
 
 > Los servicios en Render free tier tienen cold start de ~50 s. El NLP service reintenta automáticamente hasta 3 veces si recibe 502.

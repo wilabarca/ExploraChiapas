@@ -194,250 +194,248 @@ class _EditProfilePageState extends State<EditProfilePage> {
           ),
         ),
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return SingleChildScrollView(
-            padding: EdgeInsets.symmetric(
-              horizontal: constraints.maxWidth * 0.06,
-              vertical: screenH * 0.030,
-            ),
-            child: Column(
-              children: [
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    SizedBox(
-                      width: avatarRadius * 2,
-                      height: avatarRadius * 2,
-                      child: ProfileAvatar(
-                        radius: avatarRadius,
-                        showEditButton: false,
-                        onTap: subiendoFoto ? null : _subirFoto,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 440),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: constraints.maxWidth * 0.06,
+                        vertical: screenH * 0.030,
                       ),
-                    ),
-                    if (subiendoFoto)
-                      CircularProgressIndicator(
-                        color: AppColors.primary(context),
-                      ),
-                  ],
-                ),
-
-                SizedBox(height: screenH * 0.008),
-                GestureDetector(
-                  onTap: subiendoFoto ? null : _subirFoto,
-                  child: Text(
-                    subiendoFoto ? 'SUBIENDO...' : 'CAMBIAR FOTO DE PERFIL',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary(context),
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                ),
-
-                SizedBox(height: screenH * 0.028),
-
-                ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: 50),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceContainer(context),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: AppColors.borderSubtle(context),
-                      ),
-                    ),
-                    child: Text(
-                      perfil?.tipoUsuarioLabel ?? 'Turista',
-                      style: TextStyle(
-                        fontSize: isSmall ? 13 : 15,
-                        color: AppColors.textSecondary(context),
-                      ),
-                    ),
-                  ),
-                ),
-
-                SizedBox(height: screenH * 0.020),
-
-                _buildLabel('Nombre completo', Icons.person_outline),
-                const SizedBox(height: 8),
-                _buildField(
-                  controller: _nombreCtrl,
-                  hint: 'Tu nombre completo',
-                ),
-
-                SizedBox(height: screenH * 0.020),
-
-                _buildLabel('Correo electrónico', Icons.email_outlined),
-                const SizedBox(height: 8),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: 50),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceContainer(context),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: AppColors.borderSubtle(context),
-                      ),
-                    ),
-                    child: Text(
-                      perfil?.email ?? '',
-                      style: TextStyle(
-                        fontSize: isSmall ? 13 : 15,
-                        color: AppColors.textSecondary(context),
-                      ),
-                    ),
-                  ),
-                ),
-
-                SizedBox(height: screenH * 0.020),
-
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface(context),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.borderSubtle(context)),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryContainer(context),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.lock_outline,
-                          color: AppColors.primary(context),
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Contraseña',
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              SizedBox(
+                                width: avatarRadius * 2,
+                                height: avatarRadius * 2,
+                                child: ProfileAvatar(
+                                  radius: avatarRadius,
+                                  showEditButton: false,
+                                  onTap: subiendoFoto ? null : _subirFoto,
+                                ),
+                              ),
+                              if (subiendoFoto)
+                                CircularProgressIndicator(
+                                  color: AppColors.primary(context),
+                                ),
+                            ],
+                          ),
+                          SizedBox(height: screenH * 0.008),
+                          GestureDetector(
+                            onTap: subiendoFoto ? null : _subirFoto,
+                            child: Text(
+                              subiendoFoto ? 'SUBIENDO...' : 'CAMBIAR FOTO DE PERFIL',
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
                                 color: AppColors.primary(context),
-                                fontWeight: FontWeight.w600,
+                                letterSpacing: 1.2,
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '••••••••••••',
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: AppColors.textPrimary(context),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {},
-                        child: Text(
-                          'CAMBIAR',
-                          style: TextStyle(
-                            color: AppColors.primary(context),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: screenH * 0.020),
-
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryContainer(context),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline,
-                        color: AppColors.primary(context),
-                        size: 18,
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Tu información se utiliza para personalizar '
-                          'tus planes de viaje y reservas en parques naturales.',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppColors.textSecondary(context),
-                            height: 1.4,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: screenH * 0.032),
-
-                FractionallySizedBox(
-                  widthFactor: 1.0,
-                  child: SizedBox(
-                    height: 54,
-                    child: ElevatedButton(
-                      onPressed: isLoading ? null : _guardar,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary(context),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: isLoading
-                          ? SizedBox(
-                              height: 22,
-                              width: 22,
-                              child: CircularProgressIndicator(
-                                color: AppColors.onPrimary(context),
-                                strokeWidth: 2.5,
+                          SizedBox(height: screenH * 0.028),
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(minHeight: 50),
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
                               ),
-                            )
-                          : Text(
-                              'Guardar cambios',
-                              style: TextStyle(
-                                color: AppColors.onPrimary(context),
-                                fontSize: 17,
-                                fontWeight: FontWeight.w600,
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceContainer(context),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppColors.borderSubtle(context),
+                                ),
+                              ),
+                              child: Text(
+                                perfil?.tipoUsuarioLabel ?? 'Turista',
+                                style: TextStyle(
+                                  fontSize: isSmall ? 13 : 15,
+                                  color: AppColors.textSecondary(context),
+                                ),
                               ),
                             ),
+                          ),
+                          SizedBox(height: screenH * 0.020),
+                          _buildLabel('Nombre completo', Icons.person_outline),
+                          const SizedBox(height: 8),
+                          _buildField(
+                            controller: _nombreCtrl,
+                            hint: 'Tu nombre completo',
+                          ),
+                          SizedBox(height: screenH * 0.020),
+                          _buildLabel('Correo electrónico', Icons.email_outlined),
+                          const SizedBox(height: 8),
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(minHeight: 50),
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceContainer(context),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppColors.borderSubtle(context),
+                                ),
+                              ),
+                              child: Text(
+                                perfil?.email ?? '',
+                                style: TextStyle(
+                                  fontSize: isSmall ? 13 : 15,
+                                  color: AppColors.textSecondary(context),
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: screenH * 0.020),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface(context),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.borderSubtle(context)),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryContainer(context),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(
+                                    Icons.lock_outline,
+                                    color: AppColors.primary(context),
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Contraseña',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.primary(context),
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '••••••••••••',
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          color: AppColors.textPrimary(context),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () {},
+                                  child: Text(
+                                    'CAMBIAR',
+                                    style: TextStyle(
+                                      color: AppColors.primary(context),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: screenH * 0.020),
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryContainer(context),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.info_outline,
+                                  color: AppColors.primary(context),
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    'Tu información se utiliza para personalizar '
+                                    'tus planes de viaje y reservas en parques naturales.',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppColors.textSecondary(context),
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: screenH * 0.032),
+                          FractionallySizedBox(
+                            widthFactor: 1.0,
+                            child: SizedBox(
+                              height: 54,
+                              child: ElevatedButton(
+                                onPressed: isLoading ? null : _guardar,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary(context),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: isLoading
+                                    ? SizedBox(
+                                        height: 22,
+                                        width: 22,
+                                        child: CircularProgressIndicator(
+                                          color: AppColors.onPrimary(context),
+                                          strokeWidth: 2.5,
+                                        ),
+                                      )
+                                    : Text(
+                                        'Guardar cambios',
+                                        style: TextStyle(
+                                          color: AppColors.onPrimary(context),
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-
-                SizedBox(height: screenH * 0.020),
-              ],
-            ),
-          );
-        },
+              ),
+            );
+          },
+        ),
       ),
     );
   }

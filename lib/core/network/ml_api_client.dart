@@ -1,7 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import '../error/exceptions.dart';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import '../utils/app_constants.dart';
+import 'gateway_certificate_pinning.dart';
 
 @lazySingleton
 class MlApiClient {
@@ -18,6 +21,22 @@ class MlApiClient {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+        },
+      ),
+    );
+
+    _dio.httpClientAdapter = GatewayCertificatePinning.createAdapter();
+
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onResponse: (response, handler) {
+          if (kDebugMode) {
+            final gateway = response.headers.value('x-gateway');
+            if (gateway != null) {
+              debugPrint('X-Gateway: $gateway');
+            }
+          }
+          handler.next(response);
         },
       ),
     );
@@ -54,6 +73,18 @@ class MlApiClient {
   }
 
   void _handleDioError(DioException e) {
+    final errorStr = e.error.toString();
+    if (e.type.name == 'badCertificate' ||
+        e.error is HandshakeException ||
+        e.error is TlsException ||
+        errorStr.contains('CERTIFICATE_VERIFY_FAILED') ||
+        errorStr.contains('Certificate validation failed')) {
+      if (kDebugMode) {
+        debugPrint('HTTPS_PINNING_BLOCKED host=api-gateway-explorachiapas.onrender.com');
+      }
+      throw const CertificatePinningException();
+    }
+
     switch (e.type) {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.receiveTimeout:

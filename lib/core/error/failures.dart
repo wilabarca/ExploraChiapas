@@ -24,3 +24,9 @@ class NetworkFailure extends Failure {
 class CacheFailure extends Failure {
   const CacheFailure({super.message = 'Error al leer datos locales.'});
 }
+
+class CertificatePinningFailure extends Failure {
+  const CertificatePinningFailure({
+    super.message = 'No se pudo verificar la identidad del servidor. La conexión fue cancelada por seguridad.',
+  });
+}
