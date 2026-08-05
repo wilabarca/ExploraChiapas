@@ -27,6 +27,7 @@ class CacheFailure extends Failure {
 
 class CertificatePinningFailure extends Failure {
   const CertificatePinningFailure({
-    super.message = 'No se pudo verificar la identidad del servidor. La conexión fue cancelada por seguridad.',
+    super.message =
+        'No se pudo verificar la identidad del servidor. La conexión fue cancelada por seguridad.',
   });
 }

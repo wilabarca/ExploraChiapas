@@ -54,6 +54,8 @@ class DestinoRepositoryImpl implements DestinoRepository {
       final result = await operation();
 
       return Right<Failure, T>(result);
+    } on CertificatePinningException catch (e) {
+      return Left(CertificatePinningFailure(message: e.message));
     } on UnauthorizedException catch (exception) {
       return Left<Failure, T>(UnauthorizedFailure(message: exception.message));
     } on NetworkException catch (exception) {

@@ -20,6 +20,8 @@ class CategoriasRepositoryImpl implements CategoriasRepository {
     try {
       final result = await _remoteDataSource.getCategorias(scope: scope);
       return Right<Failure, List<Categoria>>(result);
+    } on CertificatePinningException catch (e) {
+      return Left(CertificatePinningFailure(message: e.message));
     } on UnauthorizedException catch (exception) {
       return Left<Failure, List<Categoria>>(
         UnauthorizedFailure(message: exception.message),

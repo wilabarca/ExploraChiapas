@@ -31,6 +31,8 @@ class ChatRepositoryImpl implements IChatRepository {
         esPrimerMensaje: esPrimerMensaje,
       );
       return Right(recomendacion);
+    } on CertificatePinningException catch (e) {
+      return Left(CertificatePinningFailure(message: e.message));
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
     } on NetworkException catch (e) {

@@ -17,6 +17,8 @@ class ProfileRepositoryImpl implements IProfileRepository {
     try {
       final model = await _datasource.getProfile();
       return Right(model);
+    } on CertificatePinningException catch (e) {
+      return Left(CertificatePinningFailure(message: e.message));
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
     } catch (e) {
@@ -37,6 +39,8 @@ class ProfileRepositoryImpl implements IProfileRepository {
         fotoPerfilUrl: fotoPerfilUrl,
       );
       return Right(model);
+    } on CertificatePinningException catch (e) {
+      return Left(CertificatePinningFailure(message: e.message));
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
     } catch (e) {
@@ -49,6 +53,8 @@ class ProfileRepositoryImpl implements IProfileRepository {
     try {
       await _datasource.deleteProfile();
       return const Right(null);
+    } on CertificatePinningException catch (e) {
+      return Left(CertificatePinningFailure(message: e.message));
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(message: e.message));
     } on NetworkException catch (e) {
@@ -71,6 +77,8 @@ class ProfileRepositoryImpl implements IProfileRepository {
     try {
       final url = await _datasource.uploadFotoPerfil(file);
       return Right(url);
+    } on CertificatePinningException catch (e) {
+      return Left(CertificatePinningFailure(message: e.message));
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
     } catch (e) {

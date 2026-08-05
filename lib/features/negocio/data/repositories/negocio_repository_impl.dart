@@ -29,6 +29,8 @@ class NegocioRepositoryImpl implements NegocioRepository {
         longitud: longitud,
       );
       return Right(negocios);
+    } on CertificatePinningException catch (e) {
+      return Left(CertificatePinningFailure(message: e.message));
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
     } on NetworkException catch (e) {
@@ -43,6 +45,8 @@ class NegocioRepositoryImpl implements NegocioRepository {
     try {
       final negocio = await _dataSource.obtenerNegocioPorId(id);
       return Right(negocio);
+    } on CertificatePinningException catch (e) {
+      return Left(CertificatePinningFailure(message: e.message));
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
     } on NetworkException catch (e) {
@@ -57,6 +61,8 @@ class NegocioRepositoryImpl implements NegocioRepository {
     try {
       final negocios = await _dataSource.buscarNegocios(query);
       return Right(negocios);
+    } on CertificatePinningException catch (e) {
+      return Left(CertificatePinningFailure(message: e.message));
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
     } on NetworkException catch (e) {

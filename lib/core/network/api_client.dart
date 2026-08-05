@@ -7,6 +7,7 @@ import '../storage/secure_session_storage.dart';
 import 'dart:io';
 import '../utils/app_constants.dart';
 import 'gateway_certificate_pinning.dart';
+
 @lazySingleton
 class ApiClient {
   late final Dio _dio;
@@ -190,7 +191,9 @@ class ApiClient {
         errorStr.contains('CERTIFICATE_VERIFY_FAILED') ||
         errorStr.contains('Certificate validation failed')) {
       if (kDebugMode) {
-        debugPrint('HTTPS_PINNING_BLOCKED host=api-gateway-explorachiapas.onrender.com');
+        debugPrint(
+          'HTTPS_PINNING_BLOCKED host=api-gateway-explorachiapas.onrender.com',
+        );
       }
       throw const CertificatePinningException();
     }

@@ -22,6 +22,8 @@ class FavoritosRepositoryImpl implements FavoritosRepository {
         targetType: targetType,
       );
       return Right(favoritos);
+    } on CertificatePinningException catch (e) {
+      return Left(CertificatePinningFailure(message: e.message));
     } on UnauthorizedException catch (e) {
       return Left(ServerFailure(message: e.message));
     } on NetworkException catch (e) {
@@ -44,6 +46,8 @@ class FavoritosRepositoryImpl implements FavoritosRepository {
         targetId: targetId,
       );
       return Right(favorito);
+    } on CertificatePinningException catch (e) {
+      return Left(CertificatePinningFailure(message: e.message));
     } on UnauthorizedException catch (e) {
       return Left(ServerFailure(message: e.message));
     } on NetworkException catch (e) {
@@ -68,6 +72,8 @@ class FavoritosRepositoryImpl implements FavoritosRepository {
         targetId: targetId,
       );
       return const Right(null);
+    } on CertificatePinningException catch (e) {
+      return Left(CertificatePinningFailure(message: e.message));
     } on UnauthorizedException catch (e) {
       return Left(ServerFailure(message: e.message));
     } on NetworkException catch (e) {
@@ -92,6 +98,8 @@ class FavoritosRepositoryImpl implements FavoritosRepository {
 
       final existe = favoritos.any((favorito) => favorito.targetId == targetId);
       return Right(existe);
+    } on CertificatePinningException catch (e) {
+      return Left(CertificatePinningFailure(message: e.message));
     } on UnauthorizedException catch (e) {
       return Left(ServerFailure(message: e.message));
     } on NetworkException catch (e) {

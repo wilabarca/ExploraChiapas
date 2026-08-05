@@ -1,3 +1,4 @@
+import 'package:explorachiapas/core/error/exceptions.dart';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import '../../../../core/error/failures.dart';
@@ -17,6 +18,8 @@ class HomeRepositoryImpl implements IHomeRepository {
     try {
       final destinos = await _datasource.getDestinos(tipo: tipo);
       return Right(destinos);
+    } on CertificatePinningException catch (e) {
+      return Left(CertificatePinningFailure(message: e.message));
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
     }

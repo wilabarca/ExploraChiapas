@@ -40,6 +40,8 @@ class AuthRepositoryImpl implements AuthRepository {
       await _secureStorage.setUserEmail(result['email'] as String? ?? '');
 
       return Right(result);
+    } on CertificatePinningException catch (e) {
+      return Left(CertificatePinningFailure(message: e.message));
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
     } on NetworkException catch (e) {
@@ -71,6 +73,8 @@ class AuthRepositoryImpl implements AuthRepository {
       );
 
       return Right(token);
+    } on CertificatePinningException catch (e) {
+      return Left(CertificatePinningFailure(message: e.message));
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(message: e.message));
     } on ServerException catch (e) {
@@ -92,6 +96,8 @@ class AuthRepositoryImpl implements AuthRepository {
       await _secureStorage.setToken(token);
 
       return Right(token);
+    } on CertificatePinningException catch (e) {
+      return Left(CertificatePinningFailure(message: e.message));
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(message: e.message));
     } on ServerException catch (e) {
@@ -113,6 +119,8 @@ class AuthRepositoryImpl implements AuthRepository {
       final result = await _dataSource.getUserInterests();
 
       return Right(result);
+    } on CertificatePinningException catch (e) {
+      return Left(CertificatePinningFailure(message: e.message));
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(message: e.message));
     } on ServerException catch (e) {
@@ -134,6 +142,8 @@ class AuthRepositoryImpl implements AuthRepository {
       );
 
       return Right(result);
+    } on CertificatePinningException catch (e) {
+      return Left(CertificatePinningFailure(message: e.message));
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(message: e.message));
     } on ServerException catch (e) {
@@ -155,6 +165,8 @@ class AuthRepositoryImpl implements AuthRepository {
       final result = await _dataSource.getInterestCategories();
 
       return Right(result);
+    } on CertificatePinningException catch (e) {
+      return Left(CertificatePinningFailure(message: e.message));
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(message: e.message));
     } on ServerException catch (e) {
@@ -192,6 +204,8 @@ class AuthRepositoryImpl implements AuthRepository {
       }
 
       return Right(usuario);
+    } on CertificatePinningException catch (e) {
+      return Left(CertificatePinningFailure(message: e.message));
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(message: e.message));
     } on ServerException catch (e) {
@@ -212,6 +226,8 @@ class AuthRepositoryImpl implements AuthRepository {
       final usuario = await _dataSource.updateProfile(name: name, phone: phone);
 
       return Right(usuario);
+    } on CertificatePinningException catch (e) {
+      return Left(CertificatePinningFailure(message: e.message));
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(message: e.message));
     } on ServerException catch (e) {

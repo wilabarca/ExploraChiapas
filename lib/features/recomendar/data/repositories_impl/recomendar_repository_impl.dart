@@ -64,6 +64,8 @@ class RecomendarRepositoryImpl implements RecomendarRepository {
   Future<Either<Failure, T>> _execute<T>(Future<T> Function() operation) async {
     try {
       return Right(await operation());
+    } on CertificatePinningException catch (e) {
+      return Left(CertificatePinningFailure(message: e.message));
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(message: e.message));
     } on NetworkException catch (e) {

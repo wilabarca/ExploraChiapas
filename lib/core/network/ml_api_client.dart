@@ -54,13 +54,18 @@ class MlApiClient {
 
   /// Devuelve la lista o lanza excepción — el llamador decide si mostrar error.
   Future<List<Map<String, dynamic>>> fetchDestacados({int limite = 10}) async {
-    // El NLP service en Render free tier puede tardar ~50s en despertar.
-    // Se usan 70s para dar margen suficiente tras cold start.
-    final resp = await _dio
-        .get('/destacados', queryParameters: {'limite': limite})
-        .timeout(const Duration(seconds: 70));
-    final list = (resp.data['destacados'] as List?) ?? [];
-    return list.cast<Map<String, dynamic>>();
+    try {
+      // El NLP service en Render free tier puede tardar ~50s en despertar.
+      // Se usan 70s para dar margen suficiente tras cold start.
+      final resp = await _dio
+          .get('/destacados', queryParameters: {'limite': limite})
+          .timeout(const Duration(seconds: 70));
+      final list = (resp.data['destacados'] as List?) ?? [];
+      return list.cast<Map<String, dynamic>>();
+    } on DioException catch (e) {
+      _handleDioError(e);
+    }
+    throw const ServerException(message: 'Error desconocido');
   }
 
   Future<Response> post(String path, {Map<String, dynamic>? data}) async {
@@ -80,7 +85,9 @@ class MlApiClient {
         errorStr.contains('CERTIFICATE_VERIFY_FAILED') ||
         errorStr.contains('Certificate validation failed')) {
       if (kDebugMode) {
-        debugPrint('HTTPS_PINNING_BLOCKED host=api-gateway-explorachiapas.onrender.com');
+        debugPrint(
+          'HTTPS_PINNING_BLOCKED host=api-gateway-explorachiapas.onrender.com',
+        );
       }
       throw const CertificatePinningException();
     }

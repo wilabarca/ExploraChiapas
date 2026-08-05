@@ -9,28 +9,37 @@ class GatewayCertificatePinning {
   };
 
   static IOHttpClientAdapter createAdapter() {
-    final adapter = IOHttpClientAdapter();
-    adapter.createHttpClient = () {
-      final client = HttpClient();
-      client.badCertificateCallback = (X509Certificate cert, String host, int port) {
-        return validateCertificate(cert, host, port);
-      };
-      return client;
-    };
-    return adapter;
+    return IOHttpClientAdapter(
+      validateCertificate:
+          (X509Certificate? certificate, String host, int port) {
+            return validateCertificate(certificate, host, port);
+          },
+    );
   }
 
-  static bool validateDigest(String digest, String host, int port) {
-    final normalizedDigest = digest.toLowerCase();
+  static bool validateCertificate(
+    X509Certificate? certificate,
+    String host,
+    int port,
+  ) {
+    if (certificate == null) {
+      return false;
+    }
+
+    final digest = sha256.convert(certificate.der).toString();
+
+    return validateDigest(digest: digest, host: host, port: port);
+  }
+
+  static bool validateDigest({
+    required String digest,
+    required String host,
+    required int port,
+  }) {
+    final normalizedDigest = digest.replaceAll(':', '').trim().toLowerCase();
+
     return host == AppConstants.gatewayHost &&
-           port == 443 &&
-           allowedCertificateSha256.contains(normalizedDigest);
-  }
-
-  static bool validateCertificate(X509Certificate? cert, String host, int port) {
-    if (cert == null) return false;
-    
-    final digest = sha256.convert(cert.der).toString();
-    return validateDigest(digest, host, port);
+        port == 443 &&
+        allowedCertificateSha256.contains(normalizedDigest);
   }
 }
